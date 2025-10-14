@@ -1,0 +1,33 @@
+{
+  "name": "pet-home-uniapp",
+  "version": "1.0.0",
+  "description": "宠物之家uniapp项目",
+  "main": "main.js",
+  "scripts": {
+    "serve": "npm run dev:h5",
+    "dev:h5": "cross-env NODE_ENV=development uniapp dev h5",
+    "dev:mp-weixin": "cross-env NODE_ENV=development uniapp dev mp-weixin",
+    "build:h5": "cross-env NODE_ENV=production uniapp build h5",
+    "build:mp-weixin": "cross-env NODE_ENV=production uniapp build mp-weixin",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^2.6.11",
+    "vuex": "^3.6.2",
+    "uview-ui": "^2.0.31"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-app": "^2.0.2",
+    "@dcloudio/uni-h5": "^2.0.2",
+    "@dcloudio/uni-mp-weixin": "^2.0.2",
+    "@vue/cli-service": "^4.5.13",
+    "cross-env": "^7.0.3",
+    "sass": "^1.32.8",
+    "sass-loader": "^10.1.1",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "browserslist": [
+    "Android >= 4",
+    "ios >= 8"
+  ]
+}

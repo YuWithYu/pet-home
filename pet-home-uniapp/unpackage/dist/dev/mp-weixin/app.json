@@ -1,0 +1,60 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/category/index",
+    "pages/goods/list",
+    "pages/goods/detail",
+    "pages/cart/index",
+    "pages/user/index",
+    "pages/user/login",
+    "pages/user/register",
+    "pages/user/profile",
+    "pages/user/pets",
+    "pages/user/pets/add",
+    "pages/user/orders",
+    "pages/appointment/medical",
+    "pages/appointment/grooming",
+    "pages/appointment/boarding"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "宠物之家",
+    "navigationBarBackgroundColor": "#ff6b35",
+    "backgroundColor": "#f8f8f8",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#ff6b35",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/images/pet-paw.png",
+        "selectedIconPath": "static/images/pet-paw.png"
+      },
+      {
+        "pagePath": "pages/category/index",
+        "text": "商城",
+        "iconPath": "static/images/shop.png",
+        "selectedIconPath": "static/images/shop.png"
+      },
+      {
+        "pagePath": "pages/cart/index",
+        "text": "社区",
+        "iconPath": "static/images/community.png",
+        "selectedIconPath": "static/images/community.png"
+      },
+      {
+        "pagePath": "pages/user/index",
+        "text": "我的",
+        "iconPath": "static/images/profile.png",
+        "selectedIconPath": "static/images/profile.png"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

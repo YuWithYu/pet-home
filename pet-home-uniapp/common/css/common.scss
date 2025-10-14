@@ -1,0 +1,527 @@
+// common/css/common.scss
+@import './variables.scss';
+@import './mixins.scss';
+
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 页面容器 */
+.page {
+  min-height: 100vh;
+  background-color: $bg-color;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 容器 */
+.container {
+  padding: $spacing-sm;
+}
+
+/* 卡片样式 */
+.card {
+  background-color: $bg-color-secondary;
+  border-radius: $border-radius;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-sm;
+
+  &-header {
+    padding: $spacing-md;
+    border-bottom: 1rpx solid $border-color-light;
+    font-weight: 600;
+    font-size: $font-size-lg;
+  }
+
+  &-body {
+    padding: $spacing-md;
+  }
+
+  &-footer {
+    padding: $spacing-md;
+    border-top: 1rpx solid $border-color-light;
+    @include horizontal-center;
+  }
+}
+
+/* 网格布局 */
+.grid {
+  display: grid;
+
+  &-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  &.gap-10 {
+    gap: $spacing-xs;
+  }
+
+  &.gap-20 {
+    gap: $spacing-sm;
+  }
+
+  &.gap-30 {
+    gap: $spacing-md;
+  }
+}
+
+/* 弹性布局 */
+.flex {
+  display: flex;
+
+  &-col {
+    flex-direction: column;
+  }
+
+  &-wrap {
+    flex-wrap: wrap;
+  }
+
+  &-center {
+    @include full-center;
+  }
+
+  &-between {
+    justify-content: space-between;
+  }
+
+  &-around {
+    justify-content: space-around;
+  }
+
+  &-start {
+    justify-content: flex-start;
+  }
+
+  &-end {
+    justify-content: flex-end;
+  }
+
+  &-items-center {
+    align-items: center;
+  }
+
+  &-items-start {
+    align-items: flex-start;
+  }
+
+  &-items-end {
+    align-items: flex-end;
+  }
+}
+
+/* 间距 */
+.m-10 {
+  margin: $spacing-xs;
+}
+
+.m-20 {
+  margin: $spacing-sm;
+}
+
+.m-30 {
+  margin: $spacing-md;
+}
+
+.mt-10 {
+  margin-top: $spacing-xs;
+}
+
+.mt-20 {
+  margin-top: $spacing-sm;
+}
+
+.mt-30 {
+  margin-top: $spacing-md;
+}
+
+.mb-10 {
+  margin-bottom: $spacing-xs;
+}
+
+.mb-20 {
+  margin-bottom: $spacing-sm;
+}
+
+.mb-30 {
+  margin-bottom: $spacing-md;
+}
+
+.ml-10 {
+  margin-left: $spacing-xs;
+}
+
+.ml-20 {
+  margin-left: $spacing-sm;
+}
+
+.ml-30 {
+  margin-left: $spacing-md;
+}
+
+.mr-10 {
+  margin-right: $spacing-xs;
+}
+
+.mr-20 {
+  margin-right: $spacing-sm;
+}
+
+.mr-30 {
+  margin-right: $spacing-md;
+}
+
+.p-10 {
+  padding: $spacing-xs;
+}
+
+.p-20 {
+  padding: $spacing-sm;
+}
+
+.p-30 {
+  padding: $spacing-md;
+}
+
+/* 文字样式 */
+.text {
+  &-primary {
+    color: $main-color;
+  }
+
+  &-secondary {
+    color: $text-color-secondary;
+  }
+
+  &-light {
+    color: $text-color-light;
+  }
+
+  &-center {
+    text-align: center;
+  }
+
+  &-left {
+    text-align: left;
+  }
+
+  &-right {
+    text-align: right;
+  }
+
+  &-ellipsis {
+    @include text-ellipsis;
+  }
+
+  &-clamp-1 {
+    @include text-clamp(1);
+  }
+
+  &-clamp-2 {
+    @include text-clamp(2);
+  }
+
+  &-clamp-3 {
+    @include text-clamp(3);
+  }
+}
+
+/* 按钮样式 */
+.btn {
+  display: inline-block;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-small;
+  text-align: center;
+  font-size: $font-size-base;
+  border: none;
+  cursor: pointer;
+  @include transition;
+
+  &-primary {
+    background-color: $main-color;
+    color: white;
+
+    &:active {
+      background-color: $main-color-dark;
+    }
+  }
+
+  &-secondary {
+    background-color: $bg-color-secondary;
+    color: $text-color;
+    border: 1rpx solid $border-color;
+
+    &:active {
+      background-color: $bg-color-dark;
+    }
+  }
+
+  &-disabled {
+    background-color: $bg-color-dark;
+    color: $text-color-light;
+    border: 1rpx solid $border-color;
+  }
+
+  &-block {
+    width: 100%;
+  }
+
+  &-round {
+    border-radius: 40rpx;
+  }
+}
+
+/* 标签样式 */
+.tag {
+  display: inline-block;
+  padding: 4rpx 12rpx;
+  background-color: $main-color;
+  color: white;
+  font-size: $font-size-xs;
+  border-radius: 20rpx;
+  margin-right: $spacing-xs;
+
+  &-primary {
+    background-color: $main-color;
+  }
+
+  &-success {
+    background-color: #52c41a;
+  }
+
+  &-warning {
+    background-color: #faad14;
+  }
+
+  &-danger {
+    background-color: #ff4d4f;
+  }
+}
+
+/* 输入框样式 */
+.input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 $spacing-md;
+  background-color: #f8f8f8;
+  border-radius: $border-radius-small;
+  font-size: $font-size-base;
+  color: $text-color;
+  border: 2rpx solid transparent;
+  @include transition;
+
+  &:focus {
+    border-color: $main-color;
+    background-color: white;
+  }
+
+  &.error {
+    border-color: #ff4d4f;
+    background-color: #fff1f0;
+  }
+
+  &::placeholder {
+    color: $text-color-light;
+  }
+}
+
+/* 加载动画 */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #f3f3f3;
+  border-top: 4rpx solid $main-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 空状态 */
+.empty-state {
+  @include full-center;
+  flex-direction: column;
+  padding: 120rpx 40rpx;
+  color: $text-color-light;
+
+  &-icon {
+    font-size: 120rpx;
+    margin-bottom: $spacing-lg;
+  }
+
+  &-text {
+    font-size: $font-size-base;
+  }
+}
+
+/* 错误状态 */
+.error-state {
+  @include full-center;
+  flex-direction: column;
+  padding: 120rpx 40rpx;
+  color: #ff4d4f;
+
+  &-icon {
+    font-size: 120rpx;
+    margin-bottom: $spacing-lg;
+  }
+
+  &-text {
+    font-size: $font-size-base;
+  }
+}
+
+/* 遮罩层 */
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+/* 弹出层 */
+.popup {
+  position: fixed;
+  background-color: white;
+  border-radius: $border-radius $border-radius 0 0;
+  z-index: 1001;
+
+  &-bottom {
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  &-center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: $border-radius;
+  }
+}
+
+/* 导航栏扩展 */
+.navbar {
+  &-custom {
+    background-color: $main-color;
+    color: white;
+  }
+}
+
+/* 商品卡片 */
+.goods-card {
+  background-color: white;
+  border-radius: $border-radius;
+  overflow: hidden;
+  @include box-shadow;
+
+  &-image {
+    position: relative;
+    width: 100%;
+    height: 280rpx;
+
+    image {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &-tag {
+    position: absolute;
+    top: $spacing-xs;
+    left: $spacing-xs;
+    @extend .tag;
+  }
+
+  &-info {
+    padding: $spacing-sm;
+  }
+
+  &-name {
+    font-size: $font-size-base;
+    color: $text-color;
+    margin-bottom: 8rpx;
+    @include text-clamp(2);
+  }
+
+  &-price {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8rpx;
+
+    &-current {
+      font-size: $font-size-lg;
+      color: $main-color;
+      font-weight: bold;
+    }
+
+    &-original {
+      font-size: $font-size-xs;
+      color: $text-color-light;
+      text-decoration: line-through;
+      margin-left: $spacing-xs;
+    }
+  }
+
+  &-sales {
+    font-size: $font-size-xs;
+    color: $text-color-light;
+  }
+}
+
+/* 搜索栏 */
+.search-bar {
+  @include horizontal-center;
+  padding: $spacing-sm $spacing-md;
+  background-color: white;
+  @include box-shadow;
+
+  &-input {
+    flex: 1;
+    @include horizontal-center;
+    background-color: #f5f5f5;
+    border-radius: 30rpx;
+    padding: 16rpx $spacing-md;
+    margin-right: $spacing-sm;
+  }
+
+  &-icon {
+    margin-right: 16rpx;
+    color: $text-color-light;
+    font-size: $font-size-base;
+  }
+
+  &-text {
+    flex: 1;
+    font-size: $font-size-base;
+    color: $text-color;
+  }
+
+  &-btn {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 50%;
+    background-color: $main-color;
+    @include full-center;
+  }
+}

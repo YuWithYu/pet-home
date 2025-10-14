@@ -1,0 +1,269 @@
+/* uni.scss */
+@import "uview-ui/theme.scss";
+
+/* 自定义主题色 */
+$main-color: #ff6b35;
+$u-type-primary: $main-color;
+$u-type-primary-light: lighten($main-color, 10%);
+$u-type-primary-dark: darken($main-color, 10%);
+
+/* 全局样式重置和扩展 */
+@import 'common/css/variables.scss';
+@import 'common/css/mixins.scss';
+
+/* 页面容器 */
+.page {
+  min-height: 100vh;
+  background-color: $bg-color;
+}
+
+/* 通用按钮样式 */
+.btn {
+  display: inline-block;
+  padding: 20rpx 40rpx;
+  border-radius: 10rpx;
+  text-align: center;
+  font-size: 28rpx;
+  border: none;
+  cursor: pointer;
+
+  &-primary {
+    background-color: $main-color;
+    color: white;
+
+    &:active {
+      background-color: $main-color-dark;
+    }
+  }
+
+  &-secondary {
+    background-color: $bg-color-secondary;
+    color: #333;
+    border: 1rpx solid #ddd;
+
+    &:active {
+      background-color: #eee;
+    }
+  }
+}
+
+/* 卡片样式 */
+.card {
+  background-color: white;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+
+  &-header {
+    padding: 30rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+    font-weight: 600;
+    font-size: 32rpx;
+  }
+
+  &-body {
+    padding: 30rpx;
+  }
+
+  &-footer {
+    padding: 30rpx;
+    border-top: 1rpx solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* 网格布局 */
+.grid {
+  display: grid;
+
+  &-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 间距 */
+.gap-10 {
+  gap: 10rpx;
+}
+
+.gap-20 {
+  gap: 20rpx;
+}
+
+.gap-30 {
+  gap: 30rpx;
+}
+
+/* 文字样式 */
+.text {
+  &-primary {
+    color: $main-color;
+  }
+
+  &-secondary {
+    color: #666;
+  }
+
+  &-success {
+    color: #52c41a;
+  }
+
+  &-warning {
+    color: #faad14;
+  }
+
+  &-danger {
+    color: #ff4d4f;
+  }
+
+  &-center {
+    text-align: center;
+  }
+
+  &-left {
+    text-align: left;
+  }
+
+  &-right {
+    text-align: right;
+  }
+}
+
+/* 弹性布局 */
+.flex {
+  display: flex;
+
+  &-col {
+    flex-direction: column;
+  }
+
+  &-wrap {
+    flex-wrap: wrap;
+  }
+
+  &-center {
+    justify-content: center;
+    align-items: center;
+  }
+
+  &-between {
+    justify-content: space-between;
+  }
+
+  &-around {
+    justify-content: space-around;
+  }
+
+  &-start {
+    justify-content: flex-start;
+  }
+
+  &-end {
+    justify-content: flex-end;
+  }
+}
+
+/* 边距 */
+.m-10 {
+  margin: 10rpx;
+}
+
+.m-20 {
+  margin: 20rpx;
+}
+
+.m-30 {
+  margin: 30rpx;
+}
+
+.mt-10 {
+  margin-top: 10rpx;
+}
+
+.mt-20 {
+  margin-top: 20rpx;
+}
+
+.mt-30 {
+  margin-top: 30rpx;
+}
+
+.mb-10 {
+  margin-bottom: 10rpx;
+}
+
+.mb-20 {
+  margin-bottom: 20rpx;
+}
+
+.mb-30 {
+  margin-bottom: 30rpx;
+}
+
+.ml-10 {
+  margin-left: 10rpx;
+}
+
+.ml-20 {
+  margin-left: 20rpx;
+}
+
+.ml-30 {
+  margin-left: 30rpx;
+}
+
+.mr-10 {
+  margin-right: 10rpx;
+}
+
+.mr-20 {
+  margin-right: 20rpx;
+}
+
+.mr-30 {
+  margin-right: 30rpx;
+}
+
+.p-10 {
+  padding: 10rpx;
+}
+
+.p-20 {
+  padding: 20rpx;
+}
+
+.p-30 {
+  padding: 30rpx;
+}
+
+/* 圆角 */
+.radius-10 {
+  border-radius: 10rpx;
+}
+
+.radius-12 {
+  border-radius: 12rpx;
+}
+
+.radius-20 {
+  border-radius: 20rpx;
+}
+
+/* 阴影 */
+.shadow {
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.shadow-lg {
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
+}

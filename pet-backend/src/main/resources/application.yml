@@ -1,0 +1,110 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  tomcat:
+    uri-encoding: UTF-8
+    connection-timeout: 30000
+
+spring:
+  application:
+    name: pet-home-backend
+  
+  # 数据源配置
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+
+  # H2数据库控制台配置
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+  # 数据库初始化脚本配置
+  sql:
+    init:
+      schema-locations: classpath:db/schema.sql
+      mode: always
+    
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+    charset: UTF-8
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+      enabled: true
+      file-size-threshold: 2KB
+      location: ${java.io.tmpdir}
+      resolve-lazily: false
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    auto-mapping-behavior: full
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      # 自动创建表结构（仅开发环境使用）
+      table-prefix: ""
+      capital-mode: true
+    banner: false
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# JWT配置
+jwt:
+  secret: pet-home-secret-key-for-jwt-token-generation-2024
+  expiration: 7200 # 2小时，单位：秒
+
+# 微信支付配置
+wechat:
+  pay:
+    app-id: wx2d696ea387550f34  # 小程序AppID
+    mch-id: 1710939204  # 商户号
+    api-key: 6671B4360FCADE952F0F22A854E5475DEC9B3BB9  # API密钥
+    notify-url: https://localhost:8080/api/payment/notify  # 支付回调地址（开发环境）
+    sandbox: false  # 生产环境
+    cert-path: ./certs/apiclient_cert.p12  # 证书路径
+    cert-password: 1710939204  # 证书密码（商户号）
+  miniapp:
+    app-id: wx2d696ea387550f34  # 小程序AppID
+    secret: 7928edd8cf0d144e608009b1ceb56340  # 小程序Secret
+
+# 日志配置
+logging:
+  level:
+    com.pethome: debug
+    org.springframework.security: debug
+    org.springframework.web: debug
+    org.hibernate: debug
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 文件上传路径配置
+upload:
+  path: ./upload/
+  url: https://localhost:8080/upload/
+
+# Swagger配置
+springfox:
+  documentation:
+    swagger-ui:
+      enabled: true
+    swagger:
+      v2:
+        path: /api-docs
