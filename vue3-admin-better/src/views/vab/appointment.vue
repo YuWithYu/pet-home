@@ -584,6 +584,7 @@
 
 <script>
 import appointmentApi from "@/api/appointment";
+import hospitalAppointmentApi from "@/api/hospital-appointment";
 import medicalServiceApi from "@/api/medical-service";
 import serviceBannerApi from "@/api/service-banner";
 
@@ -792,23 +793,23 @@ export default {
       try {
         this.loading = true;
         const queryParams = {
-          pageNo: this.currentPage,
-          pageSize: this.pageSize,
+          current: this.currentPage,
+          size: this.pageSize,
           status: this.selectedStatus || undefined,
           startDate: this.dateRange && this.dateRange[0] ? this.formatDate(this.dateRange[0]) : undefined,
           endDate: this.dateRange && this.dateRange[1] ? this.formatDate(this.dateRange[1]) : undefined
         };
 
-        const response = await appointmentApi.getAppointmentList(queryParams);
+        const response = await hospitalAppointmentApi.getHospitalAppointmentList(queryParams);
         if (response.code === 0) {
           this.appointments = response.data.records || [];
           this.totalAppointments = response.data.total || 0;
         } else {
-          this.$message.error(response.msg || '加载预约数据失败');
+          this.$message.error(response.msg || '加载医院预约数据失败');
         }
       } catch (error) {
-        console.error('加载预约数据失败:', error);
-        this.$message.error('加载预约数据失败: ' + (error.message || '网络错误'));
+        console.error('加载医院预约数据失败:', error);
+        this.$message.error('加载医院预约数据失败: ' + (error.message || '网络错误'));
       } finally {
         this.loading = false;
       }
@@ -910,7 +911,7 @@ export default {
     
     async viewAppointment(appointment) {
       try {
-        const response = await appointmentApi.getAppointmentById(appointment.id);
+        const response = await hospitalAppointmentApi.getHospitalAppointmentById(appointment.id);
         if (response.code === 0) {
           this.detailAppointment = response.data;
           this.detailDialogVisible = true;
@@ -931,7 +932,7 @@ export default {
           type: "warning"
         });
         
-        const response = await appointmentApi.deleteAppointment(appointment.id);
+        const response = await hospitalAppointmentApi.deleteHospitalAppointment(appointment.id);
         if (response.code === 0) {
           this.$message.success("预约删除成功");
           this.loadAppointments();
@@ -960,10 +961,10 @@ export default {
         let response;
         if (this.editingAppointment) {
           // 编辑预约
-          response = await appointmentApi.updateAppointment(this.editingAppointment.id, formData);
+          response = await hospitalAppointmentApi.updateHospitalAppointment(this.editingAppointment.id, formData);
         } else {
           // 添加预约
-          response = await appointmentApi.createAppointment(formData);
+          response = await hospitalAppointmentApi.createHospitalAppointment(formData);
         }
         
         if (response.code === 0) {
@@ -981,7 +982,7 @@ export default {
     
     async confirmAppointment(appointment) {
       try {
-        const response = await appointmentApi.confirmAppointment(appointment.id, 1); // 假设操作者ID为1
+        const response = await hospitalAppointmentApi.confirmHospitalAppointment(appointment.id, 1); // 假设操作者ID为1
         if (response.code === 0) {
           this.$message.success("预约已确认");
           this.loadAppointments();
@@ -996,7 +997,7 @@ export default {
     
     async rejectAppointment(appointment) {
       try {
-        const response = await appointmentApi.merchantCancelAppointment(appointment.id, 1, "商家拒绝");
+        const response = await hospitalAppointmentApi.merchantCancelHospitalAppointment(appointment.id, 1, "商家拒绝");
         if (response.code === 0) {
           this.$message.success("预约已拒绝");
           this.loadAppointments();
@@ -1011,7 +1012,7 @@ export default {
     
     async completeAppointment(appointment) {
       try {
-        const response = await appointmentApi.completeAppointment(appointment.id, 1); // 假设操作者ID为1
+        const response = await hospitalAppointmentApi.completeHospitalAppointment(appointment.id, 1); // 假设操作者ID为1
         if (response.code === 0) {
           this.$message.success("预约已完成");
           this.loadAppointments();
@@ -1110,8 +1111,8 @@ export default {
     async loadStatistics() {
       try {
         // 加载状态统计
-        const statusResponse = await appointmentApi.getAppointmentStatusStatistics();
-        const serviceResponse = await appointmentApi.getServiceTypeStatistics();
+        const statusResponse = await hospitalAppointmentApi.getHospitalAppointmentStatusStatistics();
+        const serviceResponse = await hospitalAppointmentApi.getHospitalServiceTypeStatistics();
         
         if (statusResponse.code === 0 && serviceResponse.code === 0) {
           this.statisticsData = {
