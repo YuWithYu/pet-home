@@ -56,6 +56,73 @@ public class HospitalServiceController {
         }
     }
 
+    @PostMapping("/create")
+    @ApiOperation("创建宠物医院服务")
+    public Result<HospitalService> createHospitalService(@RequestBody HospitalService service) {
+        try {
+            boolean success = hospitalServiceService.save(service);
+            if (success) {
+                return Result.success(service, "服务创建成功");
+            } else {
+                return Result.error("服务创建失败");
+            }
+        } catch (Exception e) {
+            return Result.error("服务创建失败: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    @ApiOperation("更新宠物医院服务")
+    public Result<HospitalService> updateHospitalService(@PathVariable Long id, @RequestBody HospitalService service) {
+        try {
+            service.setId(id);
+            boolean success = hospitalServiceService.updateById(service);
+            if (success) {
+                return Result.success(service, "服务更新成功");
+            } else {
+                return Result.error("服务更新失败");
+            }
+        } catch (Exception e) {
+            return Result.error("服务更新失败: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @ApiOperation("删除宠物医院服务")
+    public Result<Boolean> deleteHospitalService(@PathVariable Long id) {
+        try {
+            boolean success = hospitalServiceService.removeById(id);
+            if (success) {
+                return Result.success(true, "服务删除成功");
+            } else {
+                return Result.error("服务删除失败");
+            }
+        } catch (Exception e) {
+            return Result.error("服务删除失败: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    @ApiOperation("更新宠物医院服务状态")
+    public Result<Boolean> updateHospitalServiceStatus(@PathVariable Long id, @RequestParam Integer status) {
+        try {
+            HospitalService service = hospitalServiceService.getById(id);
+            if (service != null) {
+                service.setStatus(status);
+                boolean success = hospitalServiceService.updateById(service);
+                if (success) {
+                    return Result.success(true, "状态更新成功");
+                } else {
+                    return Result.error("状态更新失败");
+                }
+            } else {
+                return Result.error("服务不存在");
+            }
+        } catch (Exception e) {
+            return Result.error("状态更新失败: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/upload")
     @ApiOperation("上传服务图片")
     public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Long id) {
