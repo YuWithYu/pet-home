@@ -181,6 +181,12 @@
       }
     },
     {
+      "path": "pages/appointment/book-grooming",
+      "style": {
+        "navigationBarTitleText": "宠物洗护预约"
+      }
+    },
+    {
       "path": "pages/appointment/online-consultation",
       "style": {
         "navigationBarTitleText": "在线咨询"

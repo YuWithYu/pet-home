@@ -154,10 +154,11 @@ export default {
       try {
         this.loading = true
         
-        // 同时获取上门铲屎服务和医院预约数据
-        const [doorCleaningRes, hospitalRes] = await Promise.all([
+        // 同时获取上门铲屎服务、医院预约和洗护预约数据
+        const [doorCleaningRes, hospitalRes, groomingRes] = await Promise.all([
           this.$api.getUserAppointments(this.userInfo.uid),
-          this.$api.getUserHospitalAppointments(this.userInfo.uid)
+          this.$api.getUserHospitalAppointments(this.userInfo.uid),
+          this.$api.getUserGroomingAppointments(this.userInfo.uid)
         ])
 
         let allAppointments = []
@@ -178,6 +179,15 @@ export default {
             serviceType: 'hospital' // 添加服务类型标识
           }))
           allAppointments = allAppointments.concat(hospitalAppointments)
+        }
+
+        // 处理洗护预约
+        if (groomingRes.code === 0 && groomingRes.data) {
+          const groomingAppointments = groomingRes.data.map(appointment => ({
+            ...appointment,
+            serviceType: 'grooming' // 添加服务类型标识
+          }))
+          allAppointments = allAppointments.concat(groomingAppointments)
         }
 
         // 按创建时间倒序排列
@@ -283,6 +293,8 @@ export default {
               let result
               if (appointment.serviceType === 'hospital') {
                 result = await this.$api.updateHospitalAppointmentStatus(appointment.id, 'cancelled')
+              } else if (appointment.serviceType === 'grooming') {
+                result = await this.$api.updateGroomingAppointmentStatus(appointment.id, 'cancelled')
               } else {
                 result = await this.$api.updateAppointmentStatus(appointment.id, 'cancelled')
               }

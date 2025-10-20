@@ -585,6 +585,50 @@ class ApiService {
     })
   }
 
+  // ==================== 宠物洗护预约相关 API ====================
+
+  // 创建宠物洗护预约
+  createGroomingAppointment(appointmentData) {
+    return this.request({
+      url: '/api/grooming-appointments/create',
+      method: 'POST',
+      data: appointmentData
+    })
+  }
+
+  // 获取宠物洗护预约列表
+  getGroomingAppointmentPage(pageNo = 1, pageSize = 10) {
+    return this.request({
+      url: '/api/grooming-appointments/page',
+      method: 'GET',
+      data: { pageNo, pageSize }
+    })
+  }
+
+  // 获取用户宠物洗护预约列表
+  getUserGroomingAppointments(userId) {
+    return this.request({
+      url: `/api/grooming-appointments/user/list/${userId}`,
+      method: 'GET'
+    })
+  }
+
+  // 更新宠物洗护预约状态
+  updateGroomingAppointmentStatus(id, status) {
+    return this.request({
+      url: `/api/grooming-appointments/${id}/status?status=${status}`,
+      method: 'PUT'
+    })
+  }
+
+  // 获取宠物洗护预约详情
+  getGroomingAppointmentDetail(id) {
+    return this.request({
+      url: `/api/grooming-appointments/${id}`,
+      method: 'GET'
+    })
+  }
+
 
   // ==================== 订单相关接口 ====================
 
