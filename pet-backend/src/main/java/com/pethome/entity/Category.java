@@ -8,6 +8,7 @@ public class Category {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String name;
+    @TableField(exist = false)  // 数据库表中不存在此字段
     private String description;
     private String icon;
     private Integer sortOrder;
