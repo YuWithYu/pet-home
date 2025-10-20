@@ -37,7 +37,7 @@
 
       <!-- 服务列表 -->
       <view v-else class="services-grid">
-        <view class="service-card" v-for="(service, index) in services" :key="service.id || index" @tap="onServiceTap(service, index)">
+        <view class="service-card" v-for="(service, index) in services" :key="service.id || index" @tap="onServiceTap(service, index)" @click="onServiceTap(service, index)">
           <view class="service-image">
             <image :src="getImageUrl(service.image)" mode="aspectFill" @error="onImageError" />
           </view>
@@ -76,7 +76,7 @@ export default {
         console.log('开始请求医疗服务API...')
         
         const [error, response] = await uni.request({
-          url: 'http://localhost:8080/api/medical-services',
+          url: 'http://localhost:8080/api/hospital-services/list',
           method: 'GET',
           header: {
             'Content-Type': 'application/json'
@@ -183,12 +183,15 @@ export default {
     },
 
     onServiceTap(service, index) {
+      console.log('点击服务卡片:', service, index)
+      
       // 如果service为undefined，使用index从services数组中获取
       if (!service && typeof index === 'number') {
         service = this.services[index]
       }
       
       if (!service) {
+        console.error('服务信息错误:', service, index)
         uni.showToast({
           title: '服务信息错误',
           icon: 'none'
@@ -196,9 +199,21 @@ export default {
         return
       }
       
+      console.log('准备跳转到预约页面，服务名称:', service.title)
+      
       // 跳转到宠物医院预约页面
       uni.navigateTo({
-        url: `/pages/appointment/book-hospital?serviceType=hospital&serviceName=${encodeURIComponent(service.title || '宠物医院服务')}`
+        url: `/pages/appointment/book-hospital?serviceType=hospital&serviceName=${encodeURIComponent(service.title || '宠物医院服务')}`,
+        success: () => {
+          console.log('跳转成功')
+        },
+        fail: (err) => {
+          console.error('跳转失败:', err)
+          uni.showToast({
+            title: '页面跳转失败',
+            icon: 'none'
+          })
+        }
       })
     },
 
