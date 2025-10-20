@@ -199,6 +199,12 @@
       }
     },
     {
+      "path": "pages/service/hospital-detail",
+      "style": {
+        "navigationBarTitleText": "宠物医院服务详情"
+      }
+    },
+    {
       "path": "pages/booking/index",
       "style": {
         "navigationBarTitleText": "预约服务"
