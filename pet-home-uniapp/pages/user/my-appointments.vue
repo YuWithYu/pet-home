@@ -154,20 +154,41 @@ export default {
       try {
         this.loading = true
         
-        const res = await this.$api.getUserAppointments(this.userInfo.uid)
+        // 同时获取上门铲屎服务和医院预约数据
+        const [doorCleaningRes, hospitalRes] = await Promise.all([
+          this.$api.getUserAppointments(this.userInfo.uid),
+          this.$api.getUserHospitalAppointments(this.userInfo.uid)
+        ])
 
-        if (res.code === 0 && res.data) {
-          let appointments = res.data
+        let allAppointments = []
 
-          // 根据当前标签过滤
-          if (this.currentTab !== 'all') {
-            appointments = appointments.filter(a => a.status === this.currentTab)
-          }
-
-          this.appointments = appointments
-        } else {
-          this.appointments = []
+        // 处理上门铲屎服务预约
+        if (doorCleaningRes.code === 0 && doorCleaningRes.data) {
+          const doorCleaningAppointments = doorCleaningRes.data.map(appointment => ({
+            ...appointment,
+            serviceType: 'door-cleaning' // 添加服务类型标识
+          }))
+          allAppointments = allAppointments.concat(doorCleaningAppointments)
         }
+
+        // 处理医院预约
+        if (hospitalRes.code === 0 && hospitalRes.data) {
+          const hospitalAppointments = hospitalRes.data.map(appointment => ({
+            ...appointment,
+            serviceType: 'hospital' // 添加服务类型标识
+          }))
+          allAppointments = allAppointments.concat(hospitalAppointments)
+        }
+
+        // 按创建时间倒序排列
+        allAppointments.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+
+        // 根据当前标签过滤
+        if (this.currentTab !== 'all') {
+          allAppointments = allAppointments.filter(a => a.status === this.currentTab)
+        }
+
+        this.appointments = allAppointments
       } catch (error) {
         console.error('加载预约列表失败:', error)
         this.appointments = []
@@ -234,9 +255,16 @@ export default {
 
     // 查看详情
     viewDetail(appointment) {
-      uni.navigateTo({
-        url: `/pages/appointment/detail?id=${appointment.id}`
-      })
+      // 根据服务类型跳转到不同的详情页面
+      if (appointment.serviceType === 'hospital') {
+        uni.navigateTo({
+          url: `/pages/appointment/detail?id=${appointment.id}&serviceType=hospital`
+        })
+      } else {
+        uni.navigateTo({
+          url: `/pages/appointment/detail?id=${appointment.id}&serviceType=${appointment.serviceType || 'door-cleaning'}`
+        })
+      }
     },
 
     // 取消预约
@@ -251,7 +279,13 @@ export default {
                 title: '处理中...'
               })
 
-              const result = await this.$api.updateAppointmentStatus(appointment.id, 'cancelled')
+              // 根据服务类型调用不同的取消API
+              let result
+              if (appointment.serviceType === 'hospital') {
+                result = await this.$api.updateHospitalAppointmentStatus(appointment.id, 'cancelled')
+              } else {
+                result = await this.$api.updateAppointmentStatus(appointment.id, 'cancelled')
+              }
               
               console.log('取消预约API响应:', result)
 
