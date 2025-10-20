@@ -9,6 +9,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/litter-services")
@@ -50,5 +51,60 @@ public class LitterServiceController {
     @ApiOperation("获取铲屎服务详情")
     public Result<LitterService> getLitterServiceDetail(@PathVariable Long id) {
         return Result.success(litterServiceService.getLitterServiceById(id));
+    }
+
+    @PostMapping("/upload")
+    @ApiOperation("上传服务图片")
+    public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Long id) {
+        return updateServiceImage(id, file);
+    }
+
+    @PutMapping("/{id}/image")
+    @ApiOperation("更新服务图片")
+    public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return Result.error("请选择要上传的图片");
+            }
+            
+            // 检查文件类型
+            String contentType = file.getContentType();
+            if (contentType == null || (!contentType.startsWith("image/"))) {
+                return Result.error("只能上传图片文件");
+            }
+            
+            // 生成文件名
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename != null && originalFilename.contains(".") 
+                ? originalFilename.substring(originalFilename.lastIndexOf(".")) 
+                : ".jpg";
+            String filename = "litter-service-" + id + "-" + System.currentTimeMillis() + extension;
+            
+            // 上传目录
+            String uploadDir = "C:/Users/Yu/Desktop/pet-home/upload/grooming-service/";
+            java.io.File dir = new java.io.File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            
+            // 保存文件
+            java.io.File targetFile = new java.io.File(dir, filename);
+            file.transferTo(targetFile);
+            
+            // 返回图片URL
+            String imageUrl = "/upload/grooming-service/" + filename;
+            
+            // 更新服务记录
+            LitterService service = litterServiceService.getLitterServiceById(id);
+            if (service != null) {
+                service.setImageUrl(imageUrl);
+                litterServiceService.updateLitterService(service);
+                return Result.success(imageUrl);
+            } else {
+                return Result.error("服务不存在");
+            }
+        } catch (Exception e) {
+            return Result.error("图片上传失败: " + e.getMessage());
+        }
     }
 }
