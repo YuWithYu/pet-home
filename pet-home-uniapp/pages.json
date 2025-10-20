@@ -175,6 +175,12 @@
       }
     },
     {
+      "path": "pages/appointment/book-hospital",
+      "style": {
+        "navigationBarTitleText": "宠物医院预约"
+      }
+    },
+    {
       "path": "pages/appointment/online-consultation",
       "style": {
         "navigationBarTitleText": "在线咨询"
