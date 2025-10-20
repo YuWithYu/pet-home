@@ -15,7 +15,7 @@
       <!-- 预约日期 -->
       <view class="form-section">
         <view class="section-title">预约日期</view>
-        <picker mode="date" :value="formData.date" :start="todayDate" @change="onDateChange">
+        <picker mode="date" :value="formData.date" :start="todayDate" :end="maxDate" @change="onDateChange">
           <view class="date-picker">
             <view class="picker-value">{{ formData.date || '请选择日期' }}</view>
             <view class="picker-arrow">›</view>
@@ -165,7 +165,8 @@ export default {
       pets: [],
       selectedPet: null,
       showPetPicker: false,
-      todayDate: ''
+      todayDate: '',
+      maxDate: ''
     }
   },
 
@@ -219,6 +220,11 @@ export default {
       // 设置今天的日期为最小日期
       const today = new Date()
       this.todayDate = this.formatDate(today)
+      
+      // 设置最大日期为一个月后
+      const maxDate = new Date()
+      maxDate.setMonth(maxDate.getMonth() + 1)
+      this.maxDate = this.formatDate(maxDate)
       
       // 设置联系人信息为用户信息
       if (this.userInfo) {
@@ -572,7 +578,7 @@ export default {
     border-bottom: 1rpx solid #f0f0f0;
     background-color: white;
     position: relative;
-    z-index: 2;
+    z-index: 1;
     
     &:last-child {
       border-bottom: none;
@@ -584,7 +590,7 @@ export default {
       color: #333;
       flex-shrink: 0;
       background-color: white;
-      z-index: 3;
+      z-index: 1;
     }
     
     .input-field {
@@ -648,6 +654,7 @@ export default {
   padding: 20rpx 30rpx;
   background-color: white;
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  z-index: 9999;
   
   .submit-button {
     width: 100%;
