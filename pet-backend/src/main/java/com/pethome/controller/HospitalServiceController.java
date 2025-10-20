@@ -62,7 +62,7 @@ public class HospitalServiceController {
         try {
             boolean success = hospitalServiceService.save(service);
             if (success) {
-                return Result.success(service, "服务创建成功");
+                return Result.success("服务创建成功", service);
             } else {
                 return Result.error("服务创建失败");
             }
@@ -78,7 +78,7 @@ public class HospitalServiceController {
             service.setId(id);
             boolean success = hospitalServiceService.updateById(service);
             if (success) {
-                return Result.success(service, "服务更新成功");
+                return Result.success("服务更新成功", service);
             } else {
                 return Result.error("服务更新失败");
             }
@@ -93,7 +93,7 @@ public class HospitalServiceController {
         try {
             boolean success = hospitalServiceService.removeById(id);
             if (success) {
-                return Result.success(true, "服务删除成功");
+                return Result.success("服务删除成功", true);
             } else {
                 return Result.error("服务删除失败");
             }
@@ -111,7 +111,7 @@ public class HospitalServiceController {
                 service.setStatus(status);
                 boolean success = hospitalServiceService.updateById(service);
                 if (success) {
-                    return Result.success(true, "状态更新成功");
+                    return Result.success("状态更新成功", true);
                 } else {
                     return Result.error("状态更新失败");
                 }
