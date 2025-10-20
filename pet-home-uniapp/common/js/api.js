@@ -4,7 +4,7 @@ import { util } from './util.js'
 // API接口封装
 class ApiService {
   constructor() {
-    this.baseURL = 'https://localhost:8080'
+    this.baseURL = 'http://localhost:8080'
   }
 
   // 请求封装
@@ -96,6 +96,86 @@ class ApiService {
     })
   }
 
+  // 获取铲屎服务列表
+  getLitterServicePage(params) {
+    return this.request({
+      url: '/api/litter-services/page',
+      method: 'GET',
+      data: params
+    })
+  }
+
+  // 获取寄养服务列表
+  getBoardingServicePage(params) {
+    return this.request({
+      url: '/api/boarding-services/page',
+      method: 'GET',
+      data: params
+    })
+  }
+
+  // 获取医疗服务列表
+  getMedicalServicePage(params) {
+    return this.request({
+      url: '/api/medical-services/page',
+      method: 'GET',
+      data: params
+    })
+  }
+
+  // 获取洗护服务列表
+  getGroomingServicePage(params) {
+    return this.request({
+      url: '/api/grooming-services/page',
+      method: 'GET',
+      data: params
+    })
+  }
+
+  // 获取领养服务列表
+  getAdoptionServicePage(params) {
+    return this.request({
+      url: '/api/adoption-services/page',
+      method: 'GET',
+      data: params
+    })
+  }
+
+  // 获取可用时间段
+  getAvailableTimeSlots(params) {
+    return this.request({
+      url: '/api/time-slots/available',
+      method: 'GET',
+      data: params
+    })
+  }
+
+  // 创建预约
+  createBooking(data) {
+    return this.request({
+      url: '/api/bookings/create',
+      method: 'POST',
+      data: data
+    })
+  }
+
+  // 获取我的预约列表
+  getMyBookings(params) {
+    return this.request({
+      url: '/api/bookings/my-list',
+      method: 'GET',
+      data: params
+    })
+  }
+
+  // 取消预约
+  cancelBooking(id) {
+    return this.request({
+      url: `/api/bookings/${id}/cancel`,
+      method: 'PUT'
+    })
+  }
+
   // 微信小程序授权
   wxappAuthorize(params) {
     return this.request({
@@ -120,6 +200,20 @@ class ApiService {
       url: '/tz/user/wxapp/login',
       method: 'POST',
       data: { code }
+    })
+  }
+
+  // 用户注册
+  register(phone, password, nickname, smsCode) {
+    return this.request({
+      url: '/tz/user/register',
+      method: 'POST',
+      data: { 
+        phone: String(phone), 
+        password: String(password), 
+        nickname: String(nickname || ''), 
+        smsCode: String(smsCode) 
+      }
     })
   }
 
@@ -153,7 +247,7 @@ class ApiService {
   // 获取所有商品分类
   getAllCategories() {
     return this.request({
-      url: '/tz/shop/goods/category/all',
+      url: '/api/categories/all',
       method: 'GET'
     })
   }
@@ -161,9 +255,17 @@ class ApiService {
   // 获取商品列表V2
   getGoodsList(params) {
     return this.request({
-      url: '/tz/shop/goods/list/v2',
-      method: 'POST',
+      url: '/api/product/list',
+      method: 'GET',
       data: params
+    })
+  }
+
+  // 获取商品详情
+  getGoodsDetail(id) {
+    return this.request({
+      url: `/api/product/${id}`,
+      method: 'GET'
     })
   }
 
@@ -223,15 +325,6 @@ class ApiService {
     })
   }
 
-  // 用户注册
-  register(userData) {
-    return this.request({
-      url: '/api/users/register',
-      method: 'POST',
-      data: userData
-    })
-  }
-
   // 用户登录
   login(loginData) {
     return this.request({
@@ -249,6 +342,15 @@ class ApiService {
     })
   }
 
+  // 更新用户信息
+  updateUser(userData) {
+    return this.request({
+      url: '/tz/user/update',
+      method: 'POST',
+      data: userData
+    })
+  }
+
   // ==================== 商品相关接口 ====================
 
   // 分页查询商品
@@ -258,7 +360,7 @@ class ApiService {
       method: 'GET',
       data: { pageNo, pageSize }
     })
-  }
+  } 
 
   // 获取热门商品
   getHotProducts(limit = 10) {
@@ -382,7 +484,7 @@ class ApiService {
   // 分页查询预约
   getAppointmentPage(pageNo = 1, pageSize = 10) {
     return this.request({
-      url: '/api/appointment/page',
+      url: '/api/door-cleaning/page',
       method: 'GET',
       data: { pageNo, pageSize }
     })
@@ -391,7 +493,7 @@ class ApiService {
   // 创建预约
   createAppointment(appointmentData) {
     return this.request({
-      url: '/api/appointment/create',
+      url: '/api/door-cleaning/create',
       method: 'POST',
       data: appointmentData
     })
@@ -399,17 +501,25 @@ class ApiService {
 
   // 更新预约状态
   updateAppointmentStatus(id, status) {
+    console.log('调用更新预约状态API:', { id, status })
     return this.request({
-      url: `/api/appointment/${id}/status`,
-      method: 'PUT',
-      data: { status }
+      url: `/api/door-cleaning/${id}/status?status=${status}`,
+      method: 'PUT'
     })
   }
 
   // 获取用户预约列表
   getUserAppointments(userId) {
     return this.request({
-      url: `/api/appointment/user/list/${userId}`,
+      url: `/api/door-cleaning/user/list/${userId}`,
+      method: 'GET'
+    })
+  }
+
+  // 获取宠物详情
+  getPetById(id) {
+    return this.request({
+      url: `/api/pets/${id}`,
       method: 'GET'
     })
   }
@@ -417,10 +527,11 @@ class ApiService {
   // 获取预约详情
   getAppointmentDetail(id) {
     return this.request({
-      url: `/api/appointment/${id}`,
+      url: `/api/door-cleaning/${id}`,
       method: 'GET'
     })
   }
+
 
   // ==================== 订单相关接口 ====================
 
@@ -467,6 +578,43 @@ class ApiService {
       url: '/api/orders/grooming-appointments',
       method: 'GET',
       data: { status }
+    })
+  }
+
+  // ==================== 服务配置相关接口 ====================
+
+  // 获取所有服务配置
+  getAllServiceConfigs() {
+    return this.request({
+      url: '/api/service-config/all',
+      method: 'GET'
+    })
+  }
+
+  // 根据服务类型获取配置
+  getServiceConfigByType(serviceType) {
+    return this.request({
+      url: `/api/service-config/type/${serviceType}`,
+      method: 'GET'
+    })
+  }
+
+  // ==================== 核销相关接口 ====================
+
+  // 核销验证
+  verifyCode(verifyCode) {
+    return this.request({
+      url: '/api/verify/verify-code',
+      method: 'POST',
+      data: { verifyCode }
+    })
+  }
+
+  // 检查核销码状态
+  checkVerifyCode(verifyCode) {
+    return this.request({
+      url: `/api/verify/check-code/${verifyCode}`,
+      method: 'GET'
     })
   }
 }

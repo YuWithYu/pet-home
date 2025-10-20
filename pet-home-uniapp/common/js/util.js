@@ -1,6 +1,39 @@
 // common/js/util.js 工具函数
 
 /**
+ * 处理图片URL，解决小程序HTTP协议限制问题
+ * @param {string} imageUrl 原始图片URL
+ * @returns {string} 处理后的图片URL
+ */
+function getImageUrl(imageUrl) {
+  if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
+    return '/static/images/pet-paw.png' // 默认图片
+  }
+  
+  // 如果已经是完整URL
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    // 开发环境：localhost的图片直接返回（微信开发者工具支持）
+    if (imageUrl.startsWith('http://localhost:8080')) {
+      return imageUrl // ✅ 正确返回完整URL
+    }
+    return imageUrl
+  }
+  
+  // 如果是相对路径（/upload/...），拼接完整URL
+  if (imageUrl.startsWith('/upload/') || imageUrl.startsWith('/static/')) {
+    return 'http://localhost:8080' + imageUrl
+  }
+  
+  // 如果只是文件名，拼接完整URL
+  if (!imageUrl.startsWith('/')) {
+    return 'http://localhost:8080/upload/' + imageUrl
+  }
+  
+  // 其他情况，使用默认图片
+  return '/static/images/pet-paw.png'
+}
+
+/**
  * 格式化价格，保留两位小数
  */
 function formatPrice(price) {
@@ -389,6 +422,7 @@ function uploadImage(filePath) {
 }
 
 const util = {
+  getImageUrl,
   formatPrice,
   formatDate,
   formatNumber,

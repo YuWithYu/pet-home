@@ -152,9 +152,9 @@ export function getAppointmentList(params) {
 
 export function updateAppointmentStatus(id, status) {
   return request({
-    url: `/api/appointments/${id}/status`,
+    url: `/api/door-cleaning/${id}/status`,
     method: "put",
-    data: { status },
+    params: { status },
   });
 }
 
