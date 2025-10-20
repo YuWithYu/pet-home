@@ -105,6 +105,15 @@ class ApiService {
     })
   }
 
+  // 获取宠物医院服务列表
+  getHospitalServicePage(params) {
+    return this.request({
+      url: '/api/hospital-services/page',
+      method: 'GET',
+      data: params
+    })
+  }
+
   // 获取寄养服务列表
   getBoardingServicePage(params) {
     return this.request({
@@ -528,6 +537,50 @@ class ApiService {
   getAppointmentDetail(id) {
     return this.request({
       url: `/api/door-cleaning/${id}`,
+      method: 'GET'
+    })
+  }
+
+  // ==================== 宠物医院预约相关接口 ====================
+
+  // 创建宠物医院预约
+  createHospitalAppointment(appointmentData) {
+    return this.request({
+      url: '/api/hospital-appointments/create',
+      method: 'POST',
+      data: appointmentData
+    })
+  }
+
+  // 获取宠物医院预约列表
+  getHospitalAppointmentPage(pageNo = 1, pageSize = 10) {
+    return this.request({
+      url: '/api/hospital-appointments/page',
+      method: 'GET',
+      data: { pageNo, pageSize }
+    })
+  }
+
+  // 获取用户宠物医院预约列表
+  getUserHospitalAppointments(userId) {
+    return this.request({
+      url: `/api/hospital-appointments/user/list/${userId}`,
+      method: 'GET'
+    })
+  }
+
+  // 更新宠物医院预约状态
+  updateHospitalAppointmentStatus(id, status) {
+    return this.request({
+      url: `/api/hospital-appointments/${id}/status?status=${status}`,
+      method: 'PUT'
+    })
+  }
+
+  // 获取宠物医院预约详情
+  getHospitalAppointmentDetail(id) {
+    return this.request({
+      url: `/api/hospital-appointments/${id}`,
       method: 'GET'
     })
   }
