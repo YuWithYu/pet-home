@@ -114,14 +114,14 @@
                 </template>
               </el-table-column>
               <el-table-column
-                prop="image"
+                prop="imageUrl"
                 label="服务图片"
                 width="100"
                 align="center"
               >
                 <template #default="{ row }">
                   <el-image
-                    :src="getImageUrl(row.image) + '?v=' + Date.now()"
+                    :src="getImageUrl(row.imageUrl) + '?v=' + Date.now()"
                     :error-src="'http://localhost:8080/static/default-pet.png'"
                     style="width: 50px; height: 50px"
                     fit="cover"
@@ -778,6 +778,7 @@ export default {
   },
   created() {
     this.loadAppointments();
+    this.loadMedicalServices(); // 加载医疗服务数据
     // 设置定时刷新
     this.startAutoRefresh();
   },
@@ -1141,6 +1142,11 @@ export default {
       // 如果是base64数据，直接返回
       if (imagePath.startsWith('data:image')) {
         return imagePath;
+      }
+      
+      // 如果路径以 /static/ 开头，添加后端服务器地址
+      if (imagePath.startsWith('/static/')) {
+        return 'http://localhost:8080' + imagePath;
       }
       
       // 如果路径以 /upload/ 开头，添加后端服务器地址
