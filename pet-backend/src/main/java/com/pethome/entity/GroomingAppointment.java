@@ -65,6 +65,14 @@ public class GroomingAppointment {
     private LocalDateTime updateTime;
 
     // 手动添加setter和getter方法以确保IDE兼容性
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
     public void setStatus(String status) {
         this.status = status;
     }

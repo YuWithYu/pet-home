@@ -42,12 +42,28 @@ public class HospitalService {
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime updateTime;
 
-    // 手动添加setter方法以确保兼容性
+    // 手动添加setter和getter方法以确保IDE兼容性
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public Integer getStatus() {
+        return status;
     }
 }
