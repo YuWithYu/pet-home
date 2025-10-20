@@ -561,11 +561,18 @@ export default {
 
 /* 联系人输入 */
 .contact-inputs {
+  background-color: white;
+  position: relative;
+  z-index: 1;
+  
   .input-row {
     display: flex;
     align-items: center;
     padding: 20rpx 0;
     border-bottom: 1rpx solid #f0f0f0;
+    background-color: white;
+    position: relative;
+    z-index: 2;
     
     &:last-child {
       border-bottom: none;
@@ -576,12 +583,19 @@ export default {
       font-size: 28rpx;
       color: #333;
       flex-shrink: 0;
+      background-color: white;
+      z-index: 3;
     }
     
     .input-field {
       flex: 1;
       font-size: 28rpx;
       padding-left: 20rpx;
+      background-color: transparent;
+      border: none;
+      color: #333;
+      opacity: 1;
+      z-index: 1;
     }
   }
 }
