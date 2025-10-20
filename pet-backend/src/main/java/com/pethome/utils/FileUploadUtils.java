@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class FileUploadUtils {
 
-    private static final String UPLOAD_DIR = "uploads/";
+    private static final String UPLOAD_DIR = "upload/";
 
     public static String saveFile(MultipartFile file, String subDir) throws IOException {
         if (file.isEmpty()) {

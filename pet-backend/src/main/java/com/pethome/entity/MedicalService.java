@@ -15,10 +15,20 @@ public class MedicalService {
     private String description;
     private String category;
     private BigDecimal price;
+    @TableField("image")
     private String imageUrl;
+    @TableField(exist = false)
     private Integer duration;
     private String status;
     private Integer sortOrder;
+    @TableField("product_introduction")
+    private String productIntroduction;
+    @TableField("usage_instructions")
+    private String usageInstructions;
+    @TableField("created_by")
+    private Integer createdBy;
+    @TableField("updated_by")
+    private Integer updatedBy;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

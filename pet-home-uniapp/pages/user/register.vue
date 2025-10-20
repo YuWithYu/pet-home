@@ -1,11 +1,20 @@
 <template>
   <view class="register-container">
+    <!-- 背景装饰 -->
+    <view class="background-decoration">
+      <view class="decoration-circle circle-1"></view>
+      <view class="decoration-circle circle-2"></view>
+      <view class="decoration-circle circle-3"></view>
+    </view>
+
     <!-- 主要内容区域 -->
     <view class="main-content">
       <!-- 品牌区域 -->
       <view class="brand-section">
         <view class="brand-icon">
-          <image src="/static/images/brand-logo.svg" mode="aspectFit" class="logo-image" />
+          <view class="logo-container">
+            <text class="logo-emoji">🐾</text>
+          </view>
         </view>
         <view class="brand-text">
           <view class="brand-title">宠物之家</view>
@@ -17,20 +26,26 @@
       <view class="register-section">
         <!-- 手机号输入 -->
         <view class="input-group">
+          <view class="input-icon">📱</view>
           <input
             class="register-input"
             type="number"
             v-model="form.phone"
             placeholder="请输入手机号"
+            maxlength="11"
+            @input="onPhoneInput"
+            @blur="onPhoneBlur"
           />
         </view>
 
         <!-- 验证码输入 -->
         <view class="input-group sms-group">
+          <view class="input-icon">🔐</view>
           <input
             class="register-input sms-code-input"
             v-model="form.smsCode"
             placeholder="请输入验证码"
+            maxlength="6"
           />
           <button
             :class="['sms-btn', { 'active': canSendSms, 'inactive': !canSendSms || smsSending }]"
@@ -43,30 +58,44 @@
 
         <!-- 密码输入 -->
         <view class="input-group">
+          <view class="input-icon">🔒</view>
           <input
             class="register-input"
-            type="password"
+            :type="showPassword ? 'text' : 'password'"
             v-model="form.password"
             placeholder="请输入密码（至少6位）"
+            @input="onPasswordInput"
+            @blur="onPasswordBlur"
           />
+          <view class="password-toggle" @click="togglePassword">
+            <text class="eye-icon">{{ showPassword ? '👁️' : '🙈' }}</text>
+          </view>
         </view>
 
         <!-- 确认密码输入 -->
         <view class="input-group">
+          <view class="input-icon">🔒</view>
           <input
             class="register-input"
-            type="password"
+            :type="showConfirmPassword ? 'text' : 'password'"
             v-model="form.confirmPassword"
             placeholder="请再次输入密码"
+            @input="onConfirmPasswordInput"
+            @blur="onConfirmPasswordBlur"
           />
+          <view class="password-toggle" @click="toggleConfirmPassword">
+            <text class="eye-icon">{{ showConfirmPassword ? '👁️' : '🙈' }}</text>
+          </view>
         </view>
 
-        <!-- 邀请码输入（可选） -->
+        <!-- 昵称输入 -->
         <view class="input-group">
+          <view class="input-icon">👤</view>
           <input
             class="register-input"
-            v-model="form.inviteCode"
-            placeholder="请输入邀请码（可选）"
+            v-model="form.nickname"
+            placeholder="请输入昵称（可选）"
+            maxlength="20"
           />
         </view>
 
@@ -104,6 +133,7 @@
 </template>
 
 <script>
+import { api } from '@/common/js/api.js'
 import { util } from '@/common/js/util.js'
 
 export default {
@@ -115,12 +145,14 @@ export default {
       smsCountdown: 60,
       registering: false,
       agreeProtocol: false,
+      showPassword: false,
+      showConfirmPassword: false,
       form: {
         phone: '',
         smsCode: '',
         password: '',
         confirmPassword: '',
-        inviteCode: ''
+        nickname: ''
       }
     }
   },
@@ -142,148 +174,131 @@ export default {
   },
 
   methods: {
+    // 手机号输入
+    onPhoneInput() {
+      this.validateForm()
+    },
+
+    onPhoneBlur() {
+      if (this.form.phone && !util.isValidPhone(this.form.phone)) {
+        util.showToast('请输入正确的手机号', 'none')
+      }
+    },
+
+    // 密码输入
+    onPasswordInput() {
+      this.validateForm()
+    },
+
+    onPasswordBlur() {
+      if (this.form.password && this.form.password.length < 6) {
+        util.showToast('密码至少6位', 'none')
+      }
+    },
+
+    // 确认密码输入
+    onConfirmPasswordInput() {
+      this.validateForm()
+    },
+
+    onConfirmPasswordBlur() {
+      if (this.form.confirmPassword && this.form.password !== this.form.confirmPassword) {
+        util.showToast('两次密码输入不一致', 'none')
+      }
+    },
+
+    // 显示/隐藏密码
+    togglePassword() {
+      this.showPassword = !this.showPassword
+    },
+
+    toggleConfirmPassword() {
+      this.showConfirmPassword = !this.showConfirmPassword
+    },
+
+    // 表单验证
+    validateForm() {
+      // 触发computed重新计算
+    },
+
     sendSms() {
       if (!this.canSendSms || this.smsSending) return
 
       this.smsSending = true
       this.smsCountdown = 60
-      this.$util.showLoading('发送验证码中...')
 
-      // 发送验证码API
-      this.$api.sendSmsCode(this.form.phone).then(() => {
-        uni.showToast({
-          title: '验证码已发送',
-          icon: 'success'
-        })
-
-        // 开始倒计时
-        const timer = setInterval(() => {
-          this.smsCountdown--
-          if (this.smsCountdown <= 0) {
-            clearInterval(timer)
-            this.smsSending = false
-          }
-        }, 1000)
-      }).catch(() => {
+      // 调用发送验证码API
+      api.request({
+        url: '/tz/sms/send',
+        method: 'POST',
+        data: { phone: String(this.form.phone) }  // 确保phone是字符串类型
+      }).then(res => {
+        if (res.code === 0) {
+          util.showToast('验证码已发送', 'success')
+        } else {
+          util.showToast(res.msg || '发送失败', 'none')
+          this.smsSending = false
+          this.smsCountdown = 0
+        }
+      }).catch(err => {
+        console.error('发送验证码失败:', err)
+        util.showToast('发送失败，请检查网络', 'none')
         this.smsSending = false
-        uni.showToast({
-          title: '发送失败',
-          icon: 'none'
-        })
-      }).finally(() => {
-        this.$util.hideLoading()
+        this.smsCountdown = 0
       })
+
+      // 开始倒计时
+      const timer = setInterval(() => {
+        this.smsCountdown--
+        if (this.smsCountdown <= 0) {
+          clearInterval(timer)
+          this.smsSending = false
+        }
+      }, 1000)
     },
 
+    // 提交注册表单
     submitForm() {
       if (!this.canRegister || this.registering) return
 
-      // 手动验证表单
-      if (!this.validateForm()) {
-        return
-      }
-
       this.registering = true
-      this.$util.showLoading('注册中...')
 
-      // 调用注册API
-      this.$api.register({
-        phone: this.form.phone,
-        password: this.form.password,
-        smsCode: this.form.smsCode,
-        inviteCode: this.form.inviteCode
-      }).then(res => {
+      // 调用注册API，确保所有参数都是字符串类型
+      api.register(
+        String(this.form.phone), 
+        String(this.form.password), 
+        String(this.form.nickname), 
+        String(this.form.smsCode)
+      ).then(res => {
         if (res.code === 0) {
-          uni.showToast({
-            title: '注册成功',
-            icon: 'success'
+          // 注册成功，保存用户信息和token
+          const { token, uid } = res.data
+          
+          // 保存到本地存储
+          uni.setStorageSync('token', token)
+          uni.setStorageSync('userInfo', {
+            phone: this.form.phone,
+            uid: uid,
+            nickname: res.data.nickname || this.form.phone,
+            avatar: res.data.avatar || '/static/images/garfield-default-avatar.png'
           })
+
+          util.showToast('注册成功', 'success')
+
+          // 延迟跳转，给用户看到成功提示
           setTimeout(() => {
-            uni.navigateBack()
+            uni.switchTab({
+              url: '/pages/user/index'
+            })
           }, 1500)
         } else {
-          uni.showToast({
-            title: res.msg || '注册失败',
-            icon: 'none'
-          })
+          util.showToast(res.msg || '注册失败', 'none')
         }
-      }).catch(() => {
-        uni.showToast({
-          title: '注册失败',
-          icon: 'none'
-        })
+      }).catch(err => {
+        console.error('注册失败:', err)
+        util.showToast('注册失败，请检查网络连接', 'none')
       }).finally(() => {
         this.registering = false
-        this.$util.hideLoading()
-      })
-    },
-
-    // 表单验证
-    validateForm() {
-      if (!this.form.phone) {
-        uni.showToast({
-          title: '请输入手机号',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.form.smsCode) {
-        uni.showToast({
-          title: '请输入验证码',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.form.password) {
-        uni.showToast({
-          title: '请输入密码',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (this.form.password.length < 6) {
-        uni.showToast({
-          title: '密码至少6位',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (this.form.password !== this.form.confirmPassword) {
-        uni.showToast({
-          title: '两次密码不一致',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.agreeProtocol) {
-        uni.showToast({
-          title: '请同意用户协议',
-          icon: 'none'
-        })
-        return false
-      }
-
-      return true
-    },
-
-    showProtocol() {
-      uni.showToast({
-        title: '用户协议页面开发中',
-        icon: 'none',
-        duration: 2000
-      })
-    },
-
-    showPrivacy() {
-      uni.showToast({
-        title: '隐私政策页面开发中',
-        icon: 'none',
-        duration: 2000
       })
     },
 
@@ -292,10 +307,25 @@ export default {
       this.agreeProtocol = !this.agreeProtocol
     },
 
-    goLogin() {
-      uni.navigateTo({
-        url: '/pages/user/login'
+    // 显示用户协议
+    showProtocol() {
+      uni.showToast({
+        title: '用户协议功能开发中',
+        icon: 'none'
       })
+    },
+
+    // 显示隐私政策
+    showPrivacy() {
+      uni.showToast({
+        title: '隐私政策功能开发中',
+        icon: 'none'
+      })
+    },
+
+    // 跳转到登录页面
+    goLogin() {
+      uni.navigateBack()
     }
   }
 }
@@ -304,20 +334,76 @@ export default {
 <style lang="scss" scoped>
 .register-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.background-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  .decoration-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation: float 6s ease-in-out infinite;
+
+    &.circle-1 {
+      width: 200rpx;
+      height: 200rpx;
+      top: 10%;
+      left: -50rpx;
+      animation-delay: 0s;
+    }
+
+    &.circle-2 {
+      width: 150rpx;
+      height: 150rpx;
+      top: 60%;
+      right: -30rpx;
+      animation-delay: 2s;
+    }
+
+    &.circle-3 {
+      width: 100rpx;
+      height: 100rpx;
+      top: 30%;
+      right: 20%;
+      animation-delay: 4s;
+    }
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
 }
 
 .main-content {
   width: 100%;
   max-width: 600rpx;
-  background-color: #ffffff;
-  border-radius: 32rpx;
-  padding: 80rpx 60rpx 60rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20rpx);
+  border-radius: 40rpx;
+  padding: 60rpx 50rpx 50rpx;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 2;
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
 }
 
 .brand-section {
@@ -328,110 +414,132 @@ export default {
 .brand-icon {
   margin-bottom: 30rpx;
 
-  .logo-image {
+  .logo-container {
     width: 100rpx;
     height: 100rpx;
-    border-radius: 20rpx;
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    border-radius: 25rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 8rpx 24rpx rgba(255, 107, 53, 0.3);
+
+    .logo-emoji {
+      font-size: 50rpx;
+    }
   }
 }
 
 .brand-text {
   .brand-title {
-    font-size: 40rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 8rpx;
+    font-size: 44rpx;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12rpx;
+    letter-spacing: 2rpx;
   }
 
   .brand-subtitle {
     font-size: 26rpx;
     color: #666;
+    font-weight: 400;
   }
 }
 
 .register-section {
   .input-group {
-    margin-bottom: 32rpx;
+    margin-bottom: 28rpx;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 24rpx;
+    border: 2rpx solid transparent;
+    transition: all 0.3s ease;
 
-    &:last-child {
-      margin-bottom: 40rpx;
+    &:focus-within {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 6rpx rgba(102, 126, 234, 0.1);
+    }
+
+    .input-icon {
+      padding: 0 20rpx;
+      font-size: 28rpx;
+      color: #999;
+    }
+
+    .register-input {
+      flex: 1;
+      height: 88rpx;
+      padding: 0 16rpx 0 0;
+      background: transparent;
+      border: none;
+      font-size: 30rpx;
+      color: #333;
+
+      &::placeholder {
+        color: #999;
+      }
+    }
+
+    .password-toggle {
+      padding: 0 20rpx;
+      cursor: pointer;
+
+      .eye-icon {
+        font-size: 28rpx;
+        color: #999;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #667eea;
+        }
+      }
     }
 
     &.sms-group {
-      display: flex;
-      gap: 20rpx;
-      align-items: center;
-
       .sms-code-input {
         flex: 1;
       }
 
       .sms-btn {
-        width: 200rpx;
-        height: 72rpx;
-        border-radius: 18rpx;
+        height: 60rpx;
+        padding: 0 20rpx;
+        border-radius: 16rpx;
         font-size: 24rpx;
+        font-weight: 500;
         border: none;
+        margin-right: 16rpx;
         transition: all 0.3s ease;
 
         &.active {
-          background-color: #ff6b35;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
         }
 
         &.inactive {
-          background-color: #f0f0f0;
+          background: #f0f0f0;
           color: #999;
         }
       }
     }
   }
 
-  .register-input {
-    width: 100%;
-    height: 88rpx;
-    padding: 0 30rpx;
-    background-color: #f8f9fa;
-    border: 2rpx solid #e9ecef;
-    border-radius: 22rpx;
-    font-size: 30rpx;
-    color: #333;
-    transition: all 0.3s ease;
-
-    &::placeholder {
-      color: #999;
-    }
-
-    &:focus {
-      border-color: #ff6b35;
-      background-color: white;
-      box-shadow: 0 0 0 6rpx rgba(255, 107, 53, 0.1);
-    }
-  }
-
   .protocol-section {
-    margin-bottom: 40rpx;
+    margin: 30rpx 0;
 
     .checkbox-wrapper {
       display: flex;
       align-items: flex-start;
-      gap: 16rpx;
-      padding: 20rpx;
-      border-radius: 12rpx;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-      min-height: 60rpx;
-      position: relative;
-
-      &:active {
-        background-color: #f8f9fa;
-      }
+      gap: 12rpx;
 
       .checkbox-input {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
+        display: none;
       }
 
       .checkbox-icon {
@@ -439,50 +547,35 @@ export default {
         height: 32rpx;
         border: 2rpx solid #ddd;
         border-radius: 6rpx;
-        margin-top: 4rpx;
-        position: relative;
-        background-color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: all 0.3s ease;
-        flex-shrink: 0;
-        z-index: 2;
+        margin-top: 2rpx;
 
-        &::after {
-          content: '';
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          width: 16rpx;
-          height: 16rpx;
-          background-color: #ff6b35;
-          border-radius: 2rpx;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-      }
+        &.checked {
+          background: #667eea;
+          border-color: #667eea;
 
-      .checkbox-icon.checked {
-        border-color: #ff6b35;
-        background-color: #fff7e6;
-
-        &::after {
-          opacity: 1;
+          &::after {
+            content: '✓';
+            color: white;
+            font-size: 20rpx;
+            font-weight: bold;
+          }
         }
       }
 
       .protocol-text {
-        font-size: 26rpx;
-        color: #666;
-        line-height: 1.4;
         flex: 1;
-        user-select: none;
-        z-index: 2;
-        position: relative;
-      }
+        font-size: 24rpx;
+        color: #666;
+        line-height: 1.5;
 
-      .protocol-link {
-        color: #ff6b35;
-        text-decoration: underline;
+        .protocol-link {
+          color: #667eea;
+          text-decoration: underline;
+        }
       }
     }
   }
@@ -490,23 +583,52 @@ export default {
   .register-button {
     width: 100%;
     height: 88rpx;
-    border-radius: 22rpx;
-    font-size: 32rpx;
-    font-weight: bold;
+    border-radius: 24rpx;
     border: none;
-    margin-bottom: 32rpx;
+    margin-bottom: 30rpx;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 
     &.active {
-      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-      color: white;
-      box-shadow: 0 8rpx 24rpx rgba(255, 107, 53, 0.3);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+      transform: translateY(0);
+
+      &:active {
+        transform: translateY(2rpx);
+        box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+      }
     }
 
     &.inactive {
-      background-color: #f0f0f0;
+      background: #f0f0f0;
       color: #999;
     }
+
+    .button-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12rpx;
+      height: 100%;
+
+      .loading-icon {
+        font-size: 24rpx;
+        animation: spin 1s linear infinite;
+      }
+
+      .button-text {
+        font-size: 30rpx;
+        font-weight: 600;
+        color: white;
+      }
+    }
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   .login-prompt {
@@ -520,8 +642,9 @@ export default {
 
     .login-link {
       font-size: 26rpx;
-      color: #ff6b35;
+      color: #667eea;
       font-weight: 600;
+      text-decoration: underline;
     }
   }
 }

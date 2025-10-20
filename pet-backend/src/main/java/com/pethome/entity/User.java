@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
-@TableName("users")
+@TableName("user")
 public class User {
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -22,12 +22,8 @@ public class User {
     private Integer gender;
     private LocalDate birthday;
     private String address;
-    private Integer points;
     private Integer status;
     private String role;
-    private Integer memberLevel;
-    @TableField("total_spent")
-    private BigDecimal totalSpent;
     @TableField("create_time")
     private LocalDateTime createTime;
     @TableField("update_time")
@@ -118,14 +114,6 @@ public class User {
         this.address = address;
     }
 
-    public Integer getPoints() {
-        return points;
-    }
-
-    public void setPoints(Integer points) {
-        this.points = points;
-    }
-
     public Integer getStatus() {
         return status;
     }
@@ -140,22 +128,6 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
-    }
-
-    public Integer getMemberLevel() {
-        return memberLevel;
-    }
-
-    public void setMemberLevel(Integer memberLevel) {
-        this.memberLevel = memberLevel;
-    }
-
-    public BigDecimal getTotalSpent() {
-        return totalSpent;
-    }
-
-    public void setTotalSpent(BigDecimal totalSpent) {
-        this.totalSpent = totalSpent;
     }
 
     public LocalDateTime getCreateTime() {

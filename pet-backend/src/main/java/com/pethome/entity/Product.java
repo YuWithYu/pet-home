@@ -16,6 +16,7 @@ public class Product {
     private String name;
     private String description;
     private String category;
+    private String brand;
     private BigDecimal price;
     private String image;
     private Integer stock;
@@ -67,6 +68,14 @@ public class Product {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
     }
 
     public BigDecimal getPrice() {

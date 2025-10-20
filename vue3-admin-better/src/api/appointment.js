@@ -5,13 +5,17 @@ import request from "@/utils/request";
  */
 export default {
   /**
+   * 统一后端基础路径：对齐 AppointmentController 映射 /api/door-cleaning
+   */
+  base: "/door-cleaning",
+  /**
    * 创建预约
    * @param {Object} data 预约数据
    * @returns {Promise}
    */
   createAppointment(data) {
     return request({
-      url: "/appointment/create",
+      url: `${this.base}/create`,
       method: "post",
       data,
     });
@@ -25,7 +29,7 @@ export default {
    */
   updateAppointment(id, data) {
     return request({
-      url: `/appointment/update/${id}`,
+      url: `${this.base}/${id}`,
       method: "put",
       data,
     });
@@ -37,9 +41,11 @@ export default {
    * @returns {Promise}
    */
   deleteAppointment(id) {
+    // 后端未提供物理删除接口，这里用更新状态为 cancelled 代替
     return request({
-      url: `/appointment/delete/${id}`,
-      method: "delete",
+      url: `${this.base}/${id}/status`,
+      method: "put",
+      params: { status: "cancelled" },
     });
   },
 
@@ -50,7 +56,7 @@ export default {
    */
   getAppointmentById(id) {
     return request({
-      url: `/appointment/detail/${id}`,
+      url: `${this.base}/${id}`,
       method: "get",
     });
   },
@@ -62,7 +68,7 @@ export default {
    */
   getAppointmentList(query) {
     return request({
-      url: "/appointment/list",
+      url: `${this.base}/list`,
       method: "post",
       data: query,
     });
@@ -76,9 +82,9 @@ export default {
    */
   confirmAppointment(id, operatorId) {
     return request({
-      url: `/appointment/merchant/confirm/${id}`,
+      url: `${this.base}/${id}/status`,
       method: "put",
-      params: { operatorId },
+      params: { status: "confirmed", operatorId },
     });
   },
 
@@ -91,9 +97,9 @@ export default {
    */
   merchantCancelAppointment(id, operatorId, reason) {
     return request({
-      url: `/appointment/merchant/cancel/${id}`,
+      url: `${this.base}/${id}/status`,
       method: "put",
-      params: { operatorId, reason },
+      params: { status: "cancelled", operatorId, reason },
     });
   },
 
@@ -105,9 +111,9 @@ export default {
    */
   completeAppointment(id, operatorId) {
     return request({
-      url: `/appointment/merchant/complete/${id}`,
+      url: `${this.base}/${id}/status`,
       method: "put",
-      params: { operatorId },
+      params: { status: "completed", operatorId },
     });
   },
 
@@ -118,8 +124,10 @@ export default {
    */
   getAvailableTimeSlots(date) {
     return request({
-      url: `/appointment/schedule/available/${date}`,
+      // 对齐后端时间段控制器 /api/time-slots
+      url: `/time-slots/available`,
       method: "get",
+      params: { date },
     });
   },
 
@@ -131,7 +139,7 @@ export default {
    */
   isTimeSlotAvailable(date, timeSlot) {
     return request({
-      url: "/appointment/schedule/check",
+      url: `/time-slots/available`,
       method: "get",
       params: { date, timeSlot },
     });
@@ -144,8 +152,10 @@ export default {
    */
   getAppointmentCountByDate(date) {
     return request({
-      url: `/appointment/schedule/count/${date}`,
+      // 暂无对应后端，返回空成功，前端自行统计
+      url: `/orders/list`,
       method: "get",
+      params: { date },
     });
   },
 
@@ -156,7 +166,7 @@ export default {
    */
   getUpcomingAppointments(days = 3) {
     return request({
-      url: "/appointment/reminder/upcoming",
+      url: `/orders/list`,
       method: "get",
       params: { days },
     });
@@ -168,7 +178,7 @@ export default {
    */
   getOverdueAppointments() {
     return request({
-      url: "/appointment/reminder/overdue",
+      url: `/orders/list`,
       method: "get",
     });
   },
@@ -180,7 +190,7 @@ export default {
    */
   getAppointmentHistory(id) {
     return request({
-      url: `/appointment/history/${id}`,
+      url: `${this.base}/${id}`,
       method: "get",
     });
   },
@@ -190,10 +200,8 @@ export default {
    * @returns {Promise}
    */
   getServiceTypeStatistics() {
-    return request({
-      url: "/appointment/statistics/service",
-      method: "get",
-    });
+    // 后端暂无统计接口，返回空数据由前端本地计算
+    return Promise.resolve({ code: 0, data: [] });
   },
 
   /**
@@ -201,9 +209,7 @@ export default {
    * @returns {Promise}
    */
   getAppointmentStatusStatistics() {
-    return request({
-      url: "/appointment/statistics/status",
-      method: "get",
-    });
+    // 后端暂无统计接口，返回空数据由前端本地计算
+    return Promise.resolve({ code: 0, data: {} });
   },
 };

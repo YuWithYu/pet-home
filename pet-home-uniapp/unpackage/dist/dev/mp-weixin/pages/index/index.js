@@ -1,6 +1,6 @@
 (global["webpackJsonp"] = global["webpackJsonp"] || []).push([["pages/index/index"],{
 
-/***/ 146:
+/***/ 149:
 /*!*********************************************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/main.js?{"page":"pages%2Findex%2Findex"} ***!
   \*********************************************************************************************/
@@ -103,12 +103,24 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   var g0 = _vm.banners.length
+  var l0 =
+    g0 > 0
+      ? _vm.__map(_vm.banners, function (banner, __i0__) {
+          var $orig = _vm.__get_orig(banner)
+          var m0 = _vm.getImageUrl(banner.picUrl)
+          return {
+            $orig: $orig,
+            m0: m0,
+          }
+        })
+      : null
   var g1 = _vm.recommendProducts.length
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
+        l0: l0,
         g1: g1,
       },
     }
@@ -166,6 +178,7 @@ var _default = {
       hotProducts: [],
       recommendProducts: [],
       notice: null,
+      services: [],
       loading: true
     };
   },
@@ -186,7 +199,7 @@ var _default = {
     loadHomeData: function loadHomeData(callback) {
       var _this = this;
       this.loading = true;
-      Promise.all([this.loadBanners(), this.loadHotProducts(), this.loadRecommendProducts(), this.loadNotice()]).then(function () {
+      Promise.all([this.loadBanners(), this.loadHotProducts(), this.loadRecommendProducts(), this.loadNotice(), this.loadServices()]).then(function () {
         _this.loading = false;
         callback && callback();
       }).catch(function (err) {
@@ -200,90 +213,88 @@ var _default = {
     loadBanners: function loadBanners() {
       var _this2 = this;
       return this.$api.getBannerList(null).then(function (res) {
-        if (res.code === 0 && res.data) {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
           _this2.banners = res.data;
+        } else {
+          _this2.banners = [];
         }
       }).catch(function (err) {
         console.error('加载轮播图失败:', err);
-        // 使用默认轮播图数据
-        _this2.banners = [{
-          id: 1,
-          picUrl: '/static/images/banner1.jpg',
-          title: '宠物健康生活',
-          url: '/pages/goods/list?type=health'
-        }, {
-          id: 2,
-          picUrl: '/static/images/banner2.jpg',
-          title: '优质宠物食品',
-          url: '/pages/goods/list?type=food'
-        }, {
-          id: 3,
-          picUrl: '/static/images/banner3.jpg',
-          title: '宠物医疗服务',
-          url: '/pages/appointment/medical'
-        }];
+        // 不使用硬编码数据，保持空数组
+        _this2.banners = [];
+        uni.showToast({
+          title: '加载轮播图失败',
+          icon: 'none'
+        });
       });
     },
     // 加载热门商品
     loadHotProducts: function loadHotProducts() {
       var _this3 = this;
       return this.$api.getHotProducts(4).then(function (res) {
-        if (res.code === 0 && res.data) {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
           _this3.hotProducts = res.data.map(function (item) {
-            var picUrl = item.image || item.pic;
+            // 获取图片URL，优先使用pic，然后是image，最后是imageUrl
+            var picUrl = item.pic || item.image || item.imageUrl || '';
+
+            // 如果picUrl为空或者不是有效的路径，使用默认图片
+            if (!picUrl || picUrl === 'null' || picUrl === 'undefined') {
+              picUrl = '/static/images/暂无商品.svg';
+            }
             // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
-            if (picUrl && picUrl.startsWith('/upload/')) {
-              picUrl = 'https://localhost:8080' + picUrl;
+            else if (picUrl.startsWith('/upload/')) {
+              picUrl = 'http://localhost:8080' + picUrl;
+            }
+            // 如果不是完整URL且不是本地static路径，也尝试拼接后端URL
+            else if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://') && !picUrl.startsWith('/static/')) {
+              picUrl = 'http://localhost:8080/upload/' + picUrl;
             }
             return _objectSpread(_objectSpread({}, item), {}, {
               pic: picUrl,
               price: _util.util.formatPrice(item.price)
             });
           });
+        } else {
+          _this3.hotProducts = [];
         }
       }).catch(function (err) {
         console.error('加载热门商品失败:', err);
-        // 使用模拟数据
-        _this3.hotProducts = [{
-          id: 1,
-          name: '皇家猫粮',
-          pic: '/static/images/product1.jpg',
-          price: _util.util.formatPrice(128),
-          originalPrice: 158
-        }, {
-          id: 2,
-          name: '狗狗玩具球',
-          pic: '/static/images/product2.jpg',
-          price: _util.util.formatPrice(25)
-        }, {
-          id: 3,
-          name: '猫砂盆',
-          pic: '/static/images/product3.jpg',
-          price: _util.util.formatPrice(89)
-        }, {
-          id: 4,
-          name: '宠物沐浴露',
-          pic: '/static/images/product4.jpg',
-          price: _util.util.formatPrice(45)
-        }];
+        // 不使用硬编码数据，保持空数组
+        _this3.hotProducts = [];
+        uni.showToast({
+          title: '加载商品失败',
+          icon: 'none'
+        });
       });
     },
     // 加载推荐商品
     loadRecommendProducts: function loadRecommendProducts() {
       var _this4 = this;
       return this.$api.getRecommendProducts(3).then(function (res) {
-        if (res.code === 0 && res.data) {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
           _this4.recommendProducts = res.data.map(function (item) {
-            var picUrl = item.image || item.pic;
+            // 获取图片URL，优先使用pic，然后是image，最后是imageUrl
+            var picUrl = item.pic || item.image || item.imageUrl || '';
+
+            // 如果picUrl为空或者不是有效的路径，使用默认图片
+            if (!picUrl || picUrl === 'null' || picUrl === 'undefined') {
+              picUrl = '/static/images/暂无商品.svg';
+            }
             // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
-            if (picUrl && picUrl.startsWith('/upload/')) {
-              picUrl = 'https://localhost:8080' + picUrl;
+            else if (picUrl.startsWith('/upload/')) {
+              picUrl = 'http://localhost:8080' + picUrl;
+            }
+            // 如果不是完整URL且不是本地static路径，也尝试拼接后端URL
+            else if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://') && !picUrl.startsWith('/static/')) {
+              picUrl = 'http://localhost:8080/upload/' + picUrl;
             }
             return _objectSpread(_objectSpread({}, item), {}, {
               pic: picUrl,
               price: _util.util.formatPrice(item.price)
             });
           });
+        } else {
+          _this4.recommendProducts = [];
         }
       }).catch(function (err) {
         console.error('加载推荐商品失败:', err);
@@ -300,6 +311,56 @@ var _default = {
       }).catch(function (err) {
         console.error('加载公告失败:', err);
       });
+    },
+    // 加载服务列表
+    loadServices: function loadServices() {
+      // 暂时使用默认服务列表，等数据库表创建后再启用API调用
+      this.useDefaultServices();
+
+      // 注释掉API调用，等数据库表创建后再启用
+      /*
+      return this.$api.getAllServiceConfigs().then(res => {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
+          // 只显示启用的服务
+          this.services = res.data.filter(s => s.status === 1)
+        } else {
+          // 使用默认服务列表
+          this.useDefaultServices()
+        }
+      }).catch(err => {
+        console.error('加载服务列表失败:', err)
+        // 如果加载失败，使用默认服务列表
+        this.useDefaultServices()
+      })
+      */
+    },
+    // 使用默认服务列表
+    useDefaultServices: function useDefaultServices() {
+      this.services = [{
+        serviceType: 'door-cleaning',
+        serviceName: '上门铲屎',
+        icon: '/static/images/door-cleaning.svg'
+      }, {
+        serviceType: 'boarding',
+        serviceName: '宠物寄养',
+        icon: '/static/images/pet-boarding.svg'
+      }, {
+        serviceType: 'hospital',
+        serviceName: '宠物医院',
+        icon: '/static/images/pet-hospital.svg'
+      }, {
+        serviceType: 'grooming',
+        serviceName: '宠物洗护',
+        icon: '/static/images/pet-grooming.svg'
+      }, {
+        serviceType: 'adoption',
+        serviceName: '宠物领养',
+        icon: '/static/images/pet-adoption.svg'
+      }, {
+        serviceType: 'consultation',
+        serviceName: '在线咨询',
+        icon: '/static/images/online-consultation.svg'
+      }];
     },
     // 点击搜索
     onSearchTap: function onSearchTap() {
@@ -352,7 +413,9 @@ var _default = {
     onServiceTap: function onServiceTap(service) {
       switch (service) {
         case 'door-cleaning':
-          _util.util.showToast('上门铲屎服务开发中');
+          uni.navigateTo({
+            url: '/pages/appointment/door-cleaning'
+          });
           break;
         case 'boarding':
           uni.navigateTo({
@@ -360,7 +423,9 @@ var _default = {
           });
           break;
         case 'adoption':
-          _util.util.showToast('宠物领养功能开发中');
+          uni.navigateTo({
+            url: '/pages/appointment/adoption'
+          });
           break;
         case 'hospital':
           uni.navigateTo({
@@ -373,11 +438,17 @@ var _default = {
           });
           break;
         case 'consultation':
-          _util.util.showToast('在线咨询功能开发中');
+          uni.navigateTo({
+            url: '/pages/appointment/online-consultation'
+          });
           break;
         default:
           _util.util.showToast('服务开发中');
       }
+    },
+    // 处理图片URL，解决小程序HTTP协议限制问题
+    getImageUrl: function getImageUrl(imageUrl) {
+      return _util.util.getImageUrl(imageUrl);
     }
   }
 };
@@ -415,5 +486,5 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ })
 
-},[[146,"common/runtime","common/vendor"]]]);
+},[[149,"common/runtime","common/vendor"]]]);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/index/index.js.map

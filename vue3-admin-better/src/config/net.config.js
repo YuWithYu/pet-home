@@ -5,8 +5,8 @@ const network = {
   // 默认的接口地址 连接到宠物家后端系统（直接连接）
   baseURL:
     process.env.NODE_ENV === "production"
-      ? "http://10.76.242.18:8080/api"
-      : "http://10.76.242.18:8080/api",
+      ? "http://localhost:8080/api"
+      : "http://localhost:8080/api",
   //配后端数据的接收方式application/json;charset=UTF-8或者application/x-www-form-urlencoded;charset=UTF-8
   contentType: "application/json;charset=UTF-8",
   //消息框消失时间

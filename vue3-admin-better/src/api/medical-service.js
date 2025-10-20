@@ -59,7 +59,7 @@ const medicalServiceApi = {
    */
   createMedicalService(data) {
     return request({
-      url: "/medical-services",
+      url: "/medical-services/create",
       method: "post",
       data,
     });
@@ -73,9 +73,9 @@ const medicalServiceApi = {
    */
   updateMedicalService(id, data) {
     return request({
-      url: `/medical-services/${id}`,
+      url: "/medical-services/update",
       method: "put",
-      data,
+      data: { ...data, id },
     });
   },
 

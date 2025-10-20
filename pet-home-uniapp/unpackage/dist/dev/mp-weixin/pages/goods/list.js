@@ -1,6 +1,6 @@
 (global["webpackJsonp"] = global["webpackJsonp"] || []).push([["pages/goods/list"],{
 
-/***/ 148:
+/***/ 151:
 /*!********************************************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/main.js?{"page":"pages%2Fgoods%2Flist"} ***!
   \********************************************************************************************/
@@ -293,17 +293,18 @@ var _default = {
             total = _res$data.total,
             pages = _res$data.pages;
           var formattedGoods = goods.map(function (item) {
-            var picUrl = item.pic || item.image;
-            // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
-            if (picUrl && picUrl.startsWith('/upload/')) {
-              picUrl = 'https://localhost:8080' + picUrl;
-            }
+            // 获取图片URL，优先使用pic，然后是image，最后是imageUrl
+            var picUrl = item.pic || item.image || item.imageUrl || '';
+
+            // 使用getImageUrl函数处理图片URL，解决小程序HTTP协议限制问题
+            picUrl = _this2.getImageUrl(picUrl);
             return _objectSpread(_objectSpread({}, item), {}, {
               pic: picUrl,
-              price: _util.util.formatPrice(item.price),
-              sales: item.sales || Math.floor(Math.random() * 1000) + 100
+              price: _util.util.formatPrice(item.price)
+              // 移除硬编码的sales数据，只显示真实的销售数据
             });
           });
+
           _this2.goodsList = reset ? formattedGoods : [].concat((0, _toConsumableArray2.default)(_this2.goodsList), (0, _toConsumableArray2.default)(formattedGoods));
           _this2.hasMore = _this2.pageNo < pages;
           _this2.pageNo++;
@@ -341,6 +342,10 @@ var _default = {
       this.goodsList = [];
       this.hasMore = true;
       this.loadGoodsList(true);
+    },
+    // 处理图片URL，解决小程序HTTP协议限制问题
+    getImageUrl: function getImageUrl(imageUrl) {
+      return _util.util.getImageUrl(imageUrl);
     }
   }
 };
@@ -378,5 +383,5 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ })
 
-},[[148,"common/runtime","common/vendor"]]]);
+},[[151,"common/runtime","common/vendor"]]]);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/goods/list.js.map

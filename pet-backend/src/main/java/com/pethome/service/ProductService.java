@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.entity.Product;
 
 public interface ProductService {
+    java.util.List<Product> getAllProducts();
+    java.util.List<Product> getProductsByCategoryId(Integer categoryId);
     IPage<Product> getProductPage(Page<Product> page);
     Product createProduct(Product product);
     Product updateProduct(Product product);

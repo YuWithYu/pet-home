@@ -6,6 +6,7 @@ import com.pethome.entity.User;
 
 public interface UserService {
     User register(User user);
+    String register(String phone, String password, String nickname);
     String login(String username, String password);
     String loginByPhone(String phone, String password);
     User getUserById(Long id);

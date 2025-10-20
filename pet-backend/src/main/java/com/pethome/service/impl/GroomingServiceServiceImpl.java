@@ -6,12 +6,13 @@ import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pethome.entity.GroomingService;
 import com.pethome.mapper.GroomingServiceMapper;
 import com.pethome.service.GroomingServiceService;
 
 @Service
-public class GroomingServiceServiceImpl implements GroomingServiceService {
+public class GroomingServiceServiceImpl extends ServiceImpl<GroomingServiceMapper, GroomingService> implements GroomingServiceService {
 
     @Autowired
     private GroomingServiceMapper groomingServiceMapper;

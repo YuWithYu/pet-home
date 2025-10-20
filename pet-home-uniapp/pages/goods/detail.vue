@@ -1,7 +1,14 @@
 <template>
   <view class="goods-detail-container">
+    <!-- 加载状态 -->
+    <view v-if="loading" class="loading-container">
+      <text>加载中...</text>
+    </view>
+    
+    <!-- 商品内容 -->
+    <view v-else-if="goods">
     <!-- 商品图片轮播 -->
-    <swiper class="goods-swiper" indicator-dots="true" autoplay="true" circular="true">
+    <swiper class="goods-swiper" indicator-dots="true" autoplay="true" circular="true" v-if="goods.images && goods.images.length > 0">
       <swiper-item v-for="image in goods.images" :key="image">
         <image :src="image" mode="aspectFill" />
       </swiper-item>
@@ -89,6 +96,7 @@
         </view>
       </view>
     </view>
+    </view>
   </view>
 </template>
 
@@ -98,34 +106,9 @@ export default {
 
   data() {
     return {
-      goods: {
-        id: 1,
-        name: '皇家猫粮',
-        description: '优质猫粮，营养均衡',
-        price: '¥128.00',
-        originalPrice: '158.00',
-        sales: 256,
-        images: [
-          '/static/images/product1.jpg',
-          '/static/images/product2.jpg'
-        ],
-        specs: [
-          { id: 1, name: '1kg' },
-          { id: 2, name: '2kg' },
-          { id: 3, name: '5kg' }
-        ],
-        detail: '<p>商品详情内容</p>',
-        comments: [
-          {
-            id: 1,
-            userName: '宠物主人',
-            time: '2024-01-15',
-            content: '猫粮质量很好，猫咪很喜欢吃',
-            images: []
-          }
-        ]
-      },
-      selectedSpec: {}
+      goods: null,
+      selectedSpec: {},
+      loading: true
     }
   },
 
@@ -136,10 +119,62 @@ export default {
   },
 
   methods: {
-    loadGoodsDetail(id) {
-      // 这里应该调用API获取商品详情
-      // 暂时使用模拟数据
-      console.log('加载商品详情:', id)
+    async loadGoodsDetail(id) {
+      try {
+        this.loading = true
+        const res = await this.$api.getGoodsDetail(id)
+        if (res.code === 0 && res.data) {
+          // 处理商品图片URL
+          const goodsData = res.data
+          
+          // 处理主图片
+          if (goodsData.pic && goodsData.pic.startsWith('/upload/')) {
+            goodsData.pic = 'http://localhost:8080' + goodsData.pic
+          }
+          
+          // 处理图片数组
+          if (goodsData.images && Array.isArray(goodsData.images)) {
+            goodsData.images = goodsData.images.map(img => {
+              if (img.startsWith('/upload/')) {
+                return 'http://localhost:8080' + img
+              }
+              return img
+            })
+          } else if (goodsData.pic) {
+            // 如果没有images数组，使用主图片
+            goodsData.images = [goodsData.pic]
+          }
+          
+          // 格式化价格
+          if (goodsData.price) {
+            goodsData.price = this.$util.formatPrice(goodsData.price)
+          }
+          if (goodsData.originalPrice) {
+            goodsData.originalPrice = this.$util.formatPrice(goodsData.originalPrice)
+          }
+          
+          this.goods = goodsData
+        } else {
+          uni.showToast({
+            title: '商品不存在',
+            icon: 'none'
+          })
+          setTimeout(() => {
+            uni.navigateBack()
+          }, 1500)
+        }
+      } catch (error) {
+        console.error('加载商品详情失败:', error)
+        uni.showToast({
+          title: '加载失败',
+          icon: 'none'
+        })
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 1500)
+      } finally {
+        this.loading = false
+      }
     },
 
     selectSpec(spec) {

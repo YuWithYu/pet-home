@@ -209,7 +209,7 @@ export const asyncRoutes = [
         {
           path: "litter-service",
           name: "LitterServiceManagement",
-          component: () => import("@/views/vab/litter-service.vue"),
+          component: () => import("@/views/vab/door-cleaning-service.vue"),
           meta: {
             title: "上门铲屎服务管理",
             permissions: ["admin"],
@@ -218,7 +218,7 @@ export const asyncRoutes = [
         {
           path: "pet-boarding",
           name: "PetBoardingManagement",
-          component: () => import("@/views/vab/pet-boarding.vue"),
+          component: () => import("@/views/vab/pet-boarding-service.vue"),
           meta: {
             title: "宠物寄养管理",
             permissions: ["admin"],
@@ -227,30 +227,21 @@ export const asyncRoutes = [
         {
           path: "pet-adoption",
           name: "PetAdoptionManagement",
-          component: () => import("@/views/vab/pet-adoption.vue"),
+          component: () => import("@/views/vab/pet-adoption-service.vue"),
           meta: {
             title: "宠物领养管理",
             permissions: ["admin"],
           },
         },
-      {
-        path: "schedule",
-        name: "ScheduleManagement",
-        component: () => import("@/views/vab/form.vue"),
-        meta: {
-          title: "排班管理",
-          permissions: ["admin"],
+        {
+          path: "time-slots",
+          name: "TimeSlotManagement",
+          component: () => import("@/views/vab/time-slot-management.vue"),
+          meta: {
+            title: "预约时间段管理",
+            permissions: ["admin"],
+          },
         },
-      },
-      {
-        path: "services",
-        name: "ServiceManagement",
-        component: () => import("@/views/vab/table.vue"),
-        meta: {
-          title: "服务项目",
-          permissions: ["admin"],
-        },
-      },
       {
         path: "grooming-services",
         name: "GroomingServiceManagement",

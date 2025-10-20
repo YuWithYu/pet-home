@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -36,6 +38,13 @@ public class CategoryController {
         Page<Category> page = new Page<>(pageNo, pageSize);
         IPage<Category> result = categoryService.getCategoryPage(page);
         return Result.success(result);
+    }
+
+    @GetMapping("/all")
+    @ApiOperation("获取所有分类")
+    public Result<List<Category>> getAllCategories() {
+        List<Category> categories = categoryService.getAllCategories();
+        return Result.success(categories);
     }
 
     @PostMapping("/create")

@@ -12,24 +12,21 @@ spring:
   
   # 数据源配置
   datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/pet_home?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8&connectionCollation=utf8mb4_unicode_ci
+    username: root
+    password: 123456
+  sql:
+    init:
+      mode: never
 
   # H2数据库控制台配置
   h2:
     console:
-      enabled: true
+      enabled: false
       path: /h2-console
       settings:
         web-allow-others: true
-
-  # 数据库初始化脚本配置
-  sql:
-    init:
-      schema-locations: classpath:db/schema.sql
-      mode: always
     
   # Jackson配置
   jackson:
@@ -64,7 +61,6 @@ mybatis-plus:
       table-prefix: ""
       capital-mode: true
     banner: false
-  mapper-locations: classpath*:mapper/**/*.xml
 
 # JWT配置
 jwt:
@@ -97,8 +93,8 @@ logging:
 
 # 文件上传路径配置
 upload:
-  path: ./upload/
-  url: https://localhost:8080/upload/
+  path: C:/Users/Yu/Desktop/pet-home/upload/
+  url: http://localhost:8080/upload/
 
 # Swagger配置
 springfox:

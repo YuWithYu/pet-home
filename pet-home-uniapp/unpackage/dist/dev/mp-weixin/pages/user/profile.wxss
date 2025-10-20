@@ -535,119 +535,222 @@
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
 }
 .profile-container.data-v-64c291de {
+  width: 100%;
   min-height: 100vh;
-  background-color: #f8f8f8;
+  background-color: #f5f5f5;
 }
-.profile-form.data-v-64c291de {
-  background-color: white;
+/* 自定义白色导航栏 */
+.custom-white-navbar.data-v-64c291de {
+  width: 100%;
+  height: 88rpx;
+  background: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.navbar-content.data-v-64c291de {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+}
+.navbar-left.data-v-64c291de {
+  width: 80rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-icon.data-v-64c291de {
+  font-size: 48rpx;
+  color: #333;
+  font-weight: 300;
+}
+.navbar-title.data-v-64c291de {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navbar-title text.data-v-64c291de {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 400;
+}
+.navbar-right.data-v-64c291de {
+  width: 80rpx;
+  height: 60rpx;
+}
+/* 个人资料内容 */
+.profile-content.data-v-64c291de {
+  background: #fff;
   margin: 20rpx;
   border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
-.avatar-section.data-v-64c291de {
+.profile-item.data-v-64c291de {
   display: flex;
   align-items: center;
-  gap: 30rpx;
-  padding: 20rpx 0;
+  justify-content: space-between;
+  padding: 32rpx 24rpx;
+  background: #fff;
+  transition: background-color 0.2s ease;
 }
-.avatar-section .avatar-wrapper.data-v-64c291de {
-  width: 120rpx;
-  height: 120rpx;
+.profile-item.data-v-64c291de:active {
+  background-color: #f8f8f8;
+}
+.item-label.data-v-64c291de {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 400;
+  min-width: 120rpx;
+}
+.item-content.data-v-64c291de {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 16rpx;
+}
+.item-text.data-v-64c291de {
+  font-size: 32rpx;
+  color: #666;
+  text-align: right;
+}
+.item-arrow.data-v-64c291de {
+  font-size: 32rpx;
+  color: #999;
+  font-weight: 300;
+}
+.divider.data-v-64c291de {
+  height: 1rpx;
+  background-color: #f0f0f0;
+  margin: 0 24rpx;
+}
+/* 头像样式 */
+.avatar-wrapper.data-v-64c291de {
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 50%;
   overflow: hidden;
   background-color: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
-.avatar-section .avatar-wrapper image.data-v-64c291de {
+.avatar-image.data-v-64c291de {
   width: 100%;
   height: 100%;
 }
-.avatar-section .avatar-wrapper .avatar-placeholder.data-v-64c291de {
-  font-size: 48rpx;
-  color: #999;
-}
-.avatar-section .avatar-text.data-v-64c291de {
-  font-size: 28rpx;
-  color: #666;
-}
-.save-section.data-v-64c291de {
-  margin-top: 60rpx;
-  padding: 0 40rpx;
-}
-.form-label.data-v-64c291de {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 16rpx;
-}
-.form-input.data-v-64c291de {
-  width: 100%;
-  padding: 24rpx;
-  border: 2rpx solid #ddd;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-}
-.form-input.data-v-64c291de:focus {
-  border-color: #ff6b35;
-  outline: none;
-}
-.radio-group.data-v-64c291de {
+/* 手机号验证弹窗 */
+.phone-modal.data-v-64c291de {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  gap: 30rpx;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 9999;
 }
-.radio-item.data-v-64c291de {
-  padding: 16rpx 32rpx;
-  border: 2rpx solid #ddd;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  color: #666;
-  text-align: center;
-  min-width: 120rpx;
-}
-.radio-item.active.data-v-64c291de {
-  border-color: #ff6b35;
-  color: #ff6b35;
-  background-color: #fff7e6;
-}
-.picker-input.data-v-64c291de {
-  padding: 24rpx;
-  border: 2rpx solid #ddd;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  color: #666;
-  background-color: white;
-}
-.picker-input.data-v-64c291de:active {
-  border-color: #ff6b35;
-}
-.form-textarea.data-v-64c291de {
+.modal-content.data-v-64c291de {
   width: 100%;
-  min-height: 150rpx;
-  padding: 20rpx;
-  border: 2rpx solid #ddd;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  resize: vertical;
+  background: #fff;
+  border-radius: 20rpx 20rpx 0 0;
+  padding: 40rpx 30rpx 60rpx;
+  max-height: 80vh;
 }
-.save-btn.data-v-64c291de {
-  width: 100%;
-  height: 88rpx;
+.modal-header.data-v-64c291de {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40rpx;
+}
+.app-info.data-v-64c291de {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.app-icon.data-v-64c291de {
+  width: 60rpx;
+  height: 60rpx;
+  background: #ffd700;
   border-radius: 12rpx;
-  font-size: 32rpx;
-  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 32rpx;
 }
-.save-btn.primary.data-v-64c291de {
-  background-color: #ff6b35;
-  color: white;
+.app-name.data-v-64c291de {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
 }
-.save-btn.disabled.data-v-64c291de {
-  background-color: #f8f8f8;
+.info-icon.data-v-64c291de {
+  width: 40rpx;
+  height: 40rpx;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
   color: #999;
+}
+.modal-body.data-v-64c291de {
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+.modal-title.data-v-64c291de {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+.modal-subtitle.data-v-64c291de {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 40rpx;
+}
+.phone-display.data-v-64c291de {
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin: 0 20rpx;
+}
+.phone-number.data-v-64c291de {
+  display: block;
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+.phone-label.data-v-64c291de {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+}
+.modal-actions.data-v-64c291de {
+  text-align: center;
+}
+.disallow-btn.data-v-64c291de {
+  width: 100%;
+  height: 80rpx;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  margin-bottom: 30rpx;
+}
+.other-number.data-v-64c291de {
+  font-size: 26rpx;
+  color: #007aff;
+  text-decoration: underline;
 }

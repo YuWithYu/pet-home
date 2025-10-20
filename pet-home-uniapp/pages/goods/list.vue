@@ -231,16 +231,17 @@ export default {
         if (res.code === 0 && res.data) {
           const { goods, total, pages } = res.data
           const formattedGoods = goods.map(item => {
-            let picUrl = item.pic || item.image
-            // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
-            if (picUrl && picUrl.startsWith('/upload/')) {
-              picUrl = 'https://localhost:8080' + picUrl
-            }
+            // 获取图片URL，优先使用pic，然后是image，最后是imageUrl
+            let picUrl = item.pic || item.image || item.imageUrl || ''
+            
+            // 使用getImageUrl函数处理图片URL，解决小程序HTTP协议限制问题
+            picUrl = this.getImageUrl(picUrl)
+            
             return {
               ...item,
               pic: picUrl,
-              price: util.formatPrice(item.price),
-              sales: item.sales || Math.floor(Math.random() * 1000) + 100
+              price: util.formatPrice(item.price)
+              // 移除硬编码的sales数据，只显示真实的销售数据
             }
           })
 
@@ -286,6 +287,11 @@ export default {
       this.goodsList = []
       this.hasMore = true
       this.loadGoodsList(true)
+    },
+
+    // 处理图片URL，解决小程序HTTP协议限制问题
+    getImageUrl(imageUrl) {
+      return util.getImageUrl(imageUrl)
     }
   }
 }

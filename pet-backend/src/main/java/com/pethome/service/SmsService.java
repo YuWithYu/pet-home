@@ -11,4 +11,12 @@ public interface SmsService {
      * @return 发送结果
      */
     String sendVerificationCode(String phone);
+
+    /**
+     * 验证验证码
+     * @param phone 手机号
+     * @param code 验证码
+     * @return 验证结果
+     */
+    boolean verifyCode(String phone, String code);
 }

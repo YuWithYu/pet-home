@@ -161,7 +161,7 @@
             <div class="current-banner" v-if="serviceBannerImage">
               <h4>当前展示图：</h4>
               <el-image
-                :src="serviceBannerImage"
+                :src="getImageUrl(serviceBannerImage)"
                 style="width: 300px; height: 200px; border: 1px solid #ddd; border-radius: 8px;"
                 fit="cover"
               />
@@ -255,11 +255,13 @@
             </el-form-item>
             
             <el-form-item label="医院预约日期" prop="date">
-              <el-input
+              <el-date-picker
                 v-model="appointmentForm.date"
+                type="date"
                 placeholder="选择医院预约日期"
                 style="width: 100%"
-                readonly
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
               />
             </el-form-item>
             
@@ -313,7 +315,7 @@
       title="医院预约详情"
       width="800px"
     >
-      <el-descriptions :column="2" border v-if="detailAppointment">
+      <el-descriptions :column="2" border v-if="detailAppointment && detailAppointment.id">
         <el-descriptions-item label="预约ID">{{ detailAppointment.id }}</el-descriptions-item>
         <el-descriptions-item label="用户ID">{{ detailAppointment.userId }}</el-descriptions-item>
         <el-descriptions-item label="用户名">{{ detailAppointment.username }}</el-descriptions-item>
@@ -347,7 +349,7 @@
       title="预约统计信息"
       width="600px"
     >
-      <div v-if="statisticsData">
+      <div v-if="statisticsData && Object.keys(statisticsData).length > 0">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-card shadow="hover">
@@ -630,18 +632,18 @@ export default {
           { required: true, message: "请选择状态", trigger: "change" }
         ]
       },
-      detailAppointment: null,
+      detailAppointment: {},
       refreshTimer: null,
       autoRefreshInterval: 30000, // 30秒自动刷新一次
       statisticsDialogVisible: false,
-      statisticsData: null,
+      statisticsData: {},
       
       // 医疗服务相关数据
       medicalServices: [],
       servicesLoading: false,
       serviceDialogVisible: false,
       serviceImageDialogVisible: false,
-      editingService: null,
+      editingService: {},
       serviceForm: {
         name: "",
         description: "",
@@ -777,8 +779,8 @@ export default {
       try {
         this.loading = true;
         const queryParams = {
-          page: this.currentPage,
-          size: this.pageSize,
+          pageNo: this.currentPage,
+          pageSize: this.pageSize,
           status: this.selectedStatus || undefined,
           startDate: this.dateRange && this.dateRange[0] ? this.formatDate(this.dateRange[0]) : undefined,
           endDate: this.dateRange && this.dateRange[1] ? this.formatDate(this.dateRange[1]) : undefined
@@ -1254,8 +1256,9 @@ export default {
             // 清空文件选择
             this.selectedImageFile = null;
             // 清空input
-            const fileInput = event.target; // 注意：这里可能需要document.querySelector或ref
-            if (fileInput) fileInput.value = '';
+            if (event && event.target) {
+              event.target.value = '';
+            }
           } else {
             this.$message.error(response.msg || '图片更新失败');
           }

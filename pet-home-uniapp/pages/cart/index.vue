@@ -75,6 +75,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { util } from '@/common/js/util.js'
 
 export default {
@@ -82,31 +83,31 @@ export default {
 
   data() {
     return {
-      cartList: [
-        {
-          id: 1,
-          name: '皇家猫粮',
-          spec: '成猫粮 2kg',
-          pic: '/static/images/product1.jpg',
-          price: '¥128.00',
-          originalPrice: '158.00',
-          quantity: 2,
-          selected: true
-        },
-        {
-          id: 2,
-          name: '狗狗玩具球',
-          spec: '橡胶材质',
-          pic: '/static/images/product2.jpg',
-          price: '¥25.00',
-          quantity: 1,
-          selected: false
-        }
-      ]
+      cartList: [],
+      loading: false,
+      pageNo: 1,
+      pageSize: 20
     }
   },
 
+  onLoad() {
+    this.loadCartData()
+  },
+
+  onShow() {
+    this.loadCartData()
+  },
+
+  onPullDownRefresh() {
+    this.loadCartData(() => {
+      uni.stopPullDownRefresh()
+    })
+  },
+
   computed: {
+    ...mapGetters(['userInfo', 'isLoggedIn']),
+    
+
     // 全选状态
     allSelected: {
       get() {
@@ -149,6 +150,61 @@ export default {
   },
 
   methods: {
+    // 加载购物车数据
+    async loadCartData(callback) {
+      if (!this.isLoggedIn || !this.userInfo || !this.userInfo.uid) {
+        // 如果未登录，显示空购物车
+        this.cartList = []
+        callback && callback()
+        return
+      }
+
+      try {
+        this.loading = true
+        const res = await this.$api.getCartPage(this.pageNo, this.pageSize, this.userInfo.uid)
+        
+        if (res.code === 0 && res.data) {
+          const cartItems = res.data.records || []
+          
+          // 处理购物车数据
+          this.cartList = cartItems.map(item => {
+            let picUrl = item.productImage || item.pic || ''
+            
+            // 使用getImageUrl函数处理图片URL，解决小程序HTTP协议限制问题
+            picUrl = this.getImageUrl(picUrl)
+            
+            return {
+              id: item.id,
+              productId: item.productId,
+              name: item.productName,
+              spec: item.specification || '',
+              pic: picUrl,
+              price: util.formatPrice(item.price || 0),
+              originalPrice: item.originalPrice ? util.formatPrice(item.originalPrice) : null,
+              quantity: item.quantity || 1,
+              selected: false // 默认不选中
+            }
+          })
+        } else {
+          this.cartList = []
+          uni.showToast({
+            title: '加载购物车失败',
+            icon: 'none'
+          })
+        }
+      } catch (error) {
+        console.error('加载购物车失败:', error)
+        this.cartList = []
+        uni.showToast({
+          title: '加载购物车失败',
+          icon: 'none'
+        })
+      } finally {
+        this.loading = false
+        callback && callback()
+      }
+    },
+
     // 商品选择
     onItemSelect(itemId) {
       const item = this.cartList.find(item => item.id === itemId)
@@ -172,11 +228,29 @@ export default {
     },
 
     // 改变数量
-    changeQuantity(itemId, delta) {
+    async changeQuantity(itemId, delta) {
       const item = this.cartList.find(item => item.id === itemId)
       if (item) {
         const newQuantity = Math.max(1, Math.min(99, item.quantity + delta))
+        
+        // 更新本地状态
         this.$set(item, 'quantity', newQuantity)
+        
+        // 同步到后端
+        try {
+          await this.$api.updateCartItem({
+            id: itemId,
+            quantity: newQuantity
+          })
+        } catch (error) {
+          console.error('更新购物车数量失败:', error)
+          uni.showToast({
+            title: '更新失败',
+            icon: 'none'
+          })
+          // 恢复原来的数量
+          this.$set(item, 'quantity', item.quantity - delta)
+        }
       }
     },
 
@@ -202,6 +276,11 @@ export default {
     // 格式化价格
     formatPrice(price) {
       return util.formatPrice(price)
+    },
+
+    // 处理图片URL，解决小程序HTTP协议限制问题
+    getImageUrl(imageUrl) {
+      return util.getImageUrl(imageUrl)
     }
   }
 }

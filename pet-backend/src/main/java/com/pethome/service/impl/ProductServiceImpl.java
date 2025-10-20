@@ -17,6 +17,32 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductMapper productMapper;
+    
+    @Autowired
+    private com.pethome.mapper.CategoryMapper categoryMapper;
+
+    @Override
+    public List<Product> getAllProducts() {
+        QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("create_time"); // 按创建时间排序，返回所有商品
+        return productMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public List<Product> getProductsByCategoryId(Integer categoryId) {
+        // 先根据分类ID查询分类名称
+        com.pethome.entity.Category category = categoryMapper.selectById(Long.valueOf(categoryId));
+        
+        if (category == null) {
+            return new java.util.ArrayList<>();
+        }
+        
+        // 用分类名称查询商品（因为product表的category字段存的是分类名称）
+        QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("category", category.getName());
+        queryWrapper.orderByDesc("create_time");
+        return productMapper.selectList(queryWrapper);
+    }
 
     @Override
     public IPage<Product> getProductPage(Page<Product> page) {
@@ -52,7 +78,7 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getHotProducts(Integer limit) {
         // 根据库存、销售量等综合评分获取热门商品
         QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("status", 1) // 只查询上架商品
+        queryWrapper.eq("status", 1) // 只查询在售商品（状态为1）
                 .orderByDesc("stock") // 按库存排序（库存越多越热门）
                 .last("limit " + limit);
 
@@ -63,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getRecommendProducts(Integer limit) {
         // 随机推荐商品（简化版，实际应该基于用户行为分析）
         QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("status", 1)
+        queryWrapper.eq("status", "onsale")
                 .orderByDesc("create_time") // 按创建时间排序，最新商品优先
                 .last("limit " + limit);
         return productMapper.selectList(queryWrapper);

@@ -1,27 +1,40 @@
 package com.pethome.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.pethome.common.Result;
-import com.pethome.entity.Banner;
-import com.pethome.entity.Product;
-import com.pethome.entity.Category;
-import com.pethome.service.BannerService;
-import com.pethome.service.ProductService;
-import com.pethome.service.CategoryService;
-import com.pethome.service.NotificationService;
-import com.pethome.service.SmsService;
-import com.pethome.service.UserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.pethome.entity.Banner;
+import com.pethome.entity.User;
+import com.pethome.entity.Category;
+import com.pethome.entity.GroomingServiceBanner;
+import com.pethome.entity.LitterServiceBanner;
+import com.pethome.entity.MedicalServiceBanner;
+import com.pethome.entity.Product;
+import com.pethome.service.BannerService;
+import com.pethome.service.CategoryService;
+import com.pethome.service.GroomingServiceBannerService;
+import com.pethome.service.LitterServiceBannerService;
+import com.pethome.service.MedicalServiceBannerService;
+import com.pethome.service.ProductService;
+import com.pethome.service.SmsService;
+import com.pethome.service.UserService;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 /**
  * 小程序API兼容层控制器
@@ -31,6 +44,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/tz")
 @Api(tags = "小程序API兼容层")
 public class MiniProgramApiController {
+
+    private static final Logger logger = LoggerFactory.getLogger(MiniProgramApiController.class);
 
     @Autowired
     private BannerService bannerService;
@@ -42,19 +57,22 @@ public class MiniProgramApiController {
     private CategoryService categoryService;
 
     @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
     private SmsService smsService;
 
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private GroomingServiceBannerService groomingServiceBannerService;
+
+    @Autowired
+    private MedicalServiceBannerService medicalServiceBannerService;
+
+    @Autowired
+    private LitterServiceBannerService litterServiceBannerService;
+
     @Value("${server.port:8080}")
     private String serverPort;
-    
-    @Value("${upload.url:http://localhost:8080/upload/}")
-    private String uploadUrl;
 
     @Value("${server.host:http://localhost}")
     private String serverHost;
@@ -72,12 +90,19 @@ public class MiniProgramApiController {
             return imagePath;
         }
         
-        // 如果路径不以 / 开头，添加 /
-        if (!imagePath.startsWith("/")) {
-            imagePath = "/" + imagePath;
+        // 确保路径格式正确
+        // 如果路径以 /upload/ 或 /static/ 开头，直接拼接
+        if (imagePath.startsWith("/upload/") || imagePath.startsWith("/static/")) {
+            return serverHost + ":" + serverPort + imagePath;
         }
         
-        return serverHost + ":" + serverPort + imagePath;
+        // 如果路径以 / 开头但不是 /upload/ 或 /static/，直接拼接（不添加 /upload 前缀）
+        if (imagePath.startsWith("/")) {
+            return serverHost + ":" + serverPort + imagePath;
+        }
+        
+        // 其他情况（如 product/xxx.jpg），添加 /upload/ 前缀
+        return serverHost + ":" + serverPort + "/upload/" + imagePath;
     }
 
     @GetMapping("/config/values")
@@ -93,33 +118,16 @@ public class MiniProgramApiController {
         String[] keyArray = keys.split(",");
         for (String key : keyArray) {
             Map<String, String> configItem = new HashMap<>();
-            configItem.put("key", key.trim());
+            String trimmedKey = key.trim();
+            configItem.put("key", trimmedKey);
             
-            switch (key.trim()) {
-                case "mallName":
-                    configItem.put("value", "宠物之家");
-                    break;
-                case "shopMod":
-                    configItem.put("value", "1");
-                    break;
-                case "share_profile":
-                    configItem.put("value", "1");
-                    break;
-                case "recharge_amount_min":
-                    configItem.put("value", "1");
-                    break;
-                case "open_growth":
-                    configItem.put("value", "1");
-                    break;
-                case "shopping_cart_vop_open":
-                    configItem.put("value", "0");
-                    break;
-                case "needIdCheck":
-                    configItem.put("value", "0");
-                    break;
-                default:
-                    configItem.put("value", "");
-            }
+            String value = switch (trimmedKey) {
+                case "mallName" -> "宠物之家";
+                case "shopMod", "share_profile", "recharge_amount_min", "open_growth" -> "1";
+                case "shopping_cart_vop_open", "needIdCheck" -> "0";
+                default -> "";
+            };
+            configItem.put("value", value);
             configList.add(configItem);
         }
 
@@ -160,12 +168,112 @@ public class MiniProgramApiController {
         return result;
     }
 
+    @GetMapping("/grooming-banner")
+    @ApiOperation("获取洗护服务展示图")
+    public Map<String, Object> getGroomingServiceBanner() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("msg", "success");
+
+        try {
+            // 获取洗护服务页面顶部的展示图
+            GroomingServiceBanner banner = groomingServiceBannerService.getBannerByPosition("grooming-page-top");
+            
+            if (banner != null) {
+                Map<String, Object> bannerData = new HashMap<>();
+                bannerData.put("id", banner.getId());
+                bannerData.put("title", banner.getTitle());
+                bannerData.put("description", banner.getDescription());
+                bannerData.put("imageUrl", convertToFullUrl(banner.getImageUrl()));
+                bannerData.put("position", banner.getPosition());
+                bannerData.put("status", banner.getStatus());
+                
+                result.put("data", bannerData);
+            } else {
+                result.put("data", null);
+            }
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("msg", "获取洗护服务展示图失败: " + e.getMessage());
+            result.put("data", null);
+        }
+
+        return result;
+    }
+
+    @GetMapping("/medical-banner")
+    @ApiOperation("获取宠物医院展示图")
+    public Map<String, Object> getMedicalServiceBanner() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("msg", "success");
+
+        try {
+            // 获取宠物医院页面顶部的展示图
+            MedicalServiceBanner banner = medicalServiceBannerService.getBannerByPosition("medical-page-top");
+            
+            if (banner != null) {
+                Map<String, Object> bannerData = new HashMap<>();
+                bannerData.put("id", banner.getId());
+                bannerData.put("title", banner.getTitle());
+                bannerData.put("description", banner.getDescription());
+                bannerData.put("imageUrl", convertToFullUrl(banner.getImageUrl()));
+                bannerData.put("position", banner.getPosition());
+                bannerData.put("status", banner.getStatus());
+                
+                result.put("data", bannerData);
+            } else {
+                result.put("data", null);
+            }
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("msg", "获取宠物医院展示图失败: " + e.getMessage());
+            result.put("data", null);
+        }
+
+        return result;
+    }
+
+    @GetMapping("/litter-banner")
+    @ApiOperation("获取铲屎服务展示图")
+    public Map<String, Object> getLitterServiceBanner() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("msg", "success");
+
+        try {
+            // 获取铲屎服务页面顶部的展示图
+            LitterServiceBanner banner = litterServiceBannerService.getBannerByPosition("litter-page-top");
+            
+            if (banner != null) {
+                Map<String, Object> bannerData = new HashMap<>();
+                bannerData.put("id", banner.getId());
+                bannerData.put("title", banner.getTitle());
+                bannerData.put("description", banner.getDescription());
+                bannerData.put("imageUrl", convertToFullUrl(banner.getImageUrl()));
+                bannerData.put("position", banner.getPosition());
+                bannerData.put("status", banner.getStatus());
+                
+                result.put("data", bannerData);
+            } else {
+                result.put("data", null);
+            }
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("msg", "获取铲屎服务展示图失败: " + e.getMessage());
+            result.put("data", null);
+        }
+
+        return result;
+    }
+
     @PostMapping("/sms/send")
     @ApiOperation("发送短信验证码")
-    public Map<String, Object> sendSms(@RequestBody Map<String, String> params) {
+    public Map<String, Object> sendSms(@RequestBody Map<String, Object> params) {
         Map<String, Object> result = new HashMap<>();
         try {
-            String phone = params.get("phone");
+            // 获取手机号，处理可能的数字类型
+            String phone = params.get("phone") != null ? params.get("phone").toString() : null;
 
             if (phone == null || phone.trim().isEmpty()) {
                 result.put("code", 1);
@@ -194,7 +302,7 @@ public class MiniProgramApiController {
         } catch (Exception e) {
             result.put("code", 500);
             result.put("msg", "发送验证码失败：" + e.getMessage());
-            e.printStackTrace();
+            logger.error("发送验证码失败", e);
         }
 
         return result;
@@ -231,7 +339,7 @@ public class MiniProgramApiController {
         } catch (Exception e) {
             result.put("code", 500);
             result.put("msg", "微信登录失败：" + e.getMessage());
-            e.printStackTrace();
+            logger.error("微信登录失败", e);
         }
 
         return result;
@@ -274,36 +382,190 @@ public class MiniProgramApiController {
             }
 
             // 调用用户服务进行登录验证
-            try {
-                String token = userService.loginByPhone(phone, password);
-                if (token != null) {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("token", token);
-                    // 从token中提取用户ID（格式：token_userId_timestamp）
-                    String[] tokenParts = token.split("_");
-                    if (tokenParts.length >= 2) {
-                        data.put("uid", Long.parseLong(tokenParts[1]));
-                    } else {
+            String token = userService.loginByPhone(phone, password);
+            if (token != null) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("token", token);
+                
+                // 从token中提取用户ID（格式：token_userId_timestamp）
+                String[] tokenParts = token.split("_");
+                Long userId = 1L;
+                if (tokenParts.length >= 2) {
+                    try {
+                        userId = Long.parseLong(tokenParts[1]);
+                        data.put("uid", userId);
+                    } catch (NumberFormatException e) {
+                        logger.warn("无法从token中解析用户ID，使用默认值", e);
                         data.put("uid", 1L);
                     }
-
-                    result.put("code", 0);
-                    result.put("msg", "登录成功");
-                    result.put("data", data);
                 } else {
-                    result.put("code", 1);
-                    result.put("msg", "手机号或密码错误");
+                    data.put("uid", 1L);
                 }
-            } catch (Exception e) {
-                result.put("code", 500);
-                result.put("msg", "登录验证失败：" + e.getMessage());
-                e.printStackTrace(); // 打印异常堆栈
+                
+                // 获取用户详细信息
+                try {
+                    User user = userService.getUserByPhone(phone);
+                    if (user != null) {
+                        data.put("nickname", user.getNickname());
+                        data.put("avatar", user.getAvatar());
+                        data.put("phone", user.getPhone());
+                    }
+                } catch (Exception e) {
+                    logger.warn("获取用户信息失败", e);
+                }
+
+                result.put("code", 0);
+                result.put("msg", "登录成功");
+                result.put("data", data);
+            } else {
+                result.put("code", 1);
+                result.put("msg", "手机号或密码错误");
             }
 
         } catch (Exception e) {
             result.put("code", 500);
             result.put("msg", "登录失败：" + e.getMessage());
-            e.printStackTrace(); // 打印异常堆栈
+            logger.error("登录失败", e);
+        }
+
+        return result;
+    }
+
+    @PostMapping("/user/update")
+    @ApiOperation("更新用户信息")
+    public Map<String, Object> updateUser(@RequestBody Map<String, Object> userData) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String token = (String) userData.get("token");
+            if (token == null || token.trim().isEmpty()) {
+                result.put("code", 1);
+                result.put("msg", "token不能为空");
+                return result;
+            }
+
+            // 从token中提取用户ID
+            String[] tokenParts = token.split("_");
+            Long userId = 1L;
+            if (tokenParts.length >= 2) {
+                try {
+                    userId = Long.parseLong(tokenParts[1]);
+                } catch (NumberFormatException e) {
+                    result.put("code", 1);
+                    result.put("msg", "无效的token");
+                    return result;
+                }
+            }
+
+            // 获取用户信息
+            User user = userService.getUserById(userId);
+            if (user == null) {
+                result.put("code", 1);
+                result.put("msg", "用户不存在");
+                return result;
+            }
+
+            // 更新用户信息
+            if (userData.containsKey("nickname")) {
+                user.setNickname((String) userData.get("nickname"));
+            }
+            if (userData.containsKey("avatar")) {
+                user.setAvatar((String) userData.get("avatar"));
+            }
+            if (userData.containsKey("gender")) {
+                user.setGender((Integer) userData.get("gender"));
+            }
+
+            boolean success = userService.updateUser(user);
+            if (success) {
+                result.put("code", 0);
+                result.put("msg", "更新成功");
+            } else {
+                result.put("code", 1);
+                result.put("msg", "更新失败");
+            }
+
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("msg", "更新失败：" + e.getMessage());
+            logger.error("更新用户信息失败", e);
+        }
+
+        return result;
+    }
+
+    @PostMapping("/user/register")
+    @ApiOperation("用户注册")
+    public Map<String, Object> register(@RequestBody Map<String, Object> registerData) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            // 获取参数，处理可能的数字类型
+            String phone = registerData.get("phone") != null ? registerData.get("phone").toString() : null;
+            String password = registerData.get("password") != null ? registerData.get("password").toString() : null;
+            String nickname = registerData.get("nickname") != null ? registerData.get("nickname").toString() : null;
+            String smsCode = registerData.get("smsCode") != null ? registerData.get("smsCode").toString() : null;
+
+            if (phone == null || phone.trim().isEmpty()) {
+                result.put("code", 1);
+                result.put("msg", "手机号不能为空");
+                return result;
+            }
+
+            if (password == null || password.trim().isEmpty()) {
+                result.put("code", 1);
+                result.put("msg", "密码不能为空");
+                return result;
+            }
+
+            if (password.length() < 6) {
+                result.put("code", 1);
+                result.put("msg", "密码长度不能少于6位");
+                return result;
+            }
+
+            if (smsCode == null || smsCode.trim().isEmpty()) {
+                result.put("code", 1);
+                result.put("msg", "验证码不能为空");
+                return result;
+            }
+
+            // 验证验证码（这里简化处理，实际应该调用短信服务验证）
+            if (!smsService.verifyCode(phone, smsCode)) {
+                result.put("code", 1);
+                result.put("msg", "验证码错误或已过期");
+                return result;
+            }
+
+            // 调用用户服务进行注册
+            String token = userService.register(phone, password, nickname);
+            if (token != null) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("token", token);
+                // 从token中提取用户ID
+                String[] tokenParts = token.split("_");
+                if (tokenParts.length >= 2) {
+                    try {
+                        data.put("uid", Long.parseLong(tokenParts[1]));
+                    } catch (NumberFormatException e) {
+                        logger.warn("无法从token中解析用户ID，使用默认值", e);
+                        data.put("uid", 1L);
+                    }
+                } else {
+                    data.put("uid", 1L);
+                }
+                data.put("nickname", nickname != null ? nickname : phone);
+                data.put("avatar", "");
+
+                result.put("code", 0);
+                result.put("msg", "注册成功");
+                result.put("data", data);
+            } else {
+                result.put("code", 1);
+                result.put("msg", "注册失败，手机号可能已存在");
+            }
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("msg", "注册失败：" + e.getMessage());
+            logger.error("注册失败", e);
         }
 
         return result;
@@ -372,6 +634,43 @@ public class MiniProgramApiController {
         List<Category> categories = categoryService.getAllCategories();
         result.put("data", categories);
 
+        return result;
+    }
+
+    @GetMapping("/shop/goods/recommend")
+    @ApiOperation("获取推荐商品")
+    public Map<String, Object> getRecommendProducts(@RequestParam(defaultValue = "10") Integer limit) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("msg", "success");
+
+        // 获取推荐商品列表
+        List<Product> products = productService.getHotProducts(limit);
+        
+        // 处理商品图片URL
+        List<Map<String, Object>> goodsList = products.stream()
+            .map(product -> {
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", product.getId());
+                item.put("name", product.getName());
+                item.put("description", product.getDescription());
+                item.put("price", product.getPrice());
+                item.put("originalPrice", product.getPrice()); // 原价
+                item.put("stock", product.getStock());
+                item.put("category", product.getCategory());
+                
+                // 将图片路径转换为完整URL
+                String imageUrl = convertToFullUrl(product.getImage());
+                item.put("pic", imageUrl);
+                item.put("image", imageUrl);
+                item.put("minPrice", product.getPrice());
+                item.put("status", product.getStatus());
+                
+                return item;
+            })
+            .collect(Collectors.toList());
+
+        result.put("data", goodsList);
         return result;
     }
 
@@ -517,6 +816,66 @@ public class MiniProgramApiController {
         cartInfo.put("cartList", List.of());
 
         result.put("data", cartInfo);
+        return result;
+    }
+
+    @GetMapping("/user/current")
+    @ApiOperation("获取当前用户信息")
+    public Map<String, Object> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Map<String, Object> result = new HashMap<>();
+
+        // 如果没有token，返回默认数据
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("level", 1);
+            data.put("charm", 0);
+            data.put("canAmount", 120);
+            Map<String, Integer> stats = new HashMap<>();
+            stats.put("follows", 0);
+            stats.put("fans", 0);
+            stats.put("dynamics", 0);
+            stats.put("likes", 0);
+            data.put("stats", stats);
+
+            result.put("code", 0);
+            result.put("msg", "success");
+            result.put("data", data);
+            return result;
+        }
+
+        String token = authHeader.substring(7);
+        
+        try {
+            // 从token中提取用户ID（格式：token_userId_timestamp）
+            String[] tokenParts = token.split("_");
+            if (tokenParts.length >= 2) {
+                Long userId = Long.parseLong(tokenParts[1]);
+                
+                // 这里可以调用userService获取用户数据，现在返回默认值
+                Map<String, Object> data = new HashMap<>();
+                data.put("level", 1);
+                data.put("charm", 0);
+                data.put("canAmount", 120);
+                Map<String, Integer> stats = new HashMap<>();
+                stats.put("follows", 0);
+                stats.put("fans", 0);
+                stats.put("dynamics", 0);
+                stats.put("likes", 0);
+                data.put("stats", stats);
+
+                result.put("code", 0);
+                result.put("msg", "success");
+                result.put("data", data);
+            } else {
+                result.put("code", 1);
+                result.put("msg", "无效的token格式");
+            }
+        } catch (Exception e) {
+            logger.error("获取用户信息失败", e);
+            result.put("code", 1);
+            result.put("msg", "获取用户信息失败");
+        }
+
         return result;
     }
 }

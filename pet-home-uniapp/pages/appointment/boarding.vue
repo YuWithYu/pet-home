@@ -1,123 +1,253 @@
 <template>
-  <view class="boarding-container">
+  <view class="boarding-service-container">
     <view class="service-header">
+      <!-- 如果有展示图数据，显示图片 -->
+      <view v-if="bannerData && bannerData.imageUrl" class="banner-image">
+        <image :src="getImageUrl(bannerData.imageUrl)" mode="aspectFill" @error="onBannerImageError" />
+      </view>
+      <!-- 否则显示默认内容 -->
+      <view v-else class="default-banner">
       <view class="service-icon">🏠</view>
-      <view class="service-title">宠物寄养预约</view>
-      <view class="service-desc">专业宠物寄养服务，让您的宠物得到最好的照顾</view>
+        <view class="service-title">宠物寄养服务</view>
+        <view class="service-desc">温馨舒适，让您的宠物享受家的温暖</view>
+      </view>
     </view>
 
-    <view class="form-container">
-      <u-form :model="form" ref="form">
-        <!-- 宠物选择 -->
-        <u-form-item label="选择宠物" prop="petId" required>
-          <u-select v-model="form.petId" :list="petOptions" placeholder="请选择宠物"></u-select>
-        </u-form-item>
+    <view class="services-container">
+      <view class="section-title">寄养服务</view>
 
-        <!-- 寄养时间 -->
-        <u-form-item label="寄养时间" prop="startDate" required>
-          <u-calendar v-model="form.startDate" :show="showCalendar" @confirm="onDateConfirm" placeholder="选择寄养开始日期"></u-calendar>
-        </u-form-item>
+      <!-- 加载状态 -->
+      <view v-if="loading" class="loading-container">
+        <view class="loading-text">正在加载服务...</view>
+      </view>
 
-        <!-- 寄养天数 -->
-        <u-form-item label="寄养天数" prop="days" required>
-          <u-number-box v-model="form.days" :min="1" :max="30"></u-number-box>
-        </u-form-item>
-
-        <!-- 服务类型 -->
-        <u-form-item label="服务类型" prop="serviceType" required>
-          <u-radio-group v-model="form.serviceType">
-            <u-radio value="basic" label="基础寄养"></u-radio>
-            <u-radio value="premium" label="豪华寄养"></u-radio>
-            <u-radio value="medical" label="医疗寄养"></u-radio>
-          </u-radio-group>
-        </u-form-item>
-
-        <!-- 特殊需求 -->
-        <u-form-item label="特殊需求" prop="requirements">
-          <u-input v-model="form.requirements" type="textarea" placeholder="请输入特殊护理需求" :height="120"></u-input>
-        </u-form-item>
-
-        <!-- 联系电话 -->
-        <u-form-item label="联系电话" prop="phone" required>
-          <u-input v-model="form.phone" placeholder="请输入联系电话"></u-input>
-        </u-form-item>
-
-        <!-- 提交按钮 -->
-        <view class="submit-section">
-          <u-button type="primary" @click="submitForm" :loading="submitting" shape="circle">
-            {{ submitting ? '提交中...' : '立即预约' }}
-          </u-button>
+      <!-- 服务列表 -->
+      <view v-else class="services-grid">
+        <view class="service-card" v-for="(service, index) in services" :key="service.id || index" @tap="onServiceTap(service, index)">
+          <view class="service-image">
+            <image :src="getImageUrl(service.image)" mode="aspectFill" @error="onImageError" />
+          </view>
+          <view class="service-title">{{ service.title }}</view>
+          <view v-if="service.price" class="service-price">¥{{ service.price }}</view>
+          <view v-if="service.duration" class="service-duration">{{ service.duration }}天</view>
         </view>
-      </u-form>
+      </view>
     </view>
   </view>
 </template>
 
 <script>
+import { util } from '@/common/js/util.js'
+
 export default {
-  name: 'Boarding',
+  name: 'PetBoarding',
 
   data() {
     return {
-      showCalendar: false,
-      submitting: false,
-      form: {
-        petId: '',
-        startDate: '',
-        days: 1,
-        serviceType: 'basic',
-        requirements: '',
-        phone: ''
-      },
-      petOptions: [
-        { value: '1', label: '宠物1' },
-        { value: '2', label: '宠物2' }
-      ]
+      services: [],
+      loading: true,
+      bannerData: null
     }
   },
 
+  onLoad() {
+    this.loadBoardingServices()
+    this.loadBoardingBanner()
+  },
+
   methods: {
-    onDateConfirm(date) {
-      this.form.startDate = date
-      this.showCalendar = false
+    async loadBoardingServices() {
+      try {
+        this.loading = true
+        console.log('开始请求宠物寄养服务API...')
+        
+        const [error, response] = await uni.request({
+          url: 'http://localhost:8080/api/boarding-services/page',
+          method: 'GET',
+          data: {
+            pageNo: 1,
+            pageSize: 20
+          },
+          header: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        })
+
+        console.log('API错误:', error)
+        console.log('API响应:', response)
+        console.log('响应状态码:', response?.statusCode)
+        console.log('响应数据:', response?.data)
+
+        if (error) {
+          console.error('API请求出错:', error)
+          this.loadDefaultServices()
+          return
+        }
+
+        if (response && response.statusCode === 200 && response.data && response.data.code === 0) {
+          console.log('API请求成功，数据:', response.data.data)
+          const records = response.data.data.records || response.data.data || []
+          this.services = records.map(service => ({
+            id: service.id,
+            title: service.name,
+            description: service.description,
+            price: service.price,
+            duration: service.duration,
+            image: service.imageUrl ? `http://localhost:8080${service.imageUrl}` : '/static/images/pet-boarding.svg'
+          }))
+          console.log('处理后的服务数据:', this.services)
+        } else {
+          console.error('获取宠物寄养服务失败 - 状态码:', response?.statusCode, '数据:', response?.data)
+          this.loadDefaultServices()
+        }
+      } catch (error) {
+        console.error('请求宠物寄养服务API失败:', error)
+        console.error('错误详情:', JSON.stringify(error))
+        this.loadDefaultServices()
+      } finally {
+        this.loading = false
+      }
     },
 
-    submitForm() {
-      this.$refs.form.validate().then(() => {
-        this.submitting = true
-        // 这里调用预约API
-        setTimeout(() => {
-          this.submitting = false
-          uni.showToast({
-            title: '预约成功',
-            icon: 'success'
-          })
-          setTimeout(() => {
-            uni.navigateBack()
-          }, 1500)
-        }, 2000)
-      }).catch(() => {
+    async loadBoardingBanner() {
+      try {
+        console.log('开始请求宠物寄养服务展示图API...')
+        
+        const [error, response] = await uni.request({
+          url: 'http://localhost:8080/api/boarding-banners/position/boarding-page-top',
+          method: 'GET',
+          header: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        })
+
+        console.log('展示图API错误:', error)
+        console.log('展示图API响应:', response)
+        console.log('展示图响应数据:', response?.data)
+
+        if (error) {
+          console.error('展示图API请求出错:', error)
+          return
+        }
+
+        if (response && response.statusCode === 200 && response.data && response.data.code === 0) {
+          console.log('展示图API请求成功，数据:', response.data.data)
+          this.bannerData = response.data.data
+        } else {
+          console.error('获取宠物寄养服务展示图失败 - 状态码:', response?.statusCode, '数据:', response?.data)
+        }
+      } catch (error) {
+        console.error('请求宠物寄养服务展示图API失败:', error)
+        console.error('错误详情:', JSON.stringify(error))
+      }
+    },
+
+    loadDefaultServices() {
+      // 如果API请求失败，使用默认数据
+      console.log('使用默认宠物寄养服务数据')
+      this.services = [
+        {
+          id: 1,
+          title: '基础寄养服务',
+          price: 99,
+          duration: 1,
+          image: '/static/images/pet-boarding.svg'
+        },
+        {
+          id: 2,
+          title: '豪华寄养服务',
+          price: 199,
+          duration: 3,
+          image: '/static/images/pet-boarding.svg'
+        },
+        {
+          id: 3,
+          title: '长期寄养服务',
+          price: 299,
+          duration: 7,
+          image: '/static/images/pet-boarding.svg'
+        },
+        {
+          id: 4,
+          title: 'VIP寄养服务',
+          price: 399,
+          duration: 15,
+          image: '/static/images/pet-boarding.svg'
+        }
+      ]
+    },
+
+    onServiceTap(service, index) {
+      // 如果service为undefined，使用index从services数组中获取
+      if (!service && typeof index === 'number') {
+        service = this.services[index]
+      }
+      
+      if (!service) {
         uni.showToast({
-          title: '请完善信息',
+          title: '服务信息错误',
           icon: 'none'
         })
+        return
+      }
+      
+      uni.navigateTo({
+        url: `/pages/service/detail?serviceType=boarding&serviceId=${service.id || index}`
       })
+    },
+
+    onImageError(e) {
+      console.log('图片加载失败:', e)
+      // 可以设置默认图片
+    },
+
+    onBannerImageError(e) {
+      console.log('展示图加载失败:', e)
+      // 展示图加载失败时，显示默认内容
+      this.bannerData = null
+    },
+
+    // 处理图片URL，解决小程序HTTP协议限制问题
+    getImageUrl(imageUrl) {
+      return util.getImageUrl(imageUrl)
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.boarding-container {
+.boarding-service-container {
   min-height: 100vh;
   background-color: #f8f8f8;
 }
 
 .service-header {
-  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+  position: relative;
+  height: 300rpx;
+  overflow: hidden;
+
+  .banner-image {
+    width: 100%;
+    height: 100%;
+    
+    image {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .default-banner {
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
   padding: 60rpx 40rpx;
   text-align: center;
   color: white;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
   .service-icon {
     font-size: 80rpx;
@@ -133,19 +263,82 @@ export default {
   .service-desc {
     font-size: 28rpx;
     opacity: 0.9;
+    }
   }
 }
 
-.form-container {
+.services-container {
   padding: 40rpx;
-  background-color: white;
-  margin: 20rpx;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.1);
-}
 
-.submit-section {
-  margin-top: 60rpx;
-  padding: 0 40rpx;
+  .section-title {
+    font-size: 36rpx;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 30rpx;
+    text-align: left;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20rpx;
+  }
+
+  .loading-container {
+    text-align: center;
+    padding: 60rpx 0;
+
+    .loading-text {
+      font-size: 28rpx;
+      color: #999;
+    }
+  }
+
+  .service-card {
+  background-color: white;
+  border-radius: 16rpx;
+    padding: 20rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .service-image {
+      width: 100%;
+      height: 200rpx;
+      border-radius: 12rpx;
+      overflow: hidden;
+      margin-bottom: 16rpx;
+      background-color: #f8f8f8;
+
+      image {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .service-title {
+      font-size: 28rpx;
+      color: #333;
+      font-weight: 500;
+      line-height: 1.3;
+      margin-bottom: 8rpx;
+    }
+
+    .service-price {
+      font-size: 24rpx;
+      color: #4CAF50;
+      font-weight: bold;
+      margin-bottom: 4rpx;
+    }
+
+    .service-duration {
+      font-size: 22rpx;
+      color: #999;
+    }
+  }
 }
 </style>

@@ -51,7 +51,7 @@
           >
             <el-table-column prop="id" label="服务ID" width="80" />
             <el-table-column prop="name" label="服务名称" width="150" />
-            <el-table-column prop="description" label="服务描述" min-width="200" />
+            <el-table-column prop="description" label="商品介绍" min-width="200" />
             <el-table-column prop="category" label="分类" width="100">
               <template #default="scope">
                 <el-tag :type="scope.row.category === 'grooming' ? 'primary' : 'success'">
@@ -116,7 +116,7 @@
           >
             <el-table-column prop="id" label="服务ID" width="80" />
             <el-table-column prop="name" label="服务名称" width="150" />
-            <el-table-column prop="description" label="服务描述" min-width="200" />
+            <el-table-column prop="description" label="商品介绍" min-width="200" />
             <el-table-column prop="price" label="价格" width="100">
               <template #default="scope">
                 <span style="color: #ff6b35; font-weight: bold;">¥{{ scope.row.price }}</span>
@@ -168,7 +168,7 @@
           >
             <el-table-column prop="id" label="服务ID" width="80" />
             <el-table-column prop="name" label="服务名称" width="150" />
-            <el-table-column prop="description" label="服务描述" min-width="200" />
+            <el-table-column prop="description" label="商品介绍" min-width="200" />
             <el-table-column prop="price" label="价格" width="100">
               <template #default="scope">
                 <span style="color: #ff6b35; font-weight: bold;">¥{{ scope.row.price }}</span>
@@ -369,12 +369,12 @@
           <el-input v-model="serviceForm.name" placeholder="请输入服务名称" />
         </el-form-item>
         
-        <el-form-item label="服务描述" prop="description">
+        <el-form-item label="商品介绍" prop="description">
           <el-input
             v-model="serviceForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入服务描述"
+            placeholder="请输入商品介绍"
           />
         </el-form-item>
         
@@ -559,7 +559,7 @@ import axios from 'axios'
 
 // 配置axios baseURL
 const api = axios.create({
-  baseURL: 'http://10.76.242.18:8080',
+  baseURL: 'http://localhost:8080',
   timeout: 10000
 })
 
@@ -646,7 +646,7 @@ export default {
         { required: true, message: '请输入服务名称', trigger: 'blur' }
       ],
       description: [
-        { required: true, message: '请输入服务描述', trigger: 'blur' }
+        { required: true, message: '请输入商品介绍', trigger: 'blur' }
       ],
       category: [
         { required: true, message: '请选择服务分类', trigger: 'change' }
@@ -668,8 +668,8 @@ export default {
     })
 
     // 上传配置
-    const uploadUrl = ref('/api/grooming-services/upload')
-    const bannerUploadUrl = ref('/api/grooming-banners/upload')
+    const uploadUrl = ref('http://localhost:8080/api/grooming-services/upload')
+    const bannerUploadUrl = ref('http://localhost:8080/api/grooming-banners/upload')
     const uploadHeaders = ref({
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     })
@@ -751,7 +751,7 @@ export default {
     const getImageUrl = (imageUrl) => {
       if (!imageUrl) return ''
       if (imageUrl.startsWith('http')) return imageUrl
-      return `http://10.76.242.18:8080${imageUrl}`
+      return `http://localhost:8080${imageUrl}`
     }
 
     // 搜索处理
@@ -811,7 +811,21 @@ export default {
         bgColor: service.bgColor || '#e3f2fd',
         sortOrder: service.sortOrder || 0,
         isRecommended: service.isRecommended || false,
-        tags: service.tags ? JSON.parse(service.tags) : []
+        tags: service.tags ? (typeof service.tags === 'string' ? 
+          (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
+            (() => {
+              try {
+                return JSON.parse(service.tags);
+              } catch (e) {
+                // 如果JSON解析失败，尝试提取方括号内的内容
+                const match = service.tags.match(/\[(.*)\]/);
+                if (match && match[1]) {
+                  return match[1].split(',').map(tag => tag.trim().replace(/['"]/g, ''));
+                }
+                return [service.tags];
+              }
+            })() : [service.tags]) : 
+          service.tags) : []
       })
       currentService.value = service
       serviceDialogVisible.value = true
@@ -941,12 +955,12 @@ export default {
 
     // 展示图上传成功
     const handleBannerUploadSuccess = (response) => {
-      if (response.code === 200) {
+      if (response.code === 0) {
         ElMessage.success('展示图上传成功')
         bannerDialogVisible.value = false
         loadServiceBanner()
       } else {
-        ElMessage.error(response.message || '展示图上传失败')
+        ElMessage.error(response.msg || response.message || '展示图上传失败')
       }
     }
 

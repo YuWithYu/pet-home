@@ -285,9 +285,9 @@
             
             <el-form-item label="状态" prop="status">
               <el-select v-model="productForm.status" placeholder="请选择状态" style="width: 100%">
-                <el-option label="在售" value="onsale"></el-option>
-                <el-option label="下架" value="offsale"></el-option>
-                <el-option label="缺货" value="outofstock"></el-option>
+                <el-option label="在售" :value="1"></el-option>
+                <el-option label="下架" :value="0"></el-option>
+                <el-option label="缺货" :value="-1"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -300,7 +300,7 @@
                 :headers="uploadHeaders"
                 :show-file-list="false"
                 :on-success="handleImageSuccess"
-                :on-error="handleImageError"
+                :on-error="handleUploadError"
                 :before-upload="beforeImageUpload"
               >
                 <img 
@@ -493,7 +493,7 @@ export default {
       editingProduct: null,
       editingCategory: null,
       imageUpdateTimestamp: 0,
-      uploadAction: "http://localhost:8080/api/admin/upload",
+      uploadAction: "http://localhost:8080/api/admin/upload?type=product",
       uploadHeaders: {
         // 暂时移除Authorization头，因为已经移除了权限检查
         // "Authorization": "Bearer " + (localStorage.getItem("token") || "")
@@ -524,7 +524,7 @@ export default {
         brand: "",
         price: 0,
         stock: 0,
-        status: "onsale",
+        status: 1,
         image: "",
         description: ""
       },
@@ -608,7 +608,7 @@ export default {
       return result.slice(start, end);
     },
     onsaleProducts() {
-      let result = (this.allProducts || []).filter(product => product.status === "onsale");
+      let result = (this.allProducts || []).filter(product => product.status === 1);
       
       // 应用搜索过滤
       if (this.searchText) {
@@ -683,15 +683,26 @@ export default {
           return `http://localhost:8080${imagePath}`;
         }
         
-        // 兼容旧数据：/uploads/ 或 /static/ 开头的，也映射到 /upload/
+        // 兼容旧数据：/uploads/ 或 /static/ 开头的，也映射到 /upload/product/
         if (imagePath.startsWith('/uploads/') || imagePath.startsWith('/static/')) {
           // 提取文件名
           const filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-          return `http://localhost:8080/upload/${filename}`;
+          return `http://localhost:8080/upload/product/${filename}`;
         }
         
-        // 默认处理：只有文件名时，添加 /upload/ 前缀
-        return imagePath ? `http://localhost:8080/upload/${imagePath}` : '@/static/default-product.png';
+        // 默认处理：
+        // 如果包含 product/ 前缀，直接添加 /upload/
+        // 如果是纯文件名，添加 /upload/product/
+        if (imagePath) {
+          if (imagePath.startsWith('product/')) {
+            return `http://localhost:8080/upload/${imagePath}`;
+          } else {
+            // 纯文件名，假设是 product 目录下的
+            return `http://localhost:8080/upload/product/${imagePath}`;
+          }
+        }
+        
+        return '@/static/default-product.png';
       },
     
     async loadProducts() {
@@ -724,7 +735,7 @@ export default {
                 brand: item.brand || "宠物用品",
                 price: item.price,
                 stock: item.stock,
-                status: item.stock > 0 ? "onsale" : "outofstock",
+                status: item.stock > 0 ? 1 : -1,
                 image: item.image, // 使用原始图片字段
                 imageUrl: item.imageUrl, // 保存完整的图片URL
                 description: item.description || "暂无描述",
@@ -749,7 +760,7 @@ export default {
                 brand: item.brand || "宠物用品",
                 price: item.price,
                 stock: item.stock,
-                status: item.stock > 0 ? "onsale" : "outofstock",
+                status: item.stock > 0 ? 1 : -1,
                 image: item.image, // 使用原始图片字段
                 imageUrl: item.imageUrl, // 保存完整的图片URL
                 description: item.description || "暂无描述",
@@ -775,10 +786,23 @@ export default {
     },
     async loadCategories() {
       try {
-        // 从现有商品中提取所有唯一的分类
+        this.categoryLoading = true;
+        // 从后端API获取分类列表
+        const response = await productApi.getAllCategories();
+        if (response && response.data) {
+          this.categories = response.data.map(category => ({
+            id: category.id,
+            name: category.name,
+            description: category.description || '',
+            productCount: (this.allProducts || []).filter(p => p.category === category.name).length,
+            status: category.status === 1 ? 'active' : 'inactive',
+            createTime: category.createTime || new Date().toLocaleString()
+          }));
+        }
+      } catch (error) {
+        console.error('加载分类数据失败:', error);
+        // 如果API调用失败，回退到从商品中提取分类
         const uniqueCategories = [...new Set((this.allProducts || []).map(product => product.category))];
-        
-        // 根据实际商品分类创建分类列表
         this.categories = uniqueCategories.map((categoryName, index) => ({
           id: index + 1,
           name: categoryName,
@@ -787,8 +811,8 @@ export default {
           status: "active",
           createTime: new Date().toLocaleString()
         }));
-      } catch (error) {
-        console.error('加载分类数据失败:', error);
+      } finally {
+        this.categoryLoading = false;
       }
     },
     handleTabChange(tab) {
@@ -808,17 +832,17 @@ export default {
     },
     getStatusText(status) {
       const statusMap = {
-        "onsale": "在售",
-        "offsale": "下架",
-        "outofstock": "缺货"
+        1: "在售",
+        0: "下架",
+        [-1]: "缺货"
       };
       return statusMap[status] || status;
     },
     getStatusType(status) {
       const typeMap = {
-        "onsale": "success",
-        "offsale": "info",
-        "outofstock": "danger"
+        1: "success",
+        0: "info",
+        [-1]: "danger"
       };
       return typeMap[status] || "info";
     },
@@ -838,7 +862,7 @@ export default {
         brand: "",
         price: 0,
         stock: 0,
-        status: "onsale",
+        status: 1,
         image: "",
         description: ""
       };
@@ -905,19 +929,31 @@ export default {
         
         // 准备商品数据
         console.log('保存产品 - 当前productForm.image:', this.productForm.image);
-        // 提取图片文件名，确保只保存文件名而不是完整URL
-        let imageFilename = null;
+        // 提取图片相对路径（保留 product/ 前缀）
+        let imagePath = null;
         if (this.productForm.image) {
           if (this.productForm.image.startsWith('http')) {
-            // 从完整URL中提取文件名
-            const urlParts = this.productForm.image.split('/');
-            imageFilename = urlParts[urlParts.length - 1];
+            // 从完整URL中提取相对路径（如: product/xxx.jpg）
+            const url = this.productForm.image;
+            // 找到 /upload/ 后面的部分
+            const uploadIndex = url.indexOf('/upload/');
+            if (uploadIndex !== -1) {
+              imagePath = url.substring(uploadIndex + 8); // 8 = '/upload/'.length
+            } else {
+              // 如果没有 /upload/，只提取文件名
+              const urlParts = url.split('/');
+              const filename = urlParts[urlParts.length - 1];
+              imagePath = 'product/' + filename;
+            }
+          } else if (this.productForm.image.startsWith('product/')) {
+            // 如果已经是 product/ 开头，直接使用
+            imagePath = this.productForm.image;
           } else {
-            // 如果已经是文件名，直接使用
-            imageFilename = this.productForm.image;
+            // 否则添加 product/ 前缀
+            imagePath = 'product/' + this.productForm.image;
           }
         }
-        console.log('保存产品 - 提取的文件名:', imageFilename);
+        console.log('保存产品 - 提取的相对路径:', imagePath);
         console.log('保存产品 - 原始URL:', this.productForm.image);
         
         const productData = {
@@ -928,7 +964,7 @@ export default {
           stock: this.productForm.stock,
           status: this.productForm.status,
           description: this.productForm.description,
-          image: imageFilename
+          image: imagePath
         };
         
         console.log('保存产品 - 发送的数据:', productData);
@@ -1005,19 +1041,43 @@ export default {
       console.log('响应code:', response?.code);
       console.log('响应data:', response?.data);
       console.log('响应data类型:', typeof response?.data);
-      console.log('响应data长度:', response?.data?.length);
       
       if (response && response.code === 0) {
-        // 直接使用后端返回的完整图片URL
-        const imageUrl = response.data;
-        console.log('原始图片URL:', imageUrl);
-        console.log('URL长度:', imageUrl?.length);
-        console.log('URL包含/uploads/product/:', imageUrl?.includes('/uploads/product/'));
+        // 后端返回的是相对路径（如: product/文件名.jpg）
+        let relativePath = response.data;
+        
+        // 确保 relativePath 是字符串类型
+        if (typeof relativePath !== 'string') {
+          console.log('响应data不是字符串，尝试转换');
+          // 如果是对象，尝试获取fileName、url或path属性
+          if (relativePath && typeof relativePath === 'object') {
+            relativePath = relativePath.fileName || relativePath.url || relativePath.path || relativePath.fileUrl || '';
+            console.log('从对象中提取的路径:', relativePath);
+          } else {
+            relativePath = String(relativePath || '');
+          }
+        }
+        
+        console.log('相对路径:', relativePath);
+        
+        // 构建完整的图片URL
+        let imageUrl = '';
+        if (relativePath) {
+          // 如果已经是完整URL，直接使用
+          if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+            imageUrl = relativePath;
+          } else if (relativePath.startsWith('/upload/')) {
+            imageUrl = `http://localhost:8080${relativePath}`;
+          } else {
+            // 相对路径（如 product/xxx.jpg），添加 /upload/ 前缀
+            imageUrl = `http://localhost:8080/upload/${relativePath}`;
+          }
+        }
+        
+        console.log('构建的图片URL:', imageUrl);
         
         this.productForm.image = imageUrl;
         console.log('设置productForm.image为:', this.productForm.image);
-        console.log('设置后的长度:', this.productForm.image?.length);
-        console.log('当前productForm:', JSON.stringify(this.productForm, null, 2));
         this.$message.success('图片上传成功');
         
         // 强制更新视图
@@ -1025,17 +1085,12 @@ export default {
           console.log('强制更新视图后的productForm.image:', this.productForm.image);
           this.$forceUpdate();
         });
-        
-        // 延迟再次检查
-        setTimeout(() => {
-          console.log('延迟检查 - productForm.image:', this.productForm.image);
-        }, 1000);
       } else {
         console.error('上传失败响应:', response);
         this.$message.error('图片上传失败: ' + (response?.msg || '未知错误'));
       }
     },
-    handleImageError(error, file) {
+    handleUploadError(error, file) {
       console.error('图片上传失败:', error);
       this.$message.error('图片上传失败，请重试');
     },
@@ -1080,30 +1135,26 @@ export default {
         await this.$refs.categoryFormRef.validate();
         
         if (this.editingCategory) {
-          // 编辑分类
-          const index = this.categories.findIndex(c => c.id === this.editingCategory.id);
-          if (index !== -1) {
-            this.categories[index] = {
-              ...this.categories[index],
-              ...this.categoryForm
-            };
-          }
+          // 编辑分类 - 调用后端API
+          await productApi.updateCategory(this.editingCategory.id, this.categoryForm);
           this.$message.success("分类更新成功");
         } else {
-          // 添加分类
-          const newCategory = {
-            id: Date.now(), // 临时ID
-            ...this.categoryForm,
-            productCount: 0,
-            createTime: new Date().toLocaleString()
+          // 添加分类 - 调用后端API
+          const categoryData = {
+            name: this.categoryForm.name,
+            description: this.categoryForm.description,
+            status: this.categoryForm.status === 'active' ? 1 : 0
           };
-          this.categories.push(newCategory);
+          await productApi.addCategory(categoryData);
           this.$message.success("分类添加成功");
         }
         
+        // 重新加载分类列表
+        await this.loadCategories();
         this.categoryDialogVisible = false;
       } catch (error) {
         console.error("保存分类失败:", error);
+        this.$message.error("保存分类失败: " + (error.message || error));
       }
     },
     
@@ -1116,14 +1167,19 @@ export default {
       }
     },
     
-    deleteCategory(category) {
+    async deleteCategory(category) {
       this.$confirm(`确定删除分类"${category.name}"吗？`, '确认删除', {
         type: 'warning'
-      }).then(() => {
-        const index = this.categories.findIndex(c => c.id === category.id);
-        if (index !== -1) {
-          this.categories.splice(index, 1);
+      }).then(async () => {
+        try {
+          // 调用后端API删除分类
+          await productApi.deleteCategory(category.id);
           this.$message.success("分类删除成功");
+          // 重新加载分类列表
+          await this.loadCategories();
+        } catch (error) {
+          console.error('删除分类失败:', error);
+          this.$message.error("删除分类失败: " + (error.message || error));
         }
       }).catch(() => {
         // 用户取消删除
@@ -1132,12 +1188,18 @@ export default {
     
     // 图片加载事件处理
     handleImageError(event) {
-      console.log('图片加载失败:', event.target.src);
+      if (event && event.target && event.target.src) {
+        console.log('图片加载失败:', event.target.src);
+      } else {
+        console.log('图片加载失败:', event);
+      }
       // 可以在这里设置默认图片
     },
     
     handleImageLoad(event) {
-      console.log('图片加载成功:', event.target.src);
+      if (event && event.target && event.target.src) {
+        console.log('图片加载成功:', event.target.src);
+      }
     },
     
     // 测试方法：检查产品图片URL

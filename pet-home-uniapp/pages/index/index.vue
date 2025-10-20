@@ -26,7 +26,7 @@
     >
       <swiper-item v-for="banner in banners" :key="banner.id">
         <view class="banner-item" @click="onBannerTap(banner)">
-          <image class="banner-image" :src="banner.picUrl" mode="aspectFill" />
+          <image class="banner-image" :src="getImageUrl(banner.picUrl)" mode="aspectFill" />
           <view class="banner-overlay" v-if="banner.title">
             <view class="banner-title">{{ banner.title }}</view>
           </view>
@@ -47,41 +47,16 @@
     <!-- 宠物服务 -->
     <view class="service-nav bg-white">
       <view class="service-grid grid grid-cols-3 gap-15">
-        <view class="service-item" @click="onServiceTap('door-cleaning')">
+        <view 
+          v-for="service in services" 
+          :key="service.serviceType"
+          class="service-item" 
+          @click="onServiceTap(service.serviceType)"
+        >
           <view class="service-icon">
-            <image src="/static/images/door-cleaning.svg" mode="aspectFit" class="service-icon-image" />
+            <image :src="service.icon" mode="aspectFit" class="service-icon-image" />
           </view>
-          <view class="service-name">上门铲屎</view>
-        </view>
-        <view class="service-item" @click="onServiceTap('boarding')">
-          <view class="service-icon">
-            <image src="/static/images/pet-boarding.svg" mode="aspectFit" class="service-icon-image" />
-          </view>
-          <view class="service-name">宠物寄养</view>
-        </view>
-        <view class="service-item" @click="onServiceTap('hospital')">
-          <view class="service-icon">
-            <image src="/static/images/pet-hospital.svg" mode="aspectFit" class="service-icon-image" />
-          </view>
-          <view class="service-name">宠物医院</view>
-        </view>
-        <view class="service-item" @click="onServiceTap('grooming')">
-          <view class="service-icon">
-            <image src="/static/images/pet-grooming.svg" mode="aspectFit" class="service-icon-image" />
-          </view>
-          <view class="service-name">宠物洗护</view>
-        </view>
-        <view class="service-item" @click="onServiceTap('adoption')">
-          <view class="service-icon">
-            <image src="/static/images/pet-adoption.svg" mode="aspectFit" class="service-icon-image" />
-          </view>
-          <view class="service-name">宠物领养</view>
-        </view>
-        <view class="service-item" @click="onServiceTap('consultation')">
-          <view class="service-icon">
-            <image src="/static/images/online-consultation.svg" mode="aspectFit" class="service-icon-image" />
-          </view>
-          <view class="service-name">在线咨询</view>
+          <view class="service-name">{{ service.serviceName }}</view>
         </view>
       </view>
     </view>
@@ -162,6 +137,7 @@ export default {
       hotProducts: [],
       recommendProducts: [],
       notice: null,
+      services: [],
       loading: true
     }
   },
@@ -190,7 +166,8 @@ export default {
         this.loadBanners(),
         this.loadHotProducts(),
         this.loadRecommendProducts(),
-        this.loadNotice()
+        this.loadNotice(),
+        this.loadServices()
       ]).then(() => {
         this.loading = false
         callback && callback()
@@ -205,32 +182,19 @@ export default {
     // 加载轮播图
     loadBanners() {
       return this.$api.getBannerList(null).then(res => {
-        if (res.code === 0 && res.data) {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
           this.banners = res.data
+        } else {
+          this.banners = []
         }
       }).catch(err => {
         console.error('加载轮播图失败:', err)
-        // 使用默认轮播图数据
-        this.banners = [
-          {
-            id: 1,
-            picUrl: '/static/images/banner1.jpg',
-            title: '宠物健康生活',
-            url: '/pages/goods/list?type=health'
-          },
-          {
-            id: 2,
-            picUrl: '/static/images/banner2.jpg',
-            title: '优质宠物食品',
-            url: '/pages/goods/list?type=food'
-          },
-          {
-            id: 3,
-            picUrl: '/static/images/banner3.jpg',
-            title: '宠物医疗服务',
-            url: '/pages/appointment/medical'
-          }
-        ]
+        // 不使用硬编码数据，保持空数组
+        this.banners = []
+        uni.showToast({
+          title: '加载轮播图失败',
+          icon: 'none'
+        })
       })
     },
 
@@ -238,69 +202,73 @@ export default {
     // 加载热门商品
     loadHotProducts() {
       return this.$api.getHotProducts(4).then(res => {
-        if (res.code === 0 && res.data) {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
           this.hotProducts = res.data.map(item => {
-            let picUrl = item.image || item.pic
-            // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
-            if (picUrl && picUrl.startsWith('/upload/')) {
-              picUrl = 'https://localhost:8080' + picUrl
+            // 获取图片URL，优先使用pic，然后是image，最后是imageUrl
+            let picUrl = item.pic || item.image || item.imageUrl || ''
+            
+            // 如果picUrl为空或者不是有效的路径，使用默认图片
+            if (!picUrl || picUrl === 'null' || picUrl === 'undefined') {
+              picUrl = '/static/images/暂无商品.svg'
             }
+            // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
+            else if (picUrl.startsWith('/upload/')) {
+              picUrl = 'http://localhost:8080' + picUrl
+            }
+            // 如果不是完整URL且不是本地static路径，也尝试拼接后端URL
+            else if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://') && !picUrl.startsWith('/static/')) {
+              picUrl = 'http://localhost:8080/upload/' + picUrl
+            }
+            
             return {
               ...item,
               pic: picUrl,
               price: util.formatPrice(item.price)
             }
           })
+        } else {
+          this.hotProducts = []
         }
       }).catch(err => {
         console.error('加载热门商品失败:', err)
-        // 使用模拟数据
-        this.hotProducts = [
-          {
-            id: 1,
-            name: '皇家猫粮',
-            pic: '/static/images/product1.jpg',
-            price: util.formatPrice(128),
-            originalPrice: 158
-          },
-          {
-            id: 2,
-            name: '狗狗玩具球',
-            pic: '/static/images/product2.jpg',
-            price: util.formatPrice(25)
-          },
-          {
-            id: 3,
-            name: '猫砂盆',
-            pic: '/static/images/product3.jpg',
-            price: util.formatPrice(89)
-          },
-          {
-            id: 4,
-            name: '宠物沐浴露',
-            pic: '/static/images/product4.jpg',
-            price: util.formatPrice(45)
-          }
-        ]
+        // 不使用硬编码数据，保持空数组
+        this.hotProducts = []
+        uni.showToast({
+          title: '加载商品失败',
+          icon: 'none'
+        })
       })
     },
 
     // 加载推荐商品
     loadRecommendProducts() {
       return this.$api.getRecommendProducts(3).then(res => {
-        if (res.code === 0 && res.data) {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
           this.recommendProducts = res.data.map(item => {
-            let picUrl = item.image || item.pic
-            // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
-            if (picUrl && picUrl.startsWith('/upload/')) {
-              picUrl = 'https://localhost:8080' + picUrl
+            // 获取图片URL，优先使用pic，然后是image，最后是imageUrl
+            let picUrl = item.pic || item.image || item.imageUrl || ''
+            
+            // 如果picUrl为空或者不是有效的路径，使用默认图片
+            if (!picUrl || picUrl === 'null' || picUrl === 'undefined') {
+              picUrl = '/static/images/暂无商品.svg'
             }
+            // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
+            else if (picUrl.startsWith('/upload/')) {
+              picUrl = 'http://localhost:8080' + picUrl
+            }
+            // 如果不是完整URL且不是本地static路径，也尝试拼接后端URL
+            else if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://') && !picUrl.startsWith('/static/')) {
+              picUrl = 'http://localhost:8080/upload/' + picUrl
+            }
+            
             return {
               ...item,
               pic: picUrl,
               price: util.formatPrice(item.price)
             }
           })
+        } else {
+          this.recommendProducts = []
         }
       }).catch(err => {
         console.error('加载推荐商品失败:', err)
@@ -317,6 +285,65 @@ export default {
       }).catch(err => {
         console.error('加载公告失败:', err)
       })
+    },
+
+    // 加载服务列表
+    loadServices() {
+      // 暂时使用默认服务列表，等数据库表创建后再启用API调用
+      this.useDefaultServices()
+      
+      // 注释掉API调用，等数据库表创建后再启用
+      /*
+      return this.$api.getAllServiceConfigs().then(res => {
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
+          // 只显示启用的服务
+          this.services = res.data.filter(s => s.status === 1)
+        } else {
+          // 使用默认服务列表
+          this.useDefaultServices()
+        }
+      }).catch(err => {
+        console.error('加载服务列表失败:', err)
+        // 如果加载失败，使用默认服务列表
+        this.useDefaultServices()
+      })
+      */
+    },
+
+    // 使用默认服务列表
+    useDefaultServices() {
+      this.services = [
+        {
+          serviceType: 'door-cleaning',
+          serviceName: '上门铲屎',
+          icon: '/static/images/door-cleaning.svg'
+        },
+        {
+          serviceType: 'boarding',
+          serviceName: '宠物寄养',
+          icon: '/static/images/pet-boarding.svg'
+        },
+        {
+          serviceType: 'hospital',
+          serviceName: '宠物医院',
+          icon: '/static/images/pet-hospital.svg'
+        },
+        {
+          serviceType: 'grooming',
+          serviceName: '宠物洗护',
+          icon: '/static/images/pet-grooming.svg'
+        },
+        {
+          serviceType: 'adoption',
+          serviceName: '宠物领养',
+          icon: '/static/images/pet-adoption.svg'
+        },
+        {
+          serviceType: 'consultation',
+          serviceName: '在线咨询',
+          icon: '/static/images/online-consultation.svg'
+        }
+      ]
     },
 
     // 点击搜索
@@ -377,7 +404,9 @@ export default {
     onServiceTap(service) {
       switch (service) {
         case 'door-cleaning':
-          util.showToast('上门铲屎服务开发中')
+          uni.navigateTo({
+            url: '/pages/appointment/door-cleaning'
+          })
           break
         case 'boarding':
           uni.navigateTo({
@@ -385,7 +414,9 @@ export default {
           })
           break
         case 'adoption':
-          util.showToast('宠物领养功能开发中')
+          uni.navigateTo({
+            url: '/pages/appointment/adoption'
+          })
           break
         case 'hospital':
           uni.navigateTo({
@@ -398,11 +429,18 @@ export default {
           })
           break
         case 'consultation':
-          util.showToast('在线咨询功能开发中')
+          uni.navigateTo({
+            url: '/pages/appointment/online-consultation'
+          })
           break
         default:
           util.showToast('服务开发中')
       }
+    },
+
+    // 处理图片URL，解决小程序HTTP协议限制问题
+    getImageUrl(imageUrl) {
+      return util.getImageUrl(imageUrl)
     }
   }
 }

@@ -69,4 +69,21 @@ public class GroomingService implements Serializable {
 
     @TableField("is_deleted")
     private Boolean isDeleted;
+    
+    // 手动添加setter方法，确保编译通过
+    public void setId(Long id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setDescription(String description) { this.description = description; }
+    public void setCategory(String category) { this.category = category; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+    public void setDuration(Integer duration) { this.duration = duration; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public void setBgColor(String bgColor) { this.bgColor = bgColor; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+    public void setIsRecommended(Boolean isRecommended) { this.isRecommended = isRecommended; }
+    public void setStatus(String status) { this.status = status; }
+    public void setTags(String tags) { this.tags = tags; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 }

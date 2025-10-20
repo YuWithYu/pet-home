@@ -37,7 +37,9 @@
     {
       "path": "pages/user/index",
       "style": {
-        "navigationBarTitleText": "我的"
+        "navigationBarTitleText": "我的",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": false
       }
     },
     {
@@ -56,19 +58,78 @@
     {
       "path": "pages/user/profile",
       "style": {
-        "navigationBarTitleText": "个人资料"
+        "navigationBarTitleText": "编辑个人信息",
+        "navigationStyle": "custom"
       }
     },
     {
-      "path": "pages/user/pets",
+      "path": "pages/user/my-pets",
       "style": {
-        "navigationBarTitleText": "我的宠物"
+        "navigationBarTitleText": "我的宠物",
+        "navigationStyle": "custom"
       }
     },
     {
-      "path": "pages/user/pets/add",
+      "path": "pages/user/add-pet-basic",
       "style": {
-        "navigationBarTitleText": "添加宠物"
+        "navigationBarTitleText": "添加宠物档案",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-pet-type",
+      "style": {
+        "navigationBarTitleText": "选择宠物类型",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-pet-breed",
+      "style": {
+        "navigationBarTitleText": "选择品种",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-breed-list",
+      "style": {
+        "navigationBarTitleText": "选择品种",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-pet-gender",
+      "style": {
+        "navigationBarTitleText": "选择性别",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-sterilization",
+      "style": {
+        "navigationBarTitleText": "选择绝育状态",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-birth-date",
+      "style": {
+        "navigationBarTitleText": "选择出生日期",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-arrival-date",
+      "style": {
+        "navigationBarTitleText": "选择到家日期",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/select-weight",
+      "style": {
+        "navigationBarTitleText": "选择体重",
+        "navigationStyle": "custom"
       }
     },
     {
@@ -93,6 +154,97 @@
       "path": "pages/appointment/boarding",
       "style": {
         "navigationBarTitleText": "寄养预约"
+      }
+    },
+    {
+      "path": "pages/appointment/door-cleaning",
+      "style": {
+        "navigationBarTitleText": "上门铲屎服务"
+      }
+    },
+    {
+      "path": "pages/appointment/adoption",
+      "style": {
+        "navigationBarTitleText": "宠物领养"
+      }
+    },
+    {
+      "path": "pages/appointment/book-door-cleaning",
+      "style": {
+        "navigationBarTitleText": "预约服务"
+      }
+    },
+    {
+      "path": "pages/appointment/online-consultation",
+      "style": {
+        "navigationBarTitleText": "在线咨询"
+      }
+    },
+    {
+      "path": "pages/chat/consultation",
+      "style": {
+        "navigationBarTitleText": "在线咨询"
+      }
+    },
+    {
+      "path": "pages/service/detail",
+      "style": {
+        "navigationBarTitleText": "服务详情"
+      }
+    },
+    {
+      "path": "pages/booking/index",
+      "style": {
+        "navigationBarTitleText": "预约服务"
+      }
+    },
+    {
+      "path": "pages/user/my-appointments",
+      "style": {
+        "navigationBarTitleText": "我的预约",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/settings/index",
+      "style": {
+        "navigationBarTitleText": "设置",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/edit-nickname",
+      "style": {
+        "navigationBarTitleText": "编辑昵称",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/edit-pet-profile",
+      "style": {
+        "navigationBarTitleText": "编辑宠物资料",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/booking/success",
+      "style": {
+        "navigationBarTitleText": "预约成功",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/admin/verify",
+      "style": {
+        "navigationBarTitleText": "订单核销",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/appointment/detail",
+      "style": {
+        "navigationBarTitleText": "预约详情",
+        "navigationStyle": "custom"
       }
     }
   ],

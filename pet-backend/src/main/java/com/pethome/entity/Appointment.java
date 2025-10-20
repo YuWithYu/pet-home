@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@TableName("appointment")
+@TableName("door_cleaning_appointment")
 public class Appointment {
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -28,6 +28,12 @@ public class Appointment {
     private String contactPhone;
     private BigDecimal price;
     private String location;
+    @TableField("verify_code")
+    private String verifyCode;
+    @TableField("is_verified")
+    private Integer isVerified;
+    @TableField("verify_time")
+    private LocalDateTime verifyTime;
     @TableField("create_time")
     private LocalDateTime createTime;
     @TableField("update_time")
@@ -140,6 +146,30 @@ public class Appointment {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getVerifyCode() {
+        return verifyCode;
+    }
+
+    public void setVerifyCode(String verifyCode) {
+        this.verifyCode = verifyCode;
+    }
+
+    public Integer getIsVerified() {
+        return isVerified;
+    }
+
+    public void setIsVerified(Integer isVerified) {
+        this.isVerified = isVerified;
+    }
+
+    public LocalDateTime getVerifyTime() {
+        return verifyTime;
+    }
+
+    public void setVerifyTime(LocalDateTime verifyTime) {
+        this.verifyTime = verifyTime;
     }
 
     public LocalDateTime getCreateTime() {

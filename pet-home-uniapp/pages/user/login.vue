@@ -1,11 +1,20 @@
 <template>
   <view class="login-container">
+    <!-- 背景装饰 -->
+    <view class="background-decoration">
+      <view class="decoration-circle circle-1"></view>
+      <view class="decoration-circle circle-2"></view>
+      <view class="decoration-circle circle-3"></view>
+    </view>
+
     <!-- 主要内容区域 -->
     <view class="main-content">
       <!-- 品牌区域 -->
       <view class="brand-section">
         <view class="brand-icon">
-          <image src="/static/images/brand-logo.svg" mode="aspectFit" class="logo-image" />
+          <view class="logo-container">
+            <text class="logo-emoji">🐾</text>
+          </view>
         </view>
         <view class="brand-text">
           <view class="brand-title">宠物之家</view>
@@ -17,6 +26,7 @@
       <view class="login-section">
         <!-- 手机号输入 -->
         <view class="input-group">
+          <view class="input-icon">📱</view>
           <input
             class="login-input"
             type="number"
@@ -24,11 +34,13 @@
             placeholder="请输入手机号"
             @input="onPhoneInput"
             @blur="onPhoneBlur"
+            maxlength="11"
           />
         </view>
 
         <!-- 密码输入 -->
         <view class="input-group">
+          <view class="input-icon">🔒</view>
           <input
             class="login-input"
             :type="showPassword ? 'text' : 'password'"
@@ -38,12 +50,13 @@
             @blur="onPasswordBlur"
           />
           <view class="password-toggle" @click="togglePassword">
-            <image
-              :src="showPassword ? '/static/images/eye-open.svg' : '/static/images/eye-close.svg'"
-              mode="aspectFit"
-              class="eye-icon"
-            />
+            <text class="eye-icon">{{ showPassword ? '👁️' : '🙈' }}</text>
           </view>
+        </view>
+
+        <!-- 忘记密码 -->
+        <view class="forgot-password" @click="onForgotPassword">
+          <text class="forgot-text">忘记密码？</text>
         </view>
 
         <!-- 登录按钮 -->
@@ -52,7 +65,10 @@
           :disabled="!canLogin"
           @click="onLoginTap"
         >
-          {{ loggingIn ? '登录中...' : '登录' }}
+          <view class="button-content">
+            <text v-if="loggingIn" class="loading-icon">⏳</text>
+            <text class="button-text">{{ loggingIn ? '登录中...' : '登录' }}</text>
+          </view>
         </button>
 
         <!-- 分割线 -->
@@ -97,8 +113,8 @@ export default {
 
   methods: {
     // 手机号输入
-    onPhoneInput(value) {
-      this.phone = value
+    onPhoneInput(e) {
+      this.phone = e.detail.value
       this.validateForm()
     },
 
@@ -110,8 +126,8 @@ export default {
     },
 
     // 密码输入
-    onPasswordInput(value) {
-      this.password = value
+    onPasswordInput(e) {
+      this.password = e.detail.value
       this.validateForm()
     },
 
@@ -142,16 +158,18 @@ export default {
       this.loggingIn = true
 
       // 调用登录API
-      this.$api.loginByPhone(this.phone, this.password).then(res => {
+      api.loginByPhone(this.phone, this.password).then(res => {
         if (res.code === 0) {
           // 登录成功，保存用户信息和token
           const { token, uid } = res.data
-          this.$store.commit('SET_TOKEN', token)
-          this.$store.commit('SET_USER_INFO', {
+          
+          // 保存到本地存储
+          uni.setStorageSync('token', token)
+          uni.setStorageSync('userInfo', {
             phone: this.phone,
             uid: uid,
             nickname: res.data.nickname || this.phone,
-            avatar: res.data.avatar || ''
+            avatar: res.data.avatar || '/static/images/garfield-default-avatar.png'
           })
 
           util.showToast('登录成功', 'success')
@@ -197,11 +215,17 @@ export default {
           console.log('微信登录授权成功:', res)
           if (res.code) {
             // 调用后端API，用微信授权码获取用户信息和token
-            this.$api.loginByWechat(res.code).then(response => {
+            api.loginByWechat(res.code).then(response => {
               if (response.code === 0) {
                 const { token, userInfo } = response.data
-                this.$store.commit('SET_TOKEN', token)
-                this.$store.commit('SET_USER_INFO', userInfo)
+                
+                // 保存到本地存储
+                uni.setStorageSync('token', token)
+                // 确保微信登录用户也有默认头像
+                if (!userInfo.avatar) {
+                  userInfo.avatar = '/static/images/garfield-default-avatar.png'
+                }
+                uni.setStorageSync('userInfo', userInfo)
 
                 uni.showToast({
                   title: '登录成功',
@@ -256,20 +280,76 @@ export default {
 <style lang="scss" scoped>
 .login-container {
   min-height: 100vh;
-  background-color: #ffffff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.background-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  .decoration-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation: float 6s ease-in-out infinite;
+
+    &.circle-1 {
+      width: 200rpx;
+      height: 200rpx;
+      top: 10%;
+      left: -50rpx;
+      animation-delay: 0s;
+    }
+
+    &.circle-2 {
+      width: 150rpx;
+      height: 150rpx;
+      top: 60%;
+      right: -30rpx;
+      animation-delay: 2s;
+    }
+
+    &.circle-3 {
+      width: 100rpx;
+      height: 100rpx;
+      top: 30%;
+      right: 20%;
+      animation-delay: 4s;
+    }
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
 }
 
 .main-content {
   width: 100%;
   max-width: 600rpx;
-  background-color: #ffffff;
-  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20rpx);
+  border-radius: 40rpx;
   padding: 80rpx 60rpx 60rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 2;
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
 }
 
 .brand-section {
@@ -280,92 +360,155 @@ export default {
 .brand-icon {
   margin-bottom: 40rpx;
 
-  .logo-image {
+  .logo-container {
     width: 120rpx;
     height: 120rpx;
-    border-radius: 24rpx;
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    border-radius: 30rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 8rpx 24rpx rgba(255, 107, 53, 0.3);
+
+    .logo-emoji {
+      font-size: 60rpx;
+    }
   }
 }
 
 .brand-text {
   .brand-title {
-    font-size: 48rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 12rpx;
+    font-size: 52rpx;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16rpx;
+    letter-spacing: 2rpx;
   }
 
   .brand-subtitle {
     font-size: 28rpx;
     color: #666;
+    font-weight: 400;
   }
 }
 
 .login-section {
   .input-group {
-    margin-bottom: 40rpx;
+    margin-bottom: 32rpx;
     position: relative;
-
-    &:last-child {
-      margin-bottom: 60rpx;
-    }
-  }
-
-  .login-input {
-    width: 100%;
-    height: 96rpx;
-    padding: 0 30rpx;
-    background-color: #f8f9fa;
-    border: 2rpx solid #e9ecef;
-    border-radius: 24rpx;
-    font-size: 32rpx;
-    color: #333;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 28rpx;
+    border: 2rpx solid transparent;
     transition: all 0.3s ease;
 
-    &::placeholder {
+    &:focus-within {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 6rpx rgba(102, 126, 234, 0.1);
+    }
+
+    .input-icon {
+      padding: 0 24rpx;
+      font-size: 32rpx;
       color: #999;
     }
 
-    &:focus {
-      border-color: #ff6b35;
-      background-color: white;
-      box-shadow: 0 0 0 6rpx rgba(255, 107, 53, 0.1);
+    .login-input {
+      flex: 1;
+      height: 96rpx;
+      padding: 0 20rpx 0 0;
+      background: transparent;
+      border: none;
+      font-size: 32rpx;
+      color: #333;
+
+      &::placeholder {
+        color: #999;
+      }
+    }
+
+    .password-toggle {
+      padding: 0 24rpx;
+      cursor: pointer;
+
+      .eye-icon {
+        font-size: 32rpx;
+        color: #999;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #667eea;
+        }
+      }
     }
   }
 
-  .password-toggle {
-    position: absolute;
-    right: 15rpx;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 20rpx;
+  .forgot-password {
+    text-align: right;
+    margin-bottom: 40rpx;
 
-    .eye-icon {
-      width: 32rpx;
-      height: 32rpx;
+    .forgot-text {
+      font-size: 26rpx;
+      color: #667eea;
+      font-weight: 500;
     }
   }
 
   .login-button {
     width: 100%;
     height: 96rpx;
-    border-radius: 24rpx;
-    font-size: 32rpx;
-    font-weight: bold;
+    border-radius: 28rpx;
     border: none;
     margin-bottom: 40rpx;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 
     &.active {
-      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-      color: white;
-      box-shadow: 0 8rpx 24rpx rgba(255, 107, 53, 0.3);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+      transform: translateY(0);
+
+      &:active {
+        transform: translateY(2rpx);
+        box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+      }
     }
 
     &.inactive {
-      background-color: #f0f0f0;
+      background: #f0f0f0;
       color: #999;
     }
+
+    .button-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12rpx;
+      height: 100%;
+
+      .loading-icon {
+        font-size: 28rpx;
+        animation: spin 1s linear infinite;
+      }
+
+      .button-text {
+        font-size: 32rpx;
+        font-weight: 600;
+        color: white;
+      }
+    }
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   .divider {
@@ -376,43 +519,45 @@ export default {
     .divider-line {
       flex: 1;
       height: 1rpx;
-      background-color: #e0e0e0;
+      background: linear-gradient(90deg, transparent 0%, #e0e0e0 50%, transparent 100%);
     }
 
     .divider-text {
       padding: 0 30rpx;
       font-size: 24rpx;
       color: #999;
+      background: rgba(255, 255, 255, 0.95);
     }
   }
 
   .wechat-login-btn {
     width: 100%;
-    height: 80rpx;
-    border-radius: 20rpx;
-    background-color: #07c160;
+    height: 88rpx;
+    border-radius: 28rpx;
+    background: linear-gradient(135deg, #07c160 0%, #06a552 100%);
     color: white;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12rpx;
-    font-size: 28rpx;
-    font-weight: bold;
+    gap: 16rpx;
+    font-size: 30rpx;
+    font-weight: 600;
     margin-bottom: 40rpx;
     transition: all 0.3s ease;
+    box-shadow: 0 6rpx 20rpx rgba(7, 193, 96, 0.3);
 
     &:active {
-      background-color: #06a552;
-      transform: scale(0.98);
+      transform: translateY(2rpx);
+      box-shadow: 0 3rpx 10rpx rgba(7, 193, 96, 0.3);
     }
 
     .wechat-icon {
-      font-size: 32rpx;
+      font-size: 36rpx;
     }
 
     .wechat-text {
-      font-size: 28rpx;
+      font-size: 30rpx;
     }
   }
 
@@ -427,8 +572,9 @@ export default {
 
     .register-link {
       font-size: 28rpx;
-      color: #ff6b35;
+      color: #667eea;
       font-weight: 600;
+      text-decoration: underline;
     }
   }
 }

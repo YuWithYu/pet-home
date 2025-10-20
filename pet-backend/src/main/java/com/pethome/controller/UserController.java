@@ -57,14 +57,30 @@ public class UserController {
 
     @GetMapping("/current")
     @ApiOperation("获取当前用户信息")
-    public Result<User> getCurrentUser() {
+    public Result<User> getCurrentUser(@RequestParam(required = false) Long userId,
+                                       @RequestParam(required = false) String username) {
         try {
-            User user = new User();
-            user.setId(1L);
-            user.setUsername("Yuu");
-            user.setNickname("宠物达人");
-            user.setPoints(100);
-            user.setMemberLevel(1);
+            User user = null;
+            
+            // 优先使用 userId 查询
+            if (userId != null) {
+                user = userService.getUserById(userId);
+            } 
+            // 其次使用 username 查询
+            else if (username != null && !username.isEmpty()) {
+                user = userService.getUserByUsername(username);
+            }
+            // 默认返回ID为1的用户（用于测试）
+            else {
+                user = userService.getUserById(1L);
+            }
+            
+            if (user == null) {
+                return Result.error("用户不存在");
+            }
+            
+            // 隐藏密码
+            user.setPassword(null);
             return Result.success(user);
         } catch (Exception e) {
             return Result.error("获取用户信息失败: " + e.getMessage());

@@ -87,7 +87,7 @@ export function batchSetHotProducts(data) {
  */
 export function getProductDetail(productId) {
   return request({
-    url: `/api/product/${productId}`,
+    url: `/product/${productId}`,
     method: 'get'
   })
 }
@@ -99,7 +99,7 @@ export function getProductDetail(productId) {
  */
 export function createProduct(data) {
   return request({
-    url: '/product',
+    url: '/product/create',
     method: 'post',
     data
   })
@@ -113,9 +113,12 @@ export function createProduct(data) {
  */
 export function updateProduct(productId, data) {
   return request({
-    url: `/product/${productId}`,
+    url: `/product/update`,
     method: 'put',
-    data
+    data: {
+      id: productId,
+      ...data
+    }
   })
 }
 
@@ -147,16 +150,16 @@ export function addCategory(data) {
   })
 }
 
-export function deleteCategory(categoryName) {
+export function deleteCategory(categoryId) {
   return request({
-    url: `/admin/categories/${encodeURIComponent(categoryName)}`,
+    url: `/admin/categories/${categoryId}`,
     method: 'delete'
   })
 }
 
-export function updateCategory(oldName, data) {
+export function updateCategory(categoryId, data) {
   return request({
-    url: `/admin/categories/${encodeURIComponent(oldName)}`,
+    url: `/admin/categories/${categoryId}`,
     method: 'put',
     data
   })

@@ -7,8 +7,8 @@ Vue.use(Vuex)
 const store = new Vuex.Store({
   state: {
     // 用户信息
-    userInfo: null,
-    token: null,
+    userInfo: uni.getStorageSync('userInfo') || null,
+    token: uni.getStorageSync('token') || null,
 
     // 购物车信息
     cartCount: 0,
@@ -68,6 +68,16 @@ const store = new Vuex.Store({
       state.token = null
       uni.removeStorageSync('userInfo')
       uni.removeStorageSync('token')
+    },
+
+    // 退出登录（别名）
+    LOGOUT(state) {
+      state.userInfo = null
+      state.token = null
+      state.cartCount = 0
+      state.cartList = []
+      uni.removeStorageSync('userInfo')
+      uni.removeStorageSync('token')
     }
   },
 
@@ -94,7 +104,24 @@ const store = new Vuex.Store({
 
     // 退出登录
     logout({ commit }) {
-      commit('CLEAR_USER')
+      try {
+        // 清除用户相关数据
+        commit('CLEAR_USER')
+        
+        // 清除购物车数据
+        commit('SET_CART_COUNT', 0)
+        commit('SET_CART_LIST', [])
+        
+        // 清除其他可能的本地存储
+        uni.removeStorageSync('cartList')
+        uni.removeStorageSync('cartCount')
+        uni.removeStorageSync('location')
+        uni.removeStorageSync('config')
+        
+        console.log('用户数据清除完成')
+      } catch (error) {
+        console.error('清除用户数据失败:', error)
+      }
     },
 
     // 更新购物车数量

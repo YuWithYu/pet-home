@@ -65,6 +65,8 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/api/appointment/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/appointments/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/door-cleaning/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/hospital-services/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/hospital-appointments/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/grooming-services/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/grooming-banners/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/service-banners/page/**")).permitAll()

@@ -1,4 +1,5 @@
 {
-  "navigationBarTitleText": "个人资料",
+  "navigationBarTitleText": "编辑个人信息",
+  "navigationStyle": "custom",
   "usingComponents": {}
 }

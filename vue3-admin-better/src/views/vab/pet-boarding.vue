@@ -280,7 +280,7 @@ export default {
         console.log('开始加载寄养服务数据...');
         
         // 使用fetch直接调用API
-        const response = await fetch('http://10.76.242.18:8080/api/pet-boarding/list', {
+        const response = await fetch('http://localhost:8080/api/pet-boarding/list', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -359,7 +359,7 @@ export default {
         try {
           console.log('正在确认寄养:', boarding.id);
           
-          const response = await fetch(`http://10.76.242.18:8080/api/pet-boarding/${boarding.id}/status?status=confirmed`, {
+          const response = await fetch(`http://localhost:8080/api/pet-boarding/${boarding.id}/status?status=confirmed`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -390,7 +390,7 @@ export default {
         try {
           console.log('正在开始寄养:', boarding.id);
           
-          const response = await fetch(`http://10.76.242.18:8080/api/pet-boarding/${boarding.id}/status?status=in_progress`, {
+          const response = await fetch(`http://localhost:8080/api/pet-boarding/${boarding.id}/status?status=in_progress`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -423,7 +423,7 @@ export default {
         try {
           console.log('正在完成寄养:', boarding.id, 'rating:', rating);
           
-          const response = await fetch(`http://10.76.242.18:8080/api/pet-boarding/${boarding.id}/complete?rating=${rating}&review=${encodeURIComponent(review || '')}`, {
+          const response = await fetch(`http://localhost:8080/api/pet-boarding/${boarding.id}/complete?rating=${rating}&review=${encodeURIComponent(review || '')}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -454,7 +454,7 @@ export default {
         try {
           console.log('正在取消寄养:', boarding.id);
           
-          const response = await fetch(`http://10.76.242.18:8080/api/pet-boarding/${boarding.id}/cancel`, {
+          const response = await fetch(`http://localhost:8080/api/pet-boarding/${boarding.id}/cancel`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'

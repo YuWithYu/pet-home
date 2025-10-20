@@ -202,7 +202,7 @@ import axios from 'axios'
 
 // 配置axios
 const api = axios.create({
-  baseURL: 'http://10.76.242.18:8080',
+  baseURL: 'http://localhost:8080',
   timeout: 10000
 })
 

@@ -18,6 +18,8 @@ import "@/utils/resizeObserverFix";
 import dayjs from "@/utils/dayjs";
 // 导入 dayjs 补丁
 import "@/utils/dayjs-patch";
+// 导入 Element Plus 修复
+import "@/utils/element-plus-fix";
 
 // 确保 dayjs 在全局可用
 window.dayjs = dayjs;

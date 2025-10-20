@@ -1,6 +1,6 @@
 (global["webpackJsonp"] = global["webpackJsonp"] || []).push([["pages/category/index"],{
 
-/***/ 147:
+/***/ 150:
 /*!************************************************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/main.js?{"page":"pages%2Fcategory%2Findex"} ***!
   \************************************************************************************************/
@@ -194,33 +194,24 @@ var _default = {
       var _this = this;
       this.loading = true;
       this.$api.getAllCategories().then(function (res) {
-        if (res.code === 0 && res.data) {
+        if (res.code === 0 && res.data && Array.isArray(res.data) && res.data.length > 0) {
           _this.categories = res.data;
           _this.selectedCategory = res.data[0];
           _this.onCategoryTap(res.data[0]);
+        } else {
+          _this.categories = [];
+          uni.showToast({
+            title: '暂无分类数据',
+            icon: 'none'
+          });
         }
-      }).catch(function () {
-        _this.categories = [{
-          id: 1,
-          name: '宠物食品'
-        }, {
-          id: 2,
-          name: '宠物用品'
-        }, {
-          id: 3,
-          name: '宠物玩具'
-        }, {
-          id: 4,
-          name: '医疗服务'
-        }, {
-          id: 5,
-          name: '美容护理'
-        }, {
-          id: 6,
-          name: '宠物寄养'
-        }];
-        _this.selectedCategory = _this.categories[0];
-        _this.onCategoryTap(_this.categories[0]);
+      }).catch(function (err) {
+        console.error('加载分类失败:', err);
+        _this.categories = [];
+        uni.showToast({
+          title: '加载分类失败',
+          icon: 'none'
+        });
       }).finally(function () {
         _this.loading = false;
       });
@@ -267,18 +258,18 @@ var _default = {
             goods = _res$data.goods,
             total = _res$data.total,
             pages = _res$data.pages;
-          var formattedGoods = goods.map(function (item) {
-            var picUrl = item.pic || item.image;
-            // 如果图片路径以 /upload/ 开头，拼接完整的后端URL
-            if (picUrl && picUrl.startsWith('/upload/')) {
-              picUrl = 'https://localhost:8080' + picUrl;
-            }
+          var formattedGoods = goods && Array.isArray(goods) ? goods.map(function (item) {
+            // 获取图片URL，优先使用pic，然后是image，最后是imageUrl
+            var picUrl = item.pic || item.image || item.imageUrl || '';
+
+            // 使用getImageUrl函数处理图片URL，解决小程序HTTP协议限制问题
+            picUrl = _this2.getImageUrl(picUrl);
             return _objectSpread(_objectSpread({}, item), {}, {
               pic: picUrl,
-              price: _util.util.formatPrice(item.price),
-              sales: item.sales || Math.floor(Math.random() * 1000) + 100
+              price: _util.util.formatPrice(item.price)
+              // 移除硬编码的sales数据，只显示真实的销售数据
             });
-          });
+          }) : [];
           _this2.goodsList = reset ? formattedGoods : [].concat((0, _toConsumableArray2.default)(_this2.goodsList), (0, _toConsumableArray2.default)(formattedGoods));
           _this2.hasMore = _this2.pageNo < pages;
           _this2.pageNo++;
@@ -302,6 +293,10 @@ var _default = {
       uni.navigateTo({
         url: '/pages/search/index'
       });
+    },
+    // 处理图片URL，解决小程序HTTP协议限制问题
+    getImageUrl: function getImageUrl(imageUrl) {
+      return _util.util.getImageUrl(imageUrl);
     }
   }
 };
@@ -339,5 +334,5 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ })
 
-},[[147,"common/runtime","common/vendor"]]]);
+},[[150,"common/runtime","common/vendor"]]]);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/category/index.js.map

@@ -259,7 +259,7 @@ module.exports = {
     proxy: [
       {
         context: '/api',
-        target: 'http://10.76.242.18:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         pathRewrite: {
           '^/api': '/api'
@@ -267,7 +267,7 @@ module.exports = {
       },
       {
         context: '/upload',
-        target: 'http://10.76.242.18:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         pathRewrite: {
           '^/upload': '/upload'
@@ -278,11 +278,15 @@ module.exports = {
       overlay: {
         errors: true,
         warnings: false,
-        // 过滤 ResizeObserver 错误
+        // 过滤特定错误
         runtimeErrors: (error) => {
           const ignoreErrors = [
             'ResizeObserver loop completed with undelivered notifications',
-            'ResizeObserver loop limit exceeded'
+            'ResizeObserver loop limit exceeded',
+            'defaultTimeDValue.hour is not a function',
+            'TypeError: defaultTimeDValue.hour is not a function',
+            "Cannot read properties of null (reading 'nextSibling')",
+            "Cannot read property 'nextSibling' of null"
           ];
           return !ignoreErrors.some(ignoreError => error.message.includes(ignoreError));
         },

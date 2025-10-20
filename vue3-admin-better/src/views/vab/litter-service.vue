@@ -327,7 +327,7 @@ export default {
         console.log('开始加载铲屎服务数据...');
         
         // 使用fetch直接调用API
-        const response = await fetch('http://10.76.242.18:8080/api/litter-service/list', {
+        const response = await fetch('http://localhost:8080/api/litter-service/list', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -410,7 +410,7 @@ export default {
           console.log('正在确认服务:', service.id);
           
           // 调用后端API更新状态
-          const response = await fetch(`http://10.76.242.18:8080/api/litter-service/status/${service.id}?status=confirmed`, {
+          const response = await fetch(`http://localhost:8080/api/litter-service/status/${service.id}?status=confirmed`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -449,7 +449,7 @@ export default {
           console.log('正在分配服务人员:', service.id, staffName, staffPhone);
           
           // 调用后端API分配服务人员
-          const response = await fetch(`http://10.76.242.18:8080/api/litter-service/assign-staff/${service.id}?staffName=${encodeURIComponent(staffName)}&staffPhone=${encodeURIComponent(staffPhone)}`, {
+          const response = await fetch(`http://localhost:8080/api/litter-service/assign-staff/${service.id}?staffName=${encodeURIComponent(staffName)}&staffPhone=${encodeURIComponent(staffPhone)}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -487,7 +487,7 @@ export default {
           console.log('正在完成服务:', service.id);
           
           // 调用后端API更新状态
-          const response = await fetch(`http://10.76.242.18:8080/api/litter-service/status/${service.id}?status=completed`, {
+          const response = await fetch(`http://localhost:8080/api/litter-service/status/${service.id}?status=completed`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -524,7 +524,7 @@ export default {
           console.log('正在取消服务:', service.id, reason);
           
           // 调用后端API取消服务
-          const response = await fetch(`http://10.76.242.18:8080/api/litter-service/cancel/${service.id}?reason=${encodeURIComponent(reason)}`, {
+          const response = await fetch(`http://localhost:8080/api/litter-service/cancel/${service.id}?reason=${encodeURIComponent(reason)}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
