@@ -60,4 +60,13 @@ public class HospitalAppointment {
 
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime updateTime;
+
+    // 手动添加setter方法以确保兼容性
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return status;
+    }
 }
