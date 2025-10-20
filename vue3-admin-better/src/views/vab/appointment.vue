@@ -757,9 +757,22 @@ export default {
     },
     todayAppointments() {
       const today = new Date().toISOString().split('T')[0];
-      return this.filteredAppointments.filter(appointment => 
-        appointment.date && appointment.date.startsWith(today)
-      );
+      return this.filteredAppointments.filter(appointment => {
+        if (!appointment.date) return false;
+        
+        // 处理不同类型的date字段
+        let dateStr = '';
+        if (typeof appointment.date === 'string') {
+          dateStr = appointment.date;
+        } else if (appointment.date instanceof Date) {
+          dateStr = appointment.date.toISOString().split('T')[0];
+        } else if (appointment.date && typeof appointment.date === 'object') {
+          // 如果是对象，尝试转换为字符串
+          dateStr = appointment.date.toString();
+        }
+        
+        return dateStr && dateStr.startsWith(today);
+      });
     }
   },
   created() {
