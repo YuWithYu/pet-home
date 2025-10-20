@@ -428,7 +428,7 @@ export default {
           url = '/pages/appointment/boarding'
           break
         case 'medical':
-          url = '/pages/appointment/medical'
+          url = '/pages/appointment/book-hospital'
           break
         case 'grooming':
           url = '/pages/appointment/grooming'

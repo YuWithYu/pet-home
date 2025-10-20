@@ -196,8 +196,9 @@ export default {
         return
       }
       
+      // 跳转到宠物医院预约页面
       uni.navigateTo({
-        url: `/pages/service/detail?serviceType=medical&serviceId=${service.id || index}`
+        url: `/pages/appointment/book-hospital?serviceType=hospital&serviceName=${encodeURIComponent(service.title || '宠物医院服务')}`
       })
     },
 
