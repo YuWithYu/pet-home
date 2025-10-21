@@ -321,73 +321,35 @@
           />
         </el-form-item>
         
-        <el-form-item label="服务分类" prop="category">
-          <el-select 
-            :model-value="typeof serviceForm.category === 'string' ? serviceForm.category : 'basic'"
-            @update:model-value="(value) => serviceForm.category = typeof value === 'string' ? value : 'basic'"
-            placeholder="请选择服务分类" 
-            style="width: 100%"
-            clearable
-          >
-            <el-option label="基础领养服务" value="basic" />
-            <el-option label="爱心领养服务" value="love" />
-            <el-option label="专业领养服务" value="professional" />
-          </el-select>
-        </el-form-item>
-        
-        <el-form-item label="服务价格" prop="price">
+        <el-form-item label="领养费用" prop="adoptionFee">
           <el-input-number
-            v-model="serviceForm.price"
-            :min="0.01"
-            :precision="2"
-            placeholder="请输入服务价格"
-            style="width: 100%"
-          />
-        </el-form-item>
-        
-        <el-form-item label="服务时长" prop="duration">
-          <el-input-number
-            v-model="serviceForm.duration"
-            :min="1"
-            placeholder="请输入服务时长(天)"
-            style="width: 100%"
-          />
-        </el-form-item>
-        
-        <el-form-item label="背景颜色" prop="bgColor">
-          <el-color-picker v-model="serviceForm.bgColor" />
-        </el-form-item>
-        
-        <el-form-item label="排序顺序" prop="sortOrder">
-          <el-input-number
-            v-model="serviceForm.sortOrder"
+            v-model="serviceForm.adoptionFee"
             :min="0"
-            placeholder="请输入排序顺序"
+            :precision="2"
+            placeholder="请输入领养费用"
             style="width: 100%"
           />
         </el-form-item>
         
-        <el-form-item label="是否推荐" prop="isRecommended">
-          <el-switch v-model="serviceForm.isRecommended" />
+        <el-form-item label="所在位置" prop="location">
+          <el-input v-model="serviceForm.location" placeholder="请输入所在位置" />
         </el-form-item>
         
-        <el-form-item label="服务标签">
-          <el-select
-            :model-value="Array.isArray(serviceForm.tags) ? serviceForm.tags : []"
-            @update:model-value="(value) => serviceForm.tags = Array.isArray(value) ? value : []"
-            multiple
-            filterable
-            allow-create
-            placeholder="请选择或输入服务标签"
-            style="width: 100%"
-          >
-            <el-option label="领养服务" value="领养服务" />
-            <el-option label="爱心传递" value="爱心传递" />
-            <el-option label="专业指导" value="专业指导" />
-            <el-option label="长期支持" value="长期支持" />
-            <el-option label="免费服务" value="免费服务" />
+        <el-form-item label="联系方式" prop="contactInfo">
+          <el-input v-model="serviceForm.contactInfo" placeholder="请输入联系方式" />
+        </el-form-item>
+        
+        <el-form-item label="宠物照片" prop="imageUrl">
+          <el-input v-model="serviceForm.imageUrl" placeholder="请输入宠物照片URL" />
+        </el-form-item>
+        
+        <el-form-item label="宠物状态" prop="status">
+          <el-select v-model="serviceForm.status" placeholder="请选择宠物状态" style="width: 100%">
+            <el-option label="可领养" value="available" />
+            <el-option label="已领养" value="adopted" />
           </el-select>
         </el-form-item>
+        
       </el-form>
       
       <template #footer>
@@ -1081,8 +1043,8 @@ export default {
     // 组件挂载时加载数据
     onMounted(() => {
       // 确保初始数据是正确的类型
-      serviceForm.category = typeof serviceForm.category === 'string' ? serviceForm.category : 'basic'
-      serviceForm.tags = Array.isArray(serviceForm.tags) ? serviceForm.tags : []
+      serviceForm.gender = typeof serviceForm.gender === 'string' ? serviceForm.gender : 'Male'
+      serviceForm.status = typeof serviceForm.status === 'string' ? serviceForm.status : 'available'
       
       loadServices()
       loadServiceBanner()
