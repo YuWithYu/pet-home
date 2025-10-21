@@ -13,7 +13,8 @@
               @input="handleSearch"
             />
             <el-select
-              v-model="selectedStatus"
+              :model-value="String(selectedStatus || '')"
+              @update:model-value="(value) => selectedStatus = String(value || '')"
               placeholder="选择状态"
               clearable
               style="width: 150px; margin-right: 10px"
@@ -183,7 +184,8 @@
                   </template>
                 </el-input>
                 <el-select 
-                  v-model="orderFilterStatus" 
+                  :model-value="String(orderFilterStatus || '')"
+                  @update:model-value="(value) => orderFilterStatus = String(value || '')"
                   placeholder="状态筛选" 
                   style="width: 120px; margin-right: 10px"
                   @change="handleOrderStatusFilter"
@@ -307,7 +309,8 @@
         
         <el-form-item label="性别" prop="gender">
           <el-select 
-            v-model="serviceForm.gender"
+            :model-value="String(serviceForm.gender || 'Male')"
+            @update:model-value="(value) => serviceForm.gender = String(value || 'Male')"
             placeholder="请选择性别"
           >
             <el-option label="公" value="Male" />
@@ -348,7 +351,8 @@
         
         <el-form-item label="宠物状态" prop="status">
           <el-select 
-            v-model="serviceForm.status"
+            :model-value="String(serviceForm.status || 'available')"
+            @update:model-value="(value) => serviceForm.status = String(value || 'available')"
             placeholder="请选择宠物状态" 
             style="width: 100%"
           >
