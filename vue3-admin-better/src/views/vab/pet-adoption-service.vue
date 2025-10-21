@@ -716,7 +716,7 @@ export default {
       Object.assign(serviceForm, {
         name: service.name,
         description: service.description,
-        category: service.category,
+        category: typeof service.category === 'string' ? service.category : 'basic', // 确保category是字符串
         price: service.price,
         duration: service.duration,
         bgColor: service.bgColor || '#fff3e0',
@@ -746,7 +746,7 @@ export default {
       Object.assign(serviceForm, {
         name: '',
         description: '',
-        category: '',
+        category: 'basic', // 设置默认值而不是空字符串
         price: 0,
         duration: 60,
         bgColor: '#fff3e0',
