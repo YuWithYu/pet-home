@@ -12,15 +12,32 @@
         </view>
       </view>
 
-      <!-- 预约日期 -->
+      <!-- 寄养开始日期 -->
       <view class="form-section">
-        <view class="section-title">预约日期</view>
-        <picker mode="date" :value="formData.date" :start="todayDate" :end="maxDate" @change="onDateChange">
+        <view class="section-title">寄养开始日期</view>
+        <picker mode="date" :value="formData.startDate" :start="todayDate" :end="maxDate" @change="onStartDateChange">
           <view class="date-picker">
-            <view class="picker-value">{{ formData.date || '请选择日期' }}</view>
+            <view class="picker-value">{{ formData.startDate || '请选择开始日期' }}</view>
             <view class="picker-arrow">›</view>
           </view>
         </picker>
+      </view>
+
+      <!-- 寄养结束日期 -->
+      <view class="form-section">
+        <view class="section-title">寄养结束日期</view>
+        <picker mode="date" :value="formData.endDate" :start="formData.startDate || todayDate" :end="maxDate" @change="onEndDateChange">
+          <view class="date-picker">
+            <view class="picker-value">{{ formData.endDate || '请选择结束日期' }}</view>
+            <view class="picker-arrow">›</view>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 寄养天数 -->
+      <view class="form-section" v-if="formData.days > 0">
+        <view class="section-title">寄养天数</view>
+        <view class="days-display">{{ formData.days }} 天</view>
       </view>
 
       <!-- 预约时间段 -->
@@ -145,7 +162,9 @@ export default {
     return {
       formData: {
         petId: null,
-        date: '',
+        startDate: '',
+        endDate: '',
+        days: 1,
         timeSlot: '',
         location: '',
         contactName: '',
@@ -281,9 +300,35 @@ export default {
       }
     },
 
-    // 日期变更
-    onDateChange(e) {
-      this.formData.date = e.detail.value
+    // 开始日期变更
+    onStartDateChange(e) {
+      this.formData.startDate = e.detail.value
+      // 如果结束日期早于开始日期，清空结束日期
+      if (this.formData.endDate && this.formData.endDate < this.formData.startDate) {
+        this.formData.endDate = ''
+        this.formData.days = 1
+      } else {
+        this.calculateDays()
+      }
+    },
+
+    // 结束日期变更
+    onEndDateChange(e) {
+      this.formData.endDate = e.detail.value
+      this.calculateDays()
+    },
+
+    // 计算寄养天数
+    calculateDays() {
+      if (this.formData.startDate && this.formData.endDate) {
+        const start = new Date(this.formData.startDate)
+        const end = new Date(this.formData.endDate)
+        const diffTime = end - start
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        this.formData.days = diffDays > 0 ? diffDays : 1
+      } else {
+        this.formData.days = 1
+      }
     },
 
     // 选择时间段
@@ -342,9 +387,17 @@ export default {
         return false
       }
 
-      if (!this.formData.date) {
+      if (!this.formData.startDate) {
         uni.showToast({
-          title: '请选择预约日期',
+          title: '请选择寄养开始日期',
+          icon: 'none'
+        })
+        return false
+      }
+
+      if (!this.formData.endDate) {
+        uni.showToast({
+          title: '请选择寄养结束日期',
           icon: 'none'
         })
         return false
@@ -420,7 +473,9 @@ export default {
           userId: this.userInfo.uid,
           petId: this.getCompatiblePetId(this.formData.petId), // 确保ID在Integer范围内
           serviceType: this.formData.serviceType,
-          date: this.formData.date,
+          startDate: this.formData.startDate,
+          endDate: this.formData.endDate,
+          days: this.formData.days,
           timeSlot: this.formData.timeSlot,
           location: this.formData.location,
           contactName: this.formData.contactName,
@@ -550,6 +605,17 @@ export default {
       font-weight: bold;
     }
   }
+}
+
+/* 寄养天数显示 */
+.days-display {
+  padding: 24rpx;
+  background-color: #f0f9ff;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #ff6b35;
 }
 
 /* 地址输入 */
