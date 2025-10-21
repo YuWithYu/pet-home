@@ -1,5 +1,5 @@
 <template>
-  <div class="litter-service-container">
+  <div class="pet-adoption-container" :key="componentKey">
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
@@ -498,11 +498,14 @@ api.interceptors.response.use(
 )
 
 export default {
-  name: 'LitterServiceManagement',
+  name: 'PetAdoptionManagement',
   components: {
     UploadFilled
   },
   setup() {
+    // 强制重新渲染的key
+    const componentKey = ref(0)
+    
     const loading = ref(false)
     const services = ref([])
     const searchText = ref('')
@@ -1051,6 +1054,9 @@ export default {
 
     // 组件挂载时加载数据
     onMounted(() => {
+      // 强制重新渲染
+      componentKey.value++
+      
       // 确保初始数据是正确的类型
       serviceForm.petName = String(serviceForm.petName || '')
       serviceForm.breed = String(serviceForm.breed || '')
@@ -1068,6 +1074,7 @@ export default {
     })
 
     return {
+      componentKey,
       loading,
       services,
       searchText,
