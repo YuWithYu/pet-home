@@ -304,7 +304,8 @@
         
         <el-form-item label="服务分类" prop="category">
           <el-select 
-            v-model="serviceForm.category" 
+            :model-value="typeof serviceForm.category === 'string' ? serviceForm.category : 'basic'"
+            @update:model-value="(value) => serviceForm.category = typeof value === 'string' ? value : 'basic'"
             placeholder="请选择服务分类" 
             style="width: 100%"
             clearable
@@ -353,7 +354,8 @@
         
         <el-form-item label="服务标签">
           <el-select
-            v-model="serviceForm.tags"
+            :model-value="Array.isArray(serviceForm.tags) ? serviceForm.tags : []"
+            @update:model-value="(value) => serviceForm.tags = Array.isArray(value) ? value : []"
             multiple
             filterable
             allow-create
@@ -755,6 +757,7 @@ export default {
       serviceDialogVisible.value = true
     }
 
+
     // 重置表单
     const resetForm = () => {
       Object.assign(serviceForm, {
@@ -1034,6 +1037,10 @@ export default {
 
     // 组件挂载时加载数据
     onMounted(() => {
+      // 确保初始数据是正确的类型
+      serviceForm.category = typeof serviceForm.category === 'string' ? serviceForm.category : 'basic'
+      serviceForm.tags = Array.isArray(serviceForm.tags) ? serviceForm.tags : []
+      
       loadServices()
       loadServiceBanner()
     })
