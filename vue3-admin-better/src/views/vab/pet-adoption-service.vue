@@ -3,11 +3,11 @@
     <el-card shadow="never">
       <template #header>
         <div class="card-header">
-          <span>宠物领养服务管理</span>
+          <span>待领养宠物管理</span>
           <div class="header-actions">
             <el-input
               v-model="searchText"
-              placeholder="搜索领养服务..."
+              placeholder="搜索宠物名称..."
               clearable
               style="width: 200px; margin-right: 10px"
               @input="handleSearch"
@@ -20,41 +20,45 @@
               @change="handleStatusFilter"
             >
               <el-option label="全部状态" value=""></el-option>
-              <el-option label="启用" value="active"></el-option>
-              <el-option label="禁用" value="inactive"></el-option>
+              <el-option label="可领养" value="available"></el-option>
+              <el-option label="已领养" value="adopted"></el-option>
             </el-select>
-            <el-button type="primary" @click="showAddServiceDialog">添加领养服务</el-button>
-            <el-button type="success" @click="exportServices">导出数据</el-button>
+            <el-button type="primary" @click="showAddPetDialog">添加待领养宠物</el-button>
+            <el-button type="success" @click="exportPets">导出数据</el-button>
             <el-button type="info" @click="showStatisticsDialog">统计信息</el-button>
           </div>
         </div>
       </template>
       
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-        <el-tab-pane label="所有领养服务" name="all">
+        <el-tab-pane label="所有待领养宠物" name="all">
           <el-table 
             :data="services" 
             style="width: 100%"
             row-key="id"
             v-loading="loading"
           >
-            <el-table-column prop="id" label="服务ID" width="80" />
-            <el-table-column prop="name" label="服务名称" width="150" />
-            <el-table-column prop="description" label="商品介绍" min-width="200" />
-            <el-table-column prop="category" label="分类" width="120">
+            <el-table-column prop="id" label="宠物ID" width="80" />
+            <el-table-column prop="petName" label="宠物名称" width="150" />
+            <el-table-column prop="breed" label="品种" width="120" />
+            <el-table-column prop="age" label="年龄" width="80">
               <template #default="scope">
-                <el-tag type="primary">
-                  {{ scope.row.category || '领养服务' }}
+                {{ scope.row.age }}岁
+              </template>
+            </el-table-column>
+            <el-table-column prop="gender" label="性别" width="80">
+              <template #default="scope">
+                <el-tag :type="scope.row.gender === 'Male' ? 'primary' : 'success'">
+                  {{ scope.row.gender === 'Male' ? '公' : '母' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="price" label="价格" width="100">
+            <el-table-column prop="adoptionFee" label="领养费用" width="100">
               <template #default="scope">
-                <span style="color: #ff6b35; font-weight: bold;">¥{{ scope.row.price }}</span>
+                <span style="color: #ff6b35; font-weight: bold;">¥{{ scope.row.adoptionFee }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="duration" label="时长(分钟)" width="100" />
-            <el-table-column label="服务图片" width="120">
+            <el-table-column label="宠物照片" width="120">
               <template #default="scope">
                 <el-image
                   v-if="scope.row.imageUrl"
@@ -63,34 +67,34 @@
                   style="width: 60px; height: 60px"
                   fit="cover"
                 />
-                <span v-else>无图片</span>
+                <span v-else>无照片</span>
               </template>
             </el-table-column>
             <el-table-column label="状态" width="100">
               <template #default="scope">
-                <el-tag :type="scope.row.status === 'active' ? 'success' : 'danger'">
-                  {{ scope.row.status === 'active' ? '启用' : '禁用' }}
+                <el-tag :type="scope.row.status === 'available' ? 'success' : 'info'">
+                  {{ scope.row.status === 'available' ? '可领养' : '已领养' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="sortOrder" label="排序" width="80" />
-            <el-table-column prop="createdAt" label="创建时间" width="180">
+            <el-table-column prop="location" label="所在位置" width="120" />
+            <el-table-column prop="createTime" label="添加时间" width="180">
               <template #default="scope">
-                {{ formatDate(scope.row.createdAt) }}
+                {{ formatDate(scope.row.createTime) }}
               </template>
             </el-table-column>
             <el-table-column label="操作" width="200" fixed="right">
               <template #default="scope">
-                <el-button type="text" @click="editService(scope.row)">编辑</el-button>
-                <el-button type="text" @click="updateServiceImage(scope.row)">更换图片</el-button>
+                <el-button type="text" @click="editPet(scope.row)">编辑</el-button>
+                <el-button type="text" @click="updatePetImage(scope.row)">更换照片</el-button>
                 <el-button 
                   type="text" 
-                  :style="{ color: scope.row.status === 'active' ? '#e6a23c' : '#67c23a' }"
-                  @click="toggleServiceStatus(scope.row)"
+                  :style="{ color: scope.row.status === 'available' ? '#e6a23c' : '#67c23a' }"
+                  @click="togglePetStatus(scope.row)"
                 >
-                  {{ scope.row.status === 'active' ? '禁用' : '启用' }}
+                  {{ scope.row.status === 'available' ? '标记已领养' : '标记可领养' }}
                 </el-button>
-                <el-button type="text" @click="deleteService(scope.row)" style="color: #f56c6c">删除</el-button>
+                <el-button type="text" @click="deletePet(scope.row)" style="color: #f56c6c">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -289,16 +293,31 @@
         :rules="serviceFormRules"
         label-width="100px"
       >
-        <el-form-item label="服务名称" prop="name">
-          <el-input v-model="serviceForm.name" placeholder="请输入服务名称" />
+        <el-form-item label="宠物名称" prop="petName">
+          <el-input v-model="serviceForm.petName" placeholder="请输入宠物名称" />
         </el-form-item>
         
-        <el-form-item label="商品介绍" prop="description">
+        <el-form-item label="品种" prop="breed">
+          <el-input v-model="serviceForm.breed" placeholder="请输入宠物品种" />
+        </el-form-item>
+        
+        <el-form-item label="年龄" prop="age">
+          <el-input-number v-model="serviceForm.age" :min="0" :max="20" placeholder="请输入年龄" />
+        </el-form-item>
+        
+        <el-form-item label="性别" prop="gender">
+          <el-select v-model="serviceForm.gender" placeholder="请选择性别">
+            <el-option label="公" value="Male" />
+            <el-option label="母" value="Female" />
+          </el-select>
+        </el-form-item>
+        
+        <el-form-item label="宠物描述" prop="description">
           <el-input
             v-model="serviceForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入商品介绍"
+            placeholder="请输入宠物描述"
           />
         </el-form-item>
         
