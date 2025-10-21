@@ -3,7 +3,7 @@
     <!-- 页面头部 -->
     <view class="page-header">
       <view class="header-content">
-        <view class="header-icon">🐾</view>
+        <image class="header-icon" src="/static/images/your-image-name.png" mode="aspectFit"></image>
         <view class="header-title">宠物领养服务</view>
       </view>
     </view>
@@ -168,7 +168,10 @@ export default {
 <style lang="scss" scoped>
 .adoption-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  background-image: url('/static/images/your-custom-background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding-bottom: 40rpx;
 }
 
@@ -184,7 +187,8 @@ export default {
 }
 
 .header-icon {
-  font-size: 80rpx;
+  width: 80rpx;
+  height: 80rpx;
   margin-bottom: 20rpx;
 }
 

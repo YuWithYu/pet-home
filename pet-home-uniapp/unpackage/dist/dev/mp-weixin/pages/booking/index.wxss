@@ -1,0 +1,434 @@
+
+.booking-container.data-v-ad84041a {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 120rpx;
+}
+
+/* 服务信息卡片 */
+.service-card.data-v-ad84041a {
+  background: #fff;
+  padding: 30rpx;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.service-image.data-v-ad84041a {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  margin-right: 24rpx;
+}
+.service-info.data-v-ad84041a {
+  flex: 1;
+}
+.service-name.data-v-ad84041a {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+.service-price.data-v-ad84041a {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ff6b35;
+}
+
+/* 表单容器 */
+.form-container.data-v-ad84041a {
+  background: #fff;
+  padding: 0 30rpx;
+}
+.form-item.data-v-ad84041a {
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.form-item.data-v-ad84041a:last-child {
+  border-bottom: none;
+}
+.label.data-v-ad84041a {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.label-icon.data-v-ad84041a {
+  font-size: 36rpx;
+  margin-right: 12rpx;
+}
+.label-text.data-v-ad84041a {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 日期选择器 */
+.picker-value.data-v-ad84041a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+.arrow.data-v-ad84041a {
+  font-size: 36rpx;
+  color: #999;
+}
+
+/* 时间段选择 */
+.time-slots.data-v-ad84041a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+.time-slot.data-v-ad84041a {
+  flex: 0 0 calc(33.33% - 14rpx);
+  padding: 24rpx 12rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  text-align: center;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+.time-slot.active.data-v-ad84041a {
+  background: #fff5f2;
+  border-color: #ff6b35;
+  color: #ff6b35;
+}
+.time-slot.disabled.data-v-ad84041a {
+  background: #f0f0f0;
+  color: #ccc;
+}
+.time-text.data-v-ad84041a {
+  font-size: 26rpx;
+  font-weight: bold;
+}
+.status-text.data-v-ad84041a {
+  font-size: 20rpx;
+  margin-top: 8rpx;
+}
+.empty-tips.data-v-ad84041a {
+  padding: 40rpx 0;
+  text-align: center;
+  color: #999;
+  font-size: 26rpx;
+}
+
+/* 输入框 */
+.input.data-v-ad84041a {
+  padding: 20rpx 24rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+.textarea.data-v-ad84041a {
+  width: 100%;
+  padding: 20rpx 24rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+  min-height: 120rpx;
+  box-sizing: border-box;
+}
+.placeholder.data-v-ad84041a {
+  color: #999;
+}
+
+/* 底部操作栏 */
+.bottom-bar.data-v-ad84041a {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 20rpx 30rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+.price-info.data-v-ad84041a {
+  display: flex;
+  align-items: baseline;
+}
+.price-info .label.data-v-ad84041a {
+  font-size: 26rpx;
+  color: #666;
+  margin: 0;
+}
+.price-info .price.data-v-ad84041a {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #ff6b35;
+}
+.submit-btn.data-v-ad84041a {
+  flex: 0 0 240rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 30rpx;
+  font-weight: bold;
+  border: none;
+  box-shadow: 0 8rpx 20rpx rgba(255, 107, 53, 0.3);
+}
+.submit-btn.data-v-ad84041a:active {
+  opacity: 0.8;
+}
+
+/* 宠物选择器 */
+.pet-selector.data-v-ad84041a {
+  padding: 20rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  border: 1rpx solid #e0e0e0;
+}
+.selected-pet.data-v-ad84041a {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.pet-avatar.data-v-ad84041a {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 30rpx;
+  background: #f0f0f0;
+}
+.pet-info.data-v-ad84041a {
+  flex: 1;
+}
+.pet-name.data-v-ad84041a {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.pet-details.data-v-ad84041a {
+  font-size: 24rpx;
+  color: #666;
+  display: block;
+}
+.no-pet-selected.data-v-ad84041a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.placeholder-text.data-v-ad84041a {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 宠物数量计数器 */
+.counter-wrapper.data-v-ad84041a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+}
+.counter-btn.data-v-ad84041a {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #ff6b35;
+  color: #fff;
+  font-size: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.counter-input.data-v-ad84041a {
+  width: 120rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin: 0 40rpx;
+}
+
+/* 照片上传 */
+.photo-upload.data-v-ad84041a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+.photo-item.data-v-ad84041a {
+  position: relative;
+  width: 200rpx;
+  height: 200rpx;
+}
+.photo-img.data-v-ad84041a {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+}
+.photo-delete.data-v-ad84041a {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.photo-add.data-v-ad84041a {
+  width: 200rpx;
+  height: 200rpx;
+  border: 2rpx dashed #ddd;
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+}
+.photo-add-icon.data-v-ad84041a {
+  font-size: 60rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+}
+.photo-add-text.data-v-ad84041a {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 服务时长选项 */
+.duration-options.data-v-ad84041a {
+  display: flex;
+  gap: 20rpx;
+}
+.duration-item.data-v-ad84041a {
+  flex: 1;
+  padding: 24rpx 12rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  text-align: center;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+.duration-item.active.data-v-ad84041a {
+  background: #fff5f2;
+  border-color: #ff6b35;
+}
+.duration-name.data-v-ad84041a {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+.duration-item.active .duration-name.data-v-ad84041a {
+  color: #ff6b35;
+}
+.duration-price.data-v-ad84041a {
+  font-size: 22rpx;
+  color: #ff6b35;
+}
+
+/* 附加服务 */
+.extra-services.data-v-ad84041a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+.extra-service-item.data-v-ad84041a {
+  flex: 0 0 calc(50% - 10rpx);
+  padding: 24rpx 12rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  text-align: center;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+.extra-service-item.active.data-v-ad84041a {
+  background: #fff5f2;
+  border-color: #ff6b35;
+}
+.extra-service-name.data-v-ad84041a {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+.extra-service-item.active .extra-service-name.data-v-ad84041a {
+  color: #ff6b35;
+}
+.extra-service-price.data-v-ad84041a {
+  font-size: 22rpx;
+  color: #ff6b35;
+}
+
+/* 优惠券 */
+.coupon-item.data-v-ad84041a {
+  cursor: pointer;
+}
+.coupon-value.data-v-ad84041a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #ff6b35;
+  font-weight: bold;
+}
+.placeholder-text.data-v-ad84041a {
+  color: #999;
+  font-weight: normal;
+}
+
+/* 支付方式 */
+.payment-methods.data-v-ad84041a {
+  display: flex;
+  gap: 20rpx;
+}
+.payment-item.data-v-ad84041a {
+  flex: 1;
+  padding: 24rpx;
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  text-align: center;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.payment-item.active.data-v-ad84041a {
+  background: #fff5f2;
+  border-color: #ff6b35;
+}
+.payment-icon.data-v-ad84041a {
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+.payment-name.data-v-ad84041a {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: bold;
+}
+.payment-item.active .payment-name.data-v-ad84041a {
+  color: #ff6b35;
+}
+
+/* 标签提示 */
+.label-tips.data-v-ad84041a {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 8rpx;
+  font-weight: normal;
+}
+

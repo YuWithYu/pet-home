@@ -1,0 +1,260 @@
+
+.edit-pet-profile.data-v-0d4a24d3 {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* 自定义导航栏 */
+.custom-navbar.data-v-0d4a24d3 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+}
+.navbar-content.data-v-0d4a24d3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  padding: 0 30rpx;
+  padding-top: 25px;
+}
+.navbar-left.data-v-0d4a24d3 {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-icon.data-v-0d4a24d3 {
+  font-size: 40rpx;
+  color: #333;
+  font-weight: bold;
+}
+.navbar-title.data-v-0d4a24d3 {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.title-text.data-v-0d4a24d3 {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 400;
+}
+.navbar-right.data-v-0d4a24d3 {
+  width: 60rpx;
+}
+
+/* 页面内容 */
+.page-content.data-v-0d4a24d3 {
+  padding-top: calc(25px + 88rpx);
+  padding-bottom: 120rpx;
+}
+
+/* 宠物头像和昵称 */
+.pet-avatar-section.data-v-0d4a24d3 {
+  background-color: #fff;
+  padding: 40rpx 30rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+}
+.avatar-container.data-v-0d4a24d3 {
+  position: relative;
+  margin-right: 30rpx;
+}
+.pet-avatar.data-v-0d4a24d3 {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  background-color: #f0f0f0;
+}
+.camera-btn.data-v-0d4a24d3 {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40rpx;
+  height: 40rpx;
+  background-color: #ffd700;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+.camera-icon.data-v-0d4a24d3 {
+  font-size: 20rpx;
+}
+.nickname-input.data-v-0d4a24d3 {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.name-input.data-v-0d4a24d3 {
+  flex: 1;
+  height: 60rpx;
+  padding: 0 20rpx;
+  background-color: #f8f8f8;
+  border-radius: 30rpx;
+  font-size: 28rpx;
+  color: #333;
+  margin-right: 20rpx;
+}
+.next-btn.data-v-0d4a24d3 {
+  width: 120rpx;
+  height: 60rpx;
+  background-color: #ffd700;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.next-text.data-v-0d4a24d3 {
+  font-size: 24rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 宠物信息表单 */
+.pet-form.data-v-0d4a24d3 {
+  background-color: #fff;
+  margin-bottom: 20rpx;
+}
+.form-item.data-v-0d4a24d3 {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1px solid #f0f0f0;
+}
+.form-item.data-v-0d4a24d3:last-child {
+  border-bottom: none;
+}
+.item-label.data-v-0d4a24d3 {
+  width: 160rpx;
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+.item-content.data-v-0d4a24d3 {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.item-input.data-v-0d4a24d3 {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+.item-value.data-v-0d4a24d3 {
+  font-size: 28rpx;
+  color: #333;
+}
+.item-arrow.data-v-0d4a24d3 {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 20rpx;
+}
+
+/* 性别选择 */
+.gender-options.data-v-0d4a24d3 {
+  display: flex;
+  gap: 20rpx;
+}
+.gender-btn.data-v-0d4a24d3 {
+  padding: 12rpx 24rpx;
+  border-radius: 20rpx;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+}
+.gender-btn.active.data-v-0d4a24d3 {
+  background-color: #ffd700;
+  border-color: #ffd700;
+}
+.gender-text.data-v-0d4a24d3 {
+  font-size: 24rpx;
+  color: #666;
+}
+.gender-btn.active .gender-text.data-v-0d4a24d3 {
+  color: #333;
+}
+
+/* 绝育状态选择 */
+.sterilization-options.data-v-0d4a24d3 {
+  display: flex;
+  gap: 15rpx;
+}
+.sterilization-btn.data-v-0d4a24d3 {
+  padding: 12rpx 20rpx;
+  border-radius: 20rpx;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+}
+.sterilization-btn.active.data-v-0d4a24d3 {
+  background-color: #ffd700;
+  border-color: #ffd700;
+}
+.sterilization-text.data-v-0d4a24d3 {
+  font-size: 22rpx;
+  color: #666;
+}
+.sterilization-btn.active .sterilization-text.data-v-0d4a24d3 {
+  color: #333;
+}
+
+/* 相亲意愿选择 */
+.dating-options.data-v-0d4a24d3 {
+  display: flex;
+  gap: 20rpx;
+}
+.dating-btn.data-v-0d4a24d3 {
+  padding: 12rpx 24rpx;
+  border-radius: 20rpx;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+}
+.dating-btn.active.data-v-0d4a24d3 {
+  background-color: #ffd700;
+  border-color: #ffd700;
+}
+.dating-text.data-v-0d4a24d3 {
+  font-size: 24rpx;
+  color: #666;
+}
+.dating-btn.active .dating-text.data-v-0d4a24d3 {
+  color: #333;
+}
+
+/* 提示信息 */
+.tip-text.data-v-0d4a24d3 {
+  padding: 20rpx 30rpx;
+}
+.tip.data-v-0d4a24d3 {
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.5;
+}
+
+/* 保存按钮 */
+.save-btn.data-v-0d4a24d3 {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  background-color: #ffd700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.save-text.data-v-0d4a24d3 {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+}
+

@@ -1,0 +1,756 @@
+@charset "UTF-8";
+/* uni.scss */
+.u-button--primary.data-v-64c291de {
+  background-color: #ff6b35;
+  border-color: #ff6b35;
+}
+.u-button--primary.data-v-64c291de:active {
+  background-color: #ff4602;
+  border-color: #ff4602;
+}
+.u-button--default.data-v-64c291de {
+  background-color: #ffffff;
+  border-color: #e0e0e0;
+  color: #333333;
+}
+.u-button--default.data-v-64c291de:active {
+  background-color: #f8f8f8;
+}
+.u-input.data-v-64c291de {
+  background-color: #f8f8f8;
+  border-color: transparent;
+}
+.u-input.data-v-64c291de:focus {
+  border-color: #ff6b35;
+  background-color: #ffffff;
+}
+.u-card.data-v-64c291de {
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+.u-tag--primary.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-tag--success.data-v-64c291de {
+  background-color: #52c41a;
+  color: white;
+}
+.u-tag--warning.data-v-64c291de {
+  background-color: #faad14;
+  color: white;
+}
+.u-tag--danger.data-v-64c291de {
+  background-color: #ff4d4f;
+  color: white;
+}
+.u-badge.data-v-64c291de {
+  background-color: #ff4d4f;
+  color: white;
+}
+.u-progress.data-v-64c291de {
+  background-color: #f0f0f0;
+}
+.u-progress__track.data-v-64c291de {
+  background-color: #ff6b35;
+}
+.u-navbar.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-tabs__item.data-v-64c291de {
+  color: #666666;
+}
+.u-tabs__item--active.data-v-64c291de {
+  color: #ff6b35;
+}
+.u-tabs__track.data-v-64c291de {
+  background-color: #ff6b35;
+}
+.u-radio__label.data-v-64c291de {
+  color: #333333;
+}
+.u-radio__label--checked.data-v-64c291de {
+  color: #ff6b35;
+}
+.u-checkbox__label.data-v-64c291de {
+  color: #333333;
+}
+.u-checkbox__label--checked.data-v-64c291de {
+  color: #ff6b35;
+}
+.u-switch.data-v-64c291de {
+  background-color: #ddd;
+}
+.u-switch__core.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-switch__core.data-v-64c291de::after {
+  background-color: white;
+}
+.u-switch--checked.data-v-64c291de {
+  background-color: #ff6b35;
+}
+.u-switch--checked .u-switch__core.data-v-64c291de {
+  background-color: #ff6b35;
+}
+.u-slider.data-v-64c291de {
+  background-color: #f0f0f0;
+}
+.u-slider__track.data-v-64c291de {
+  background-color: #ff6b35;
+}
+.u-slider__thumb.data-v-64c291de {
+  background-color: #ffffff;
+  border-color: #ff6b35;
+}
+.u-rate__icon.data-v-64c291de {
+  color: #ddd;
+}
+.u-rate__icon--active.data-v-64c291de {
+  color: #ffca28;
+}
+.u-loading__spinner.data-v-64c291de {
+  border-color: #ff6b35;
+  border-top-color: transparent;
+}
+.u-popup.data-v-64c291de {
+  background-color: #ffffff;
+  border-radius: 12rpx 12rpx 0 0;
+}
+.u-action-sheet__item.data-v-64c291de {
+  color: #333333;
+}
+.u-action-sheet__item.data-v-64c291de:active {
+  background-color: #f8f8f8;
+}
+.u-action-sheet__cancel.data-v-64c291de {
+  color: #666666;
+}
+.u-toast.data-v-64c291de {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 8rpx;
+}
+.u-notice-bar.data-v-64c291de {
+  background-color: #fff7e6;
+  color: #d48806;
+  border-color: #ffeaa7;
+}
+.u-steps__item__title.data-v-64c291de {
+  color: #666666;
+}
+.u-steps__item__title--active.data-v-64c291de {
+  color: #ff6b35;
+}
+.u-steps__item__dot.data-v-64c291de {
+  background-color: #e0e0e0;
+}
+.u-steps__item__dot--active.data-v-64c291de {
+  background-color: #ff6b35;
+}
+.u-skeleton.data-v-64c291de {
+  background-color: #f0f0f0;
+}
+.u-skeleton__avatar.data-v-64c291de {
+  background-color: #e0e0e0;
+}
+.u-skeleton__paragraph.data-v-64c291de {
+  background-color: #e0e0e0;
+}
+.u-empty.data-v-64c291de {
+  color: #999999;
+}
+.u-empty__icon.data-v-64c291de {
+  color: #ddd;
+}
+.u-error-page.data-v-64c291de {
+  color: #999999;
+}
+.u-error-page__icon.data-v-64c291de {
+  color: #ddd;
+}
+.u-divider.data-v-64c291de {
+  color: #999999;
+  border-color: #f0f0f0;
+}
+.u-sticky.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-back-top.data-v-64c291de {
+  background-color: #ffffff;
+  border-color: #e0e0e0;
+}
+.u-back-top__icon.data-v-64c291de {
+  color: #666666;
+}
+.u-keyboard.data-v-64c291de {
+  background-color: #f0f0f0;
+}
+.u-keyboard__key.data-v-64c291de {
+  background-color: #ffffff;
+  color: #333333;
+}
+.u-keyboard__key.data-v-64c291de:active {
+  background-color: #f8f8f8;
+}
+.u-keyboard__confirm.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-calendar.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-calendar__header.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-calendar__weekdays.data-v-64c291de {
+  color: #666666;
+}
+.u-calendar__day.data-v-64c291de {
+  color: #333333;
+}
+.u-calendar__day--selected.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-calendar__day--today.data-v-64c291de {
+  color: #ff6b35;
+}
+.u-picker.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-picker__header.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-picker__body.data-v-64c291de {
+  color: #333333;
+}
+.u-picker-view__item.data-v-64c291de {
+  color: #333333;
+}
+.u-picker-view__item--selected.data-v-64c291de {
+  color: #ff6b35;
+}
+.u-cascader.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-cascader__header.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-cascader__body.data-v-64c291de {
+  color: #333333;
+}
+.u-city-select.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-city-select__header.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-city-select__body.data-v-64c291de {
+  color: #333333;
+}
+.u-area-select.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-area-select__header.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-area-select__body.data-v-64c291de {
+  color: #333333;
+}
+.u-time-picker.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-time-picker__header.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-time-picker__body.data-v-64c291de {
+  color: #333333;
+}
+.u-datetime-picker.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-datetime-picker__header.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.u-datetime-picker__body.data-v-64c291de {
+  color: #333333;
+}
+.u-upload.data-v-64c291de {
+  background-color: #f8f8f8;
+  border-color: #e0e0e0;
+}
+.u-upload__button.data-v-64c291de {
+  color: #666666;
+}
+.u-upload__button.data-v-64c291de:active {
+  background-color: #f8f8f8;
+}
+.u-upload__file.data-v-64c291de {
+  border-color: #e0e0e0;
+}
+.u-upload__file__status.data-v-64c291de {
+  color: #666666;
+}
+.u-cropper.data-v-64c291de {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+.u-watermark.data-v-64c291de {
+  color: rgba(0, 0, 0, 0.1);
+}
+.u-charts.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-canvas.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-map.data-v-64c291de {
+  background-color: #f0f0f0;
+}
+.u-editor.data-v-64c291de {
+  background-color: #ffffff;
+  border-color: #e0e0e0;
+}
+.u-editor__toolbar.data-v-64c291de {
+  background-color: #f8f8f8;
+  border-color: #e0e0e0;
+}
+.u-file-preview.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-qrcode.data-v-64c291de {
+  background-color: #ffffff;
+}
+.u-barcode.data-v-64c291de {
+  background-color: #ffffff;
+}
+/* 自定义主题色 */
+/* 全局样式重置和扩展 */
+/* 页面容器 */
+.page.data-v-64c291de {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+}
+/* 通用按钮样式 */
+.btn.data-v-64c291de {
+  display: inline-block;
+  padding: 20rpx 40rpx;
+  border-radius: 10rpx;
+  text-align: center;
+  font-size: 28rpx;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary.data-v-64c291de {
+  background-color: #ff6b35;
+  color: white;
+}
+.btn-primary.data-v-64c291de:active {
+  background-color: #ff4602;
+}
+.btn-secondary.data-v-64c291de {
+  background-color: #ffffff;
+  color: #333;
+  border: 1rpx solid #ddd;
+}
+.btn-secondary.data-v-64c291de:active {
+  background-color: #eee;
+}
+/* 卡片样式 */
+.card.data-v-64c291de {
+  background-color: white;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+.card-header.data-v-64c291de {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  font-weight: 600;
+  font-size: 32rpx;
+}
+.card-body.data-v-64c291de {
+  padding: 30rpx;
+}
+.card-footer.data-v-64c291de {
+  padding: 30rpx;
+  border-top: 1rpx solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* 网格布局 */
+.grid.data-v-64c291de {
+  display: grid;
+}
+.grid-cols-2.data-v-64c291de {
+  grid-template-columns: repeat(2, 1fr);
+}
+.grid-cols-3.data-v-64c291de {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-cols-4.data-v-64c291de {
+  grid-template-columns: repeat(4, 1fr);
+}
+/* 间距 */
+.gap-10.data-v-64c291de {
+  gap: 10rpx;
+}
+.gap-20.data-v-64c291de {
+  gap: 20rpx;
+}
+.gap-30.data-v-64c291de {
+  gap: 30rpx;
+}
+/* 文字样式 */
+.text-primary.data-v-64c291de {
+  color: #ff6b35;
+}
+.text-secondary.data-v-64c291de {
+  color: #666;
+}
+.text-success.data-v-64c291de {
+  color: #52c41a;
+}
+.text-warning.data-v-64c291de {
+  color: #faad14;
+}
+.text-danger.data-v-64c291de {
+  color: #ff4d4f;
+}
+.text-center.data-v-64c291de {
+  text-align: center;
+}
+.text-left.data-v-64c291de {
+  text-align: left;
+}
+.text-right.data-v-64c291de {
+  text-align: right;
+}
+/* 弹性布局 */
+.flex.data-v-64c291de {
+  display: flex;
+}
+.flex-col.data-v-64c291de {
+  flex-direction: column;
+}
+.flex-wrap.data-v-64c291de {
+  flex-wrap: wrap;
+}
+.flex-center.data-v-64c291de {
+  justify-content: center;
+  align-items: center;
+}
+.flex-between.data-v-64c291de {
+  justify-content: space-between;
+}
+.flex-around.data-v-64c291de {
+  justify-content: space-around;
+}
+.flex-start.data-v-64c291de {
+  justify-content: flex-start;
+}
+.flex-end.data-v-64c291de {
+  justify-content: flex-end;
+}
+/* 边距 */
+.m-10.data-v-64c291de {
+  margin: 10rpx;
+}
+.m-20.data-v-64c291de {
+  margin: 20rpx;
+}
+.m-30.data-v-64c291de {
+  margin: 30rpx;
+}
+.mt-10.data-v-64c291de {
+  margin-top: 10rpx;
+}
+.mt-20.data-v-64c291de {
+  margin-top: 20rpx;
+}
+.mt-30.data-v-64c291de {
+  margin-top: 30rpx;
+}
+.mb-10.data-v-64c291de {
+  margin-bottom: 10rpx;
+}
+.mb-20.data-v-64c291de {
+  margin-bottom: 20rpx;
+}
+.mb-30.data-v-64c291de {
+  margin-bottom: 30rpx;
+}
+.ml-10.data-v-64c291de {
+  margin-left: 10rpx;
+}
+.ml-20.data-v-64c291de {
+  margin-left: 20rpx;
+}
+.ml-30.data-v-64c291de {
+  margin-left: 30rpx;
+}
+.mr-10.data-v-64c291de {
+  margin-right: 10rpx;
+}
+.mr-20.data-v-64c291de {
+  margin-right: 20rpx;
+}
+.mr-30.data-v-64c291de {
+  margin-right: 30rpx;
+}
+.p-10.data-v-64c291de {
+  padding: 10rpx;
+}
+.p-20.data-v-64c291de {
+  padding: 20rpx;
+}
+.p-30.data-v-64c291de {
+  padding: 30rpx;
+}
+/* 圆角 */
+.radius-10.data-v-64c291de {
+  border-radius: 10rpx;
+}
+.radius-12.data-v-64c291de {
+  border-radius: 12rpx;
+}
+.radius-20.data-v-64c291de {
+  border-radius: 20rpx;
+}
+/* 阴影 */
+.shadow.data-v-64c291de {
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+.shadow-lg.data-v-64c291de {
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
+}
+.profile-container.data-v-64c291de {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+/* 自定义白色导航栏 */
+.custom-white-navbar.data-v-64c291de {
+  width: 100%;
+  height: 88rpx;
+  background: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.navbar-content.data-v-64c291de {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+}
+.navbar-left.data-v-64c291de {
+  width: 80rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-icon.data-v-64c291de {
+  font-size: 48rpx;
+  color: #333;
+  font-weight: 300;
+}
+.navbar-title.data-v-64c291de {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navbar-title text.data-v-64c291de {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 400;
+}
+.navbar-right.data-v-64c291de {
+  width: 80rpx;
+  height: 60rpx;
+}
+/* 个人资料内容 */
+.profile-content.data-v-64c291de {
+  background: #fff;
+  margin: 20rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+.profile-item.data-v-64c291de {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 24rpx;
+  background: #fff;
+  transition: background-color 0.2s ease;
+}
+.profile-item.data-v-64c291de:active {
+  background-color: #f8f8f8;
+}
+.item-label.data-v-64c291de {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 400;
+  min-width: 120rpx;
+}
+.item-content.data-v-64c291de {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 16rpx;
+}
+.item-text.data-v-64c291de {
+  font-size: 32rpx;
+  color: #666;
+  text-align: right;
+}
+.item-arrow.data-v-64c291de {
+  font-size: 32rpx;
+  color: #999;
+  font-weight: 300;
+}
+.divider.data-v-64c291de {
+  height: 1rpx;
+  background-color: #f0f0f0;
+  margin: 0 24rpx;
+}
+/* 头像样式 */
+.avatar-wrapper.data-v-64c291de {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+.avatar-image.data-v-64c291de {
+  width: 100%;
+  height: 100%;
+}
+/* 手机号验证弹窗 */
+.phone-modal.data-v-64c291de {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-content.data-v-64c291de {
+  width: 100%;
+  background: #fff;
+  border-radius: 20rpx 20rpx 0 0;
+  padding: 40rpx 30rpx 60rpx;
+  max-height: 80vh;
+}
+.modal-header.data-v-64c291de {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40rpx;
+}
+.app-info.data-v-64c291de {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.app-icon.data-v-64c291de {
+  width: 60rpx;
+  height: 60rpx;
+  background: #ffd700;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+.app-name.data-v-64c291de {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+}
+.info-icon.data-v-64c291de {
+  width: 40rpx;
+  height: 40rpx;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #999;
+}
+.modal-body.data-v-64c291de {
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+.modal-title.data-v-64c291de {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+.modal-subtitle.data-v-64c291de {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 40rpx;
+}
+.phone-display.data-v-64c291de {
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin: 0 20rpx;
+}
+.phone-number.data-v-64c291de {
+  display: block;
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+.phone-label.data-v-64c291de {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+}
+.modal-actions.data-v-64c291de {
+  text-align: center;
+}
+.disallow-btn.data-v-64c291de {
+  width: 100%;
+  height: 80rpx;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  margin-bottom: 30rpx;
+}
+.other-number.data-v-64c291de {
+  font-size: 26rpx;
+  color: #007aff;
+  text-decoration: underline;
+}

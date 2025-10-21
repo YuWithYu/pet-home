@@ -3,8 +3,8 @@ package com.pethome.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
-import com.pethome.entity.LitterService;
-import com.pethome.service.LitterServiceService;
+import com.pethome.entity.AdoptionService;
+import com.pethome.service.AdoptionServiceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,53 +17,70 @@ import org.springframework.web.multipart.MultipartFile;
 public class AdoptionServiceController {
 
     @Autowired
-    private LitterServiceService litterServiceService;
+    private AdoptionServiceService adoptionServiceService;
 
     @GetMapping("/page")
     @ApiOperation("分页查询领养服务")
-    public Result<IPage<LitterService>> getAdoptionServicePage(
+    public Result<IPage<AdoptionService>> getAdoptionServicePage(
             @RequestParam(defaultValue = "1") Integer pageNo,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String status) {
-        Page<LitterService> page = new Page<>(pageNo, pageSize);
-        IPage<LitterService> result = litterServiceService.getLitterServiceList(page);
+        Page<AdoptionService> page = new Page<>(pageNo, pageSize);
+        IPage<AdoptionService> result = adoptionServiceService.page(page);
         return Result.success(result);
     }
 
     @PostMapping("/create")
     @ApiOperation("创建领养服务")
-    public Result<LitterService> createAdoptionService(@RequestBody LitterService service) {
-        return Result.success(litterServiceService.createLitterService(service));
+    public Result<AdoptionService> createAdoptionService(@RequestBody AdoptionService service) {
+        boolean success = adoptionServiceService.createAdoptionService(service);
+        if (success) {
+            return Result.success(service);
+        } else {
+            return Result.error("创建失败");
+        }
     }
 
     @PutMapping("/update")
     @ApiOperation("更新领养服务")
-    public Result<LitterService> updateAdoptionService(@RequestBody LitterService service) {
-        return Result.success(litterServiceService.updateLitterService(service));
+    public Result<AdoptionService> updateAdoptionService(@RequestBody AdoptionService service) {
+        boolean success = adoptionServiceService.updateAdoptionService(service);
+        if (success) {
+            return Result.success(service);
+        } else {
+            return Result.error("更新失败");
+        }
     }
 
     @DeleteMapping("/{id}")
     @ApiOperation("删除领养服务")
     public Result<Boolean> deleteAdoptionService(@PathVariable Long id) {
-        return Result.success(litterServiceService.deleteLitterService(id));
+        boolean success = adoptionServiceService.deleteAdoptionService(id);
+        return Result.success(success);
     }
 
     @GetMapping("/{id}")
     @ApiOperation("获取领养服务详情")
-    public Result<LitterService> getAdoptionServiceDetail(@PathVariable Long id) {
-        return Result.success(litterServiceService.getLitterServiceById(id));
+    public Result<AdoptionService> getAdoptionServiceDetail(@PathVariable Long id) {
+        AdoptionService service = adoptionServiceService.getAdoptionServiceById(id);
+        if (service != null) {
+            return Result.success(service);
+        } else {
+            return Result.error("服务不存在");
+        }
     }
 
     @PutMapping("/{id}/status")
     @ApiOperation("更新领养服务状态")
-    public Result<LitterService> updateAdoptionServiceStatus(@PathVariable Long id, @RequestParam String status) {
-        LitterService service = litterServiceService.getLitterServiceById(id);
-        if (service != null) {
-            service.setStatus(status);
-            return Result.success(litterServiceService.updateLitterService(service));
+    public Result<AdoptionService> updateAdoptionServiceStatus(@PathVariable Long id, @RequestParam String status) {
+        boolean success = adoptionServiceService.updateAdoptionServiceStatus(id, status);
+        if (success) {
+            AdoptionService service = adoptionServiceService.getAdoptionServiceById(id);
+            return Result.success(service);
+        } else {
+            return Result.error("状态更新失败");
         }
-        return Result.error("服务不存在");
     }
 
     @PostMapping("/upload")
