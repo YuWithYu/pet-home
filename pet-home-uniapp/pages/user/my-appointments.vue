@@ -154,12 +154,13 @@ export default {
       try {
         this.loading = true
         
-        // 同时获取上门铲屎服务、医院预约、洗护预约和寄养预约数据
-        const [doorCleaningRes, hospitalRes, groomingRes, boardingRes] = await Promise.all([
+        // 同时获取所有类型的预约数据
+        const [doorCleaningRes, hospitalRes, groomingRes, boardingRes, adoptionRes] = await Promise.all([
           this.$api.getUserAppointments(this.userInfo.uid),
           this.$api.getUserHospitalAppointments(this.userInfo.uid),
           this.$api.getUserGroomingAppointments(this.userInfo.uid),
-          this.$api.getUserBoardingAppointments(this.userInfo.uid)
+          this.$api.getUserBoardingAppointments(this.userInfo.uid),
+          this.$api.getUserAdoptionAppointments(this.userInfo.uid)
         ])
 
         let allAppointments = []
@@ -200,6 +201,15 @@ export default {
           allAppointments = allAppointments.concat(boardingAppointments)
         }
 
+        // 处理领养预约
+        if (adoptionRes.code === 0 && adoptionRes.data) {
+          const adoptionAppointments = adoptionRes.data.map(appointment => ({
+            ...appointment,
+            serviceType: 'adoption' // 添加服务类型标识
+          }))
+          allAppointments = allAppointments.concat(adoptionAppointments)
+        }
+
         // 按创建时间倒序排列
         allAppointments.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
 
@@ -233,7 +243,8 @@ export default {
         'door-cleaning': '🏠',
         'grooming': '✨',
         'hospital': '🏥',
-        'boarding': '🏡'
+        'boarding': '🏡',
+        'adoption': '🐾'
       }
       return icons[serviceType] || '📋'
     },
@@ -244,7 +255,8 @@ export default {
         'door-cleaning': '上门铲屎服务',
         'grooming': '宠物洗护服务',
         'hospital': '宠物医院',
-        'boarding': '宠物寄养'
+        'boarding': '宠物寄养',
+        'adoption': '宠物领养'
       }
       return names[serviceType] || '服务'
     },
@@ -307,6 +319,8 @@ export default {
                 result = await this.$api.updateGroomingAppointmentStatus(appointment.id, 'cancelled')
               } else if (appointment.serviceType === 'boarding') {
                 result = await this.$api.updateBoardingAppointmentStatus(appointment.id, 'cancelled')
+              } else if (appointment.serviceType === 'adoption') {
+                result = await this.$api.updateAdoptionAppointmentStatus(appointment.id, 'cancelled')
               } else {
                 result = await this.$api.updateAppointmentStatus(appointment.id, 'cancelled')
               }

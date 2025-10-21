@@ -673,6 +673,50 @@ class ApiService {
     })
   }
 
+  // ==================== 宠物领养预约相关 API ====================
+
+  // 创建宠物领养预约
+  createAdoptionAppointment(appointmentData) {
+    return this.request({
+      url: '/api/adoption-appointments/create',
+      method: 'POST',
+      data: appointmentData
+    })
+  }
+
+  // 获取宠物领养预约列表
+  getAdoptionAppointmentPage(pageNo = 1, pageSize = 10) {
+    return this.request({
+      url: '/api/adoption-appointments/page',
+      method: 'GET',
+      data: { pageNo, pageSize }
+    })
+  }
+
+  // 获取用户宠物领养预约列表
+  getUserAdoptionAppointments(userId) {
+    return this.request({
+      url: `/api/adoption-appointments/user/list/${userId}`,
+      method: 'GET'
+    })
+  }
+
+  // 更新宠物领养预约状态
+  updateAdoptionAppointmentStatus(id, status) {
+    return this.request({
+      url: `/api/adoption-appointments/${id}/status?status=${status}`,
+      method: 'PUT'
+    })
+  }
+
+  // 获取宠物领养预约详情
+  getAdoptionAppointmentDetail(id) {
+    return this.request({
+      url: `/api/adoption-appointments/${id}`,
+      method: 'GET'
+    })
+  }
+
 
   // ==================== 订单相关接口 ====================
 
