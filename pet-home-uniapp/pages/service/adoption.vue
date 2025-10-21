@@ -82,9 +82,46 @@ export default {
         }
       } catch (error) {
         console.error('加载宠物列表失败:', error)
-        this.pets = []
+        
+        // 如果API调用失败，使用模拟数据
+        this.pets = [
+          {
+            id: 1,
+            petName: 'Xiao Bai',
+            breed: 'Golden Retriever',
+            age: 2,
+            gender: 'Male',
+            description: 'Gentle and friendly, neutered, fully vaccinated',
+            imageUrl: '/static/images/default-pet.png',
+            adoptionFee: 200.00,
+            status: 'available'
+          },
+          {
+            id: 2,
+            petName: 'Mi Mi',
+            breed: 'British Shorthair',
+            age: 1,
+            gender: 'Female',
+            description: 'Playful and cute, loves human interaction',
+            imageUrl: '/static/images/default-pet.png',
+            adoptionFee: 150.00,
+            status: 'available'
+          },
+          {
+            id: 3,
+            petName: 'Wang Cai',
+            breed: 'Labrador',
+            age: 3,
+            gender: 'Male',
+            description: 'Smart and obedient, suitable for experienced families',
+            imageUrl: '/static/images/default-pet.png',
+            adoptionFee: 300.00,
+            status: 'available'
+          }
+        ]
+        
         uni.showToast({
-          title: '加载失败',
+          title: '使用模拟数据',
           icon: 'none'
         })
       } finally {
