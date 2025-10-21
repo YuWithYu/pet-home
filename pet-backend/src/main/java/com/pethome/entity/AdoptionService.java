@@ -59,4 +59,21 @@ public class AdoptionService {
 
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime updateTime;
+
+    // 手动添加setter方法以确保IDE兼容性
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
 }
