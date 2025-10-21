@@ -773,9 +773,6 @@ export default {
   color: #666;
   background: #f8f9fa;
 }
-  background-color: #f5f5f5;
-  min-height: 100vh;
-}
 
 /* 页面标题 */
 .page-header {
