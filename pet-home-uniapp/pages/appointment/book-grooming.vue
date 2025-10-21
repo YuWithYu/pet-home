@@ -182,7 +182,7 @@ export default {
       })
     } else {
       uni.setNavigationBarTitle({
-        title: '上门铲屎服务'
+        title: '宠物洗护服务'
       })
     }
 
