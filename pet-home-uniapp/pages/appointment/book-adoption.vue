@@ -3,41 +3,31 @@
 
     <!-- 预约表单 -->
     <view class="booking-form">
-      <!-- 选择宠物 -->
+      <!-- 待领养宠物信息 -->
       <view class="form-section">
-        <view class="section-title">选择宠物</view>
-        <view class="pet-selector" @click="showPetPicker = true">
-          <view class="selector-label">{{ selectedPet ? selectedPet.name : '请选择宠物' }}</view>
-          <view class="selector-arrow">›</view>
+        <view class="section-title">待领养宠物</view>
+        <view class="adoption-pet-info" v-if="adoptionPet">
+          <image :src="adoptionPet.imageUrl" class="pet-image" mode="aspectFill"></image>
+          <view class="pet-details">
+            <view class="pet-name">{{ adoptionPet.petName }}</view>
+            <view class="pet-breed">{{ adoptionPet.breed }} · {{ adoptionPet.age }}岁 · {{ adoptionPet.gender }}</view>
+            <view class="adoption-fee">领养费用：¥{{ adoptionPet.adoptionFee }}</view>
+          </view>
+        </view>
+        <view class="no-pet-selected" v-else>
+          <text>请先选择要领养的宠物</text>
         </view>
       </view>
 
-      <!-- 寄养开始日期 -->
+      <!-- 预约到店日期 -->
       <view class="form-section">
-        <view class="section-title">寄养开始日期</view>
-        <picker mode="date" :value="formData.startDate" :start="todayDate" :end="maxDate" @change="onStartDateChange">
+        <view class="section-title">预约到店日期</view>
+        <picker mode="date" :value="formData.appointmentDate" :start="todayDate" :end="maxDate" @change="onDateChange">
           <view class="date-picker">
-            <view class="picker-value">{{ formData.startDate || '请选择开始日期' }}</view>
+            <view class="picker-value">{{ formData.appointmentDate || '请选择到店日期' }}</view>
             <view class="picker-arrow">›</view>
           </view>
         </picker>
-      </view>
-
-      <!-- 寄养结束日期 -->
-      <view class="form-section">
-        <view class="section-title">寄养结束日期</view>
-        <picker mode="date" :value="formData.endDate" :start="formData.startDate || todayDate" :end="maxDate" @change="onEndDateChange">
-          <view class="date-picker">
-            <view class="picker-value">{{ formData.endDate || '请选择结束日期' }}</view>
-            <view class="picker-arrow">›</view>
-          </view>
-        </picker>
-      </view>
-
-      <!-- 寄养天数 -->
-      <view class="form-section" v-if="formData.days > 0">
-        <view class="section-title">寄养天数</view>
-        <view class="days-display">{{ formData.days }} 天</view>
       </view>
 
       <!-- 预约时间段 -->
@@ -55,19 +45,6 @@
         </view>
       </view>
 
-      <!-- 服务地址 -->
-      <view class="form-section">
-        <view class="section-title">服务地址</view>
-        <view class="address-input">
-          <textarea
-            v-model="formData.location"
-            placeholder="请输入详细地址（包括门牌号）"
-            class="address-textarea"
-            maxlength="200"
-          />
-        </view>
-      </view>
-
       <!-- 联系人信息 -->
       <view class="form-section">
         <view class="section-title">联系人信息</view>
@@ -75,80 +52,73 @@
           <view class="input-row">
             <view class="input-label">姓名</view>
             <input
-              v-model="formData.contactName"
-              placeholder="请输入联系人姓名"
               class="input-field"
+              v-model="formData.contactName"
+              placeholder="请输入您的姓名"
+              maxlength="20"
             />
           </view>
           <view class="input-row">
-            <view class="input-label">电话</view>
+            <view class="input-label">手机号</view>
             <input
-              v-model="formData.contactPhone"
-              type="number"
-              placeholder="请输入联系电话"
               class="input-field"
+              v-model="formData.contactPhone"
+              placeholder="请输入手机号"
+              type="number"
+              maxlength="11"
+            />
+          </view>
+          <view class="input-row">
+            <view class="input-label">身份证号</view>
+            <input
+              class="input-field"
+              v-model="formData.idCard"
+              placeholder="请输入身份证号（用于领养审核）"
+              maxlength="18"
+            />
+          </view>
+          <view class="input-row">
+            <view class="input-label">居住地址</view>
+            <input
+              class="input-field"
+              v-model="formData.address"
+              placeholder="请输入详细居住地址"
+              maxlength="100"
             />
           </view>
         </view>
       </view>
 
-      <!-- 备注 -->
+      <!-- 领养原因 -->
       <view class="form-section">
-        <view class="section-title">备注信息（选填）</view>
-        <view class="remark-input">
-          <textarea
-            v-model="formData.remark"
-            placeholder="如有特殊要求请在此说明"
-            class="remark-textarea"
-            maxlength="200"
-          />
-        </view>
+        <view class="section-title">领养原因</view>
+        <textarea
+          class="reason-textarea"
+          v-model="formData.reason"
+          placeholder="请简述您的领养原因和养宠经验（有助于审核通过）"
+          maxlength="200"
+        ></textarea>
       </view>
-    </view>
 
-    <!-- 价格汇总 -->
-    <view class="price-summary">
-      <view class="summary-row">
-        <view class="summary-label">服务费用</view>
-        <view class="summary-value">¥99</view>
-      </view>
-      <view class="summary-total">
-        <view class="total-label">合计</view>
-        <view class="total-value">¥99</view>
+      <!-- 备注信息 -->
+      <view class="form-section">
+        <view class="section-title">备注信息</view>
+        <textarea
+          class="remark-textarea"
+          v-model="formData.remark"
+          placeholder="其他需要说明的信息（选填）"
+          maxlength="100"
+        ></textarea>
       </view>
     </view>
 
     <!-- 提交按钮 -->
     <view class="submit-section">
-      <button class="submit-button" @click="submitBooking">确认预约</button>
+      <button class="submit-button" @click="submitBooking" :disabled="!canSubmit">
+        提交领养申请
+      </button>
     </view>
 
-    <!-- 宠物选择弹窗 -->
-    <view v-if="showPetPicker" class="picker-modal" @click="showPetPicker = false">
-      <view class="picker-content" @click.stop>
-        <view class="picker-header">
-          <view class="picker-title">选择宠物</view>
-          <view class="picker-close" @click="showPetPicker = false">✕</view>
-        </view>
-        <view class="picker-list">
-          <view
-            v-for="pet in pets"
-            :key="pet.id"
-            :class="['pet-item', { 'selected': selectedPet && selectedPet.id === pet.id }]"
-            @click="selectPet(pet)"
-          >
-            <view class="pet-info">
-              <view class="pet-name">{{ pet.name }}</view>
-              <view class="pet-breed">{{ pet.breed }}</view>
-            </view>
-            <view v-if="selectedPet && selectedPet.id === pet.id" class="pet-check">✓</view>
-          </view>
-        </view>
-        <view class="add-pet-btn" @click="goToAddPet">
-          + 添加新宠物
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
@@ -156,7 +126,7 @@
 import { mapGetters } from 'vuex'
 
 export default {
-  name: 'BookDoorCleaning',
+  name: 'BookAdoption',
 
   data() {
     return {
@@ -182,20 +152,28 @@ export default {
         { label: '16:00-18:00', value: '16:00-18:00' },
         { label: '18:00-20:00', value: '18:00-20:00' }
       ],
-      pets: [],
-      selectedPet: null,
-      showPetPicker: false,
       todayDate: '',
       maxDate: ''
     }
   },
 
   computed: {
-    ...mapGetters(['userInfo', 'isLoggedIn'])
+    ...mapGetters(['userInfo', 'isLoggedIn']),
+    
+    canSubmit() {
+      return this.formData.adoptionPetId &&
+             this.formData.appointmentDate &&
+             this.formData.timeSlot &&
+             this.formData.contactName &&
+             this.formData.contactPhone &&
+             this.formData.idCard &&
+             this.formData.address &&
+             this.formData.reason
+    }
   },
 
   onLoad(options) {
-    // 设置页面标题为服务名称
+    // 设置页面标题
     if (options.serviceName) {
       uni.setNavigationBarTitle({
         title: decodeURIComponent(options.serviceName)
@@ -213,47 +191,31 @@ export default {
         icon: 'none'
       })
       setTimeout(() => {
-        uni.navigateTo({
-          url: '/pages/user/login'
-        })
+        uni.navigateBack()
       }, 1500)
       return
     }
 
-    // 从本地存储加载用户信息（备用方案）
-    const localUserInfo = uni.getStorageSync('userInfo')
-    if (localUserInfo && !this.userInfo) {
-      this.userInfo = localUserInfo
-    }
-
+    // 初始化日期
     this.initData()
-    this.loadPets()
-  },
-  onShow() {
-    // 返回本页时刷新一次宠物列表，确保新添加的宠物能显示
-    this.loadPets()
+    
+    // 如果有传递的宠物ID，加载宠物信息
+    if (options.petId) {
+      this.formData.adoptionPetId = parseInt(options.petId)
+      this.loadAdoptionPetInfo()
+    }
   },
 
   methods: {
-    // 初始化数据
     initData() {
-      // 设置今天的日期为最小日期
       const today = new Date()
-      this.todayDate = this.formatDate(today)
-      
-      // 设置最大日期为一个月后
       const maxDate = new Date()
       maxDate.setMonth(maxDate.getMonth() + 1)
-      this.maxDate = this.formatDate(maxDate)
       
-      // 设置联系人信息为用户信息
-      if (this.userInfo) {
-        this.formData.contactName = this.userInfo.nickname || this.userInfo.username || ''
-        this.formData.contactPhone = this.userInfo.phone || ''
-      }
+      this.todayDate = this.formatDate(today)
+      this.maxDate = this.formatDate(maxDate)
     },
 
-    // 格式化日期
     formatDate(date) {
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -261,197 +223,66 @@ export default {
       return `${year}-${month}-${day}`
     },
 
-    // 加载宠物列表（优先本地存储，兼容后端接口）
-    async loadPets() {
-      try {
-        // 1) 先从本地存储读取宠物档案
-        const localList = uni.getStorageSync('petList') || []
-        if (Array.isArray(localList) && localList.length > 0) {
-          this.pets = localList.map(p => ({
-            id: p.id,
-            name: p.name,
-            breed: p.breed,
-            avatar: p.avatar,
-            gender: p.gender,
-            weight: p.weight
-          }))
-        } else {
-          // 2) 兼容：若本地没有，再尝试后端接口（若可用）
-          if (this.$api && this.userInfo && this.userInfo.uid) {
-            try {
-              const res = await this.$api.getPetPage(1, 100, this.userInfo.uid)
-              if (res && res.code === 0 && res.data && res.data.records) {
-                this.pets = res.data.records
-              }
-            } catch (err) {
-              // 后端不可用时忽略，保持空列表
-              console.warn('后端宠物接口不可用，使用空列表作为回退。')
-            }
-          }
-        }
-
-        // 自动选中：若只有一只宠物
-        if (this.pets.length === 1) {
-          this.selectedPet = this.pets[0]
-          this.formData.petId = this.pets[0].id
-        }
-      } catch (error) {
-        console.error('加载宠物列表失败:', error)
-        this.pets = []
-      }
+    onDateChange(e) {
+      this.formData.appointmentDate = e.detail.value
     },
 
-    // 开始日期变更
-    onStartDateChange(e) {
-      this.formData.startDate = e.detail.value
-      // 如果结束日期早于开始日期，清空结束日期
-      if (this.formData.endDate && this.formData.endDate < this.formData.startDate) {
-        this.formData.endDate = ''
-        this.formData.days = 1
-      } else {
-        this.calculateDays()
-      }
-    },
-
-    // 结束日期变更
-    onEndDateChange(e) {
-      this.formData.endDate = e.detail.value
-      this.calculateDays()
-    },
-
-    // 计算寄养天数
-    calculateDays() {
-      if (this.formData.startDate && this.formData.endDate) {
-        const start = new Date(this.formData.startDate)
-        const end = new Date(this.formData.endDate)
-        const diffTime = end - start
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        this.formData.days = diffDays > 0 ? diffDays : 1
-      } else {
-        this.formData.days = 1
-      }
-    },
-
-    // 选择时间段
     selectTimeSlot(slot) {
       this.formData.timeSlot = slot
     },
 
-    // 选择宠物
-    selectPet(pet) {
-      this.selectedPet = pet
-      this.formData.petId = pet.id
-      this.showPetPicker = false
+    async loadAdoptionPetInfo() {
+      if (!this.formData.adoptionPetId) return
+      
+      try {
+        // 这里应该调用获取待领养宠物详情的API
+        // const res = await this.$api.getAdoptionPetDetail(this.formData.adoptionPetId)
+        // this.adoptionPet = res.data
+        
+        // 临时模拟数据
+        this.adoptionPet = {
+          id: this.formData.adoptionPetId,
+          petName: '小白',
+          breed: '金毛',
+          age: 2,
+          gender: '公',
+          imageUrl: '/static/images/default-pet.png',
+          adoptionFee: 200
+        }
+        this.formData.adoptionFee = this.adoptionPet.adoptionFee
+      } catch (error) {
+        console.error('加载宠物信息失败:', error)
+        uni.showToast({
+          title: '加载宠物信息失败',
+          icon: 'none'
+        })
+      }
     },
 
-    // 前往添加宠物页面
-    goToAddPet() {
-      // 直接进入添加宠物档案第一步
-      uni.navigateTo({
-        url: '/pages/user/add-pet-basic'
-      })
-    },
-    
-    // 获取兼容的宠物ID（确保在Integer范围内）
-    getCompatiblePetId(originalId) {
-      const maxInt = 2147483647
-      const minInt = 1
-      
-      // 如果ID已经在Integer范围内，直接返回
-      if (originalId >= minInt && originalId <= maxInt) {
-        return originalId
-      }
-      
-      // 如果ID超出范围，生成一个基于原ID的兼容ID
-      // 使用原ID的哈希值来确保同一宠物总是得到相同的兼容ID
-      let hash = 0
-      const str = String(originalId)
-      for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i)
-        hash = ((hash << 5) - hash) + char
-        hash = hash & hash // 转换为32位整数
-      }
-      
-      // 将哈希值映射到Integer范围内
-      const compatibleId = Math.abs(hash) % (maxInt - minInt + 1) + minInt
-      console.log(`宠物ID转换: ${originalId} -> ${compatibleId}`)
-      return compatibleId
-    },
-
-    // 表单验证
-    validateForm() {
-      if (!this.formData.petId) {
+    async submitBooking() {
+      if (!this.canSubmit) {
         uni.showToast({
-          title: '请选择宠物',
+          title: '请完善必填信息',
           icon: 'none'
         })
-        return false
+        return
       }
 
-      if (!this.formData.startDate) {
-        uni.showToast({
-          title: '请选择寄养开始日期',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.formData.endDate) {
-        uni.showToast({
-          title: '请选择寄养结束日期',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.formData.timeSlot) {
-        uni.showToast({
-          title: '请选择预约时间',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.formData.location || this.formData.location.trim() === '') {
-        uni.showToast({
-          title: '请输入服务地址',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.formData.contactName || this.formData.contactName.trim() === '') {
-        uni.showToast({
-          title: '请输入联系人姓名',
-          icon: 'none'
-        })
-        return false
-      }
-
-      if (!this.formData.contactPhone || this.formData.contactPhone.trim() === '') {
-        uni.showToast({
-          title: '请输入联系电话',
-          icon: 'none'
-        })
-        return false
-      }
-
-      // 验证手机号格式
-      const phoneReg = /^1[3-9]\d{9}$/
-      if (!phoneReg.test(this.formData.contactPhone)) {
+      // 验证手机号
+      if (!/^1[3-9]\d{9}$/.test(this.formData.contactPhone)) {
         uni.showToast({
           title: '请输入正确的手机号',
           icon: 'none'
         })
-        return false
+        return
       }
 
-      return true
-    },
-
-    // 提交预约
-    async submitBooking() {
-      if (!this.validateForm()) {
+      // 验证身份证号
+      if (!/^[1-9]\d{5}(18|19|20)\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/.test(this.formData.idCard)) {
+        uni.showToast({
+          title: '请输入正确的身份证号',
+          icon: 'none'
+        })
         return
       }
 
@@ -460,29 +291,19 @@ export default {
           title: '提交中...'
         })
 
-        // 检查用户信息
-        if (!this.userInfo || !this.userInfo.uid) {
-          uni.hideLoading()
-          uni.showToast({
-            title: '用户信息异常，请重新登录',
-            icon: 'none'
-          })
-          return
-        }
-        
         const appointmentData = {
           userId: this.userInfo.uid,
-          petId: this.getCompatiblePetId(this.formData.petId), // 确保ID在Integer范围内
+          adoptionPetId: this.formData.adoptionPetId,
           serviceType: this.formData.serviceType,
-          startDate: this.formData.startDate,
-          endDate: this.formData.endDate,
-          days: this.formData.days,
+          appointmentDate: this.formData.appointmentDate,
           timeSlot: this.formData.timeSlot,
-          location: this.formData.location,
           contactName: this.formData.contactName,
           contactPhone: this.formData.contactPhone,
+          idCard: this.formData.idCard,
+          address: this.formData.address,
+          reason: this.formData.reason,
           remark: this.formData.remark,
-          price: this.formData.price,
+          adoptionFee: this.formData.adoptionFee,
           status: 'pending'
         }
         
@@ -495,43 +316,26 @@ export default {
           uni.hideLoading()
           
           // 跳转到预约成功页面
-          const orderInfo = {
-            orderNumber: res.data?.id || Date.now().toString(),
-            verifyCode: res.data?.verifyCode || '',
-            orderTime: new Date().toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
-            }).replace(/\//g, '-'),
-            location: this.formData.location || '广州南方学院店',
-            serviceType: this.formData.serviceType || 'litter',
-            petName: this.selectedPet?.name || 'YU',
-            appointmentDate: this.formData.date,
-            appointmentTime: this.formData.timeSlot
-          }
-          
-          const queryParams = Object.keys(orderInfo)
-            .map(key => `${key}=${encodeURIComponent(orderInfo[key])}`)
-            .join('&')
-          
-          uni.redirectTo({
-            url: `/pages/booking/success?${queryParams}`
+          uni.showToast({
+            title: '申请提交成功',
+            icon: 'success'
           })
+          
+          setTimeout(() => {
+            uni.navigateBack()
+          }, 1500)
         } else {
           uni.hideLoading()
           uni.showToast({
-            title: res.msg || '预约失败',
+            title: res.message || '提交失败',
             icon: 'none'
           })
         }
       } catch (error) {
-        console.error('提交预约失败:', error)
         uni.hideLoading()
+        console.error('提交预约失败:', error)
         uni.showToast({
-          title: '预约失败，请稍后重试',
+          title: '提交失败，请重试',
           icon: 'none'
         })
       }
@@ -543,173 +347,162 @@ export default {
 <style lang="scss" scoped>
 .booking-container {
   min-height: 100vh;
-  background-color: #f8f8f8;
-  padding-bottom: 200rpx;
+  background-color: #f5f5f5;
+  padding-bottom: 120rpx;
 }
 
-
-/* 表单区域 */
 .booking-form {
-  .form-section {
-    background-color: white;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
-    
-    .section-title {
-      font-size: 28rpx;
-      color: #333;
-      font-weight: bold;
-      margin-bottom: 20rpx;
-    }
-  }
+  padding: 20rpx;
 }
 
-/* 宠物选择器 */
-.pet-selector, .date-picker {
+.form-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+/* 待领养宠物信息 */
+.adoption-pet-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 24rpx 30rpx;
-  background-color: #f8f8f8;
+  padding: 20rpx;
+  background: #f8f9fa;
   border-radius: 12rpx;
-  
-  .selector-label, .picker-value {
-    font-size: 28rpx;
-    color: #333;
-  }
-  
-  .selector-arrow, .picker-arrow {
-    font-size: 40rpx;
-    color: #999;
-  }
+}
+
+.pet-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  margin-right: 20rpx;
+}
+
+.pet-details {
+  flex: 1;
+}
+
+.pet-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.pet-breed {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.adoption-fee {
+  font-size: 28rpx;
+  color: #ff6b35;
+  font-weight: bold;
+}
+
+.no-pet-selected {
+  text-align: center;
+  color: #999;
+  padding: 40rpx;
+}
+
+/* 日期选择器 */
+.date-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.picker-value {
+  font-size: 30rpx;
+  color: #333;
+}
+
+.picker-arrow {
+  font-size: 32rpx;
+  color: #999;
 }
 
 /* 时间段选择 */
 .time-slots {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20rpx;
-  
-  .time-slot {
-    padding: 24rpx;
-    background-color: #f8f8f8;
-    border-radius: 12rpx;
-    text-align: center;
-    font-size: 26rpx;
-    color: #666;
-    border: 2rpx solid transparent;
-    
-    &.selected {
-      background-color: #fff7e6;
-      color: #ff6b35;
-      border-color: #ff6b35;
-      font-weight: bold;
-    }
-  }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
 }
 
-/* 寄养天数显示 */
-.days-display {
-  padding: 24rpx;
-  background-color: #f0f9ff;
-  border-radius: 12rpx;
+.time-slot {
+  flex: 1;
+  min-width: 200rpx;
+  padding: 20rpx;
   text-align: center;
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #ff6b35;
+  background: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #666;
+  transition: all 0.3s;
 }
 
-/* 地址输入 */
-.address-input, .remark-input {
-  .address-textarea, .remark-textarea {
-    width: 100%;
-    min-height: 150rpx;
-    padding: 20rpx;
-    background-color: #f8f8f8;
-    border-radius: 12rpx;
-    font-size: 28rpx;
-    line-height: 1.6;
-  }
+.time-slot.selected {
+  background: #ff6b35;
+  border-color: #ff6b35;
+  color: white;
 }
 
-/* 联系人输入 */
+/* 联系人信息 */
 .contact-inputs {
-  background-color: white;
-  position: relative;
-  z-index: 1;
-  
-  .input-row {
-    display: flex;
-    align-items: center;
-    padding: 20rpx 0;
-    border-bottom: 1rpx solid #f0f0f0;
-    background-color: white;
-    position: relative;
-    z-index: 1;
-    
-    &:last-child {
-      border-bottom: none;
-    }
-    
-    .input-label {
-      width: 120rpx;
-      font-size: 28rpx;
-      color: #333;
-      flex-shrink: 0;
-      background-color: white;
-      z-index: 1;
-    }
-    
-    .input-field {
-      flex: 1;
-      font-size: 28rpx;
-      padding-left: 20rpx;
-      background-color: transparent;
-      border: none;
-      color: #333;
-      opacity: 1;
-      z-index: 1;
-    }
-  }
+  background: white;
 }
 
-/* 价格汇总 */
-.price-summary {
-  background-color: white;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  
-  .summary-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20rpx;
-    font-size: 28rpx;
-    color: #666;
-    
-    .summary-value {
-      color: #333;
-    }
-  }
-  
-  .summary-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 20rpx;
-    border-top: 1rpx solid #f0f0f0;
-    
-    .total-label {
-      font-size: 30rpx;
-      color: #333;
-      font-weight: bold;
-    }
-    
-    .total-value {
-      font-size: 40rpx;
-      color: #ff6b35;
-      font-weight: bold;
-    }
-  }
+.input-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.input-row:last-child {
+  border-bottom: none;
+}
+
+.input-label {
+  width: 160rpx;
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.input-field {
+  flex: 1;
+  font-size: 30rpx;
+  color: #333;
+  padding: 10rpx 0;
+}
+
+/* 文本域 */
+.reason-textarea,
+.remark-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  color: #333;
+  border: none;
+  resize: none;
 }
 
 /* 提交按钮 */
@@ -718,114 +511,28 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
+  background: white;
   padding: 20rpx 30rpx;
-  background-color: white;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.1);
   z-index: 9999;
-  
-  .submit-button {
-    width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 20rpx;
-    border-radius: 40rpx;
-    font-size: 28rpx;
-    font-weight: bold;
-    
-    &:active {
-      opacity: 0.9;
-    }
-  }
 }
 
-/* 宠物选择弹窗 */
-.picker-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+.submit-button {
+  width: 100%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: white;
+  border: none;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: bold;
   display: flex;
-  align-items: flex-end;
-  z-index: 1000;
-  
-  .picker-content {
-    width: 100%;
-    max-height: 80vh;
-    background-color: white;
-    border-radius: 40rpx 40rpx 0 0;
-    overflow: hidden;
-    
-    .picker-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 30rpx;
-      border-bottom: 1rpx solid #f0f0f0;
-      
-      .picker-title {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
-      }
-      
-      .picker-close {
-        font-size: 40rpx;
-        color: #999;
-        padding: 10rpx;
-      }
-    }
-    
-    .picker-list {
-      max-height: 500rpx;
-      overflow-y: auto;
-      
-      .pet-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 30rpx;
-        border-bottom: 1rpx solid #f0f0f0;
-        
-        &.selected {
-          background-color: #fff7e6;
-        }
-        
-        .pet-info {
-          flex: 1;
-          
-          .pet-name {
-            font-size: 30rpx;
-            color: #333;
-            font-weight: bold;
-            margin-bottom: 8rpx;
-          }
-          
-          .pet-breed {
-            font-size: 24rpx;
-            color: #999;
-          }
-        }
-        
-        .pet-check {
-          color: #ff6b35;
-          font-size: 40rpx;
-          font-weight: bold;
-        }
-      }
-    }
-    
-    .add-pet-btn {
-      padding: 30rpx;
-      text-align: center;
-      color: #667eea;
-      font-size: 28rpx;
-      font-weight: bold;
-      border-top: 1rpx solid #f0f0f0;
-    }
-  }
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-button:disabled {
+  background: #ccc;
+  color: #999;
 }
 </style>
-
