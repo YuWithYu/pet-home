@@ -1,13 +1,19 @@
 package com.pethome.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.pethome.entity.PetAdoption;
 
-public interface PetAdoptionService {
-    IPage<PetAdoption> getPetAdoptionList(Page<PetAdoption> page);
-    PetAdoption createPetAdoption(PetAdoption petAdoption);
-    PetAdoption updatePetAdoption(PetAdoption petAdoption);
-    boolean deletePetAdoption(Long id);
-    PetAdoption getPetAdoptionById(Long id);
+import java.util.List;
+
+public interface PetAdoptionService extends IService<PetAdoption> {
+    
+    /**
+     * 获取可领养的宠物列表
+     */
+    List<PetAdoption> getAvailablePets();
+    
+    /**
+     * 根据ID获取宠物详情
+     */
+    PetAdoption getPetById(Long id);
 }

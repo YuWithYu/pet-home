@@ -72,6 +72,7 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/api/grooming-appointments/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/boarding-appointments/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/adoption-appointments/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/pet-adoption/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/service-banners/page/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/orders/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/community/**")).permitAll()

@@ -203,6 +203,15 @@ export default {
     if (options.petId) {
       this.formData.adoptionPetId = parseInt(options.petId)
       this.loadAdoptionPetInfo()
+    } else {
+      // 如果没有传递宠物ID，提示用户先选择宠物
+      uni.showToast({
+        title: '请先选择要领养的宠物',
+        icon: 'none'
+      })
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1500)
     }
   },
 
@@ -235,21 +244,15 @@ export default {
       if (!this.formData.adoptionPetId) return
       
       try {
-        // 这里应该调用获取待领养宠物详情的API
-        // const res = await this.$api.getAdoptionPetDetail(this.formData.adoptionPetId)
-        // this.adoptionPet = res.data
+        // 调用获取待领养宠物详情的API
+        const res = await this.$api.getAdoptionPetDetail(this.formData.adoptionPetId)
         
-        // 临时模拟数据
-        this.adoptionPet = {
-          id: this.formData.adoptionPetId,
-          petName: '小白',
-          breed: '金毛',
-          age: 2,
-          gender: '公',
-          imageUrl: '/static/images/default-pet.png',
-          adoptionFee: 200
+        if (res.code === 0 && res.data) {
+          this.adoptionPet = res.data
+          this.formData.adoptionFee = this.adoptionPet.adoptionFee
+        } else {
+          throw new Error(res.message || '获取宠物信息失败')
         }
-        this.formData.adoptionFee = this.adoptionPet.adoptionFee
       } catch (error) {
         console.error('加载宠物信息失败:', error)
         uni.showToast({

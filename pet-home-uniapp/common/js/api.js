@@ -717,6 +717,24 @@ class ApiService {
     })
   }
 
+  // ==================== 待领养宠物相关 API ====================
+
+  // 获取待领养宠物列表
+  getAdoptionPets() {
+    return this.request({
+      url: '/api/pet-adoption/list',
+      method: 'GET'
+    })
+  }
+
+  // 获取待领养宠物详情
+  getAdoptionPetDetail(id) {
+    return this.request({
+      url: `/api/pet-adoption/${id}`,
+      method: 'GET'
+    })
+  }
+
 
   // ==================== 订单相关接口 ====================
 

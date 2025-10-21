@@ -223,6 +223,12 @@
       }
     },
     {
+      "path": "pages/service/adoption",
+      "style": {
+        "navigationBarTitleText": "宠物领养"
+      }
+    },
+    {
       "path": "pages/booking/index",
       "style": {
         "navigationBarTitleText": "预约服务"
