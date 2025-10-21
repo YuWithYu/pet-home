@@ -23,8 +23,8 @@
               <el-option label="可领养" value="available"></el-option>
               <el-option label="已领养" value="adopted"></el-option>
             </el-select>
-            <el-button type="primary" @click="showAddPetDialog">添加待领养宠物</el-button>
-            <el-button type="success" @click="exportPets">导出数据</el-button>
+            <el-button type="primary" @click="showAddServiceDialog">添加待领养宠物</el-button>
+            <el-button type="success" @click="exportServices">导出数据</el-button>
             <el-button type="info" @click="showStatisticsDialog">统计信息</el-button>
           </div>
         </div>
@@ -85,16 +85,16 @@
             </el-table-column>
             <el-table-column label="操作" width="200" fixed="right">
               <template #default="scope">
-                <el-button type="text" @click="editPet(scope.row)">编辑</el-button>
-                <el-button type="text" @click="updatePetImage(scope.row)">更换照片</el-button>
+                <el-button type="text" @click="editService(scope.row)">编辑</el-button>
+                <el-button type="text" @click="updateServiceImage(scope.row)">更换照片</el-button>
                 <el-button 
                   type="text" 
                   :style="{ color: scope.row.status === 'available' ? '#e6a23c' : '#67c23a' }"
-                  @click="togglePetStatus(scope.row)"
+                  @click="toggleServiceStatus(scope.row)"
                 >
                   {{ scope.row.status === 'available' ? '标记已领养' : '标记可领养' }}
                 </el-button>
-                <el-button type="text" @click="deletePet(scope.row)" style="color: #f56c6c">删除</el-button>
+                <el-button type="text" @click="deleteService(scope.row)" style="color: #f56c6c">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
