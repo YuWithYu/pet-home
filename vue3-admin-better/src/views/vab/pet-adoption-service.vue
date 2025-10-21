@@ -514,7 +514,7 @@ export default {
     const loading = ref(false)
     const services = ref([])
     const searchText = ref('')
-    const selectedStatus = ref(null) // 使用null而不是空字符串
+    const selectedStatus = ref('') // 使用空字符串而不是null
     const currentPage = ref(1)
     const pageSize = ref(10)
     const total = ref(0)
@@ -523,7 +523,7 @@ export default {
     // 订单相关数据
     const serviceOrders = ref([])
     const orderSearchText = ref('')
-    const orderFilterStatus = ref(null) // 使用null而不是空字符串
+    const orderFilterStatus = ref('') // 使用空字符串而不是null
     const orderCurrentPage = ref(1)
     const orderPageSize = ref(10)
     const orderTotal = ref(0)
@@ -629,7 +629,22 @@ export default {
         
         const response = await adoptionServiceApi.getAdoptionServicePage(params)
         if (response.code === 0) {
-          services.value = response.data.records || []
+          // 清理数据，确保所有字段都是正确的类型
+          const records = response.data.records || []
+          services.value = records.map(service => ({
+            ...service,
+            category: typeof service.category === 'string' ? service.category : 'basic',
+            tags: Array.isArray(service.tags) ? service.tags : 
+                  (typeof service.tags === 'string' ? 
+                    (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
+                      (() => {
+                        try {
+                          return JSON.parse(service.tags);
+                        } catch (e) {
+                          return [service.tags];
+                        }
+                      })() : [service.tags]) : [])
+          }))
           total.value = response.data.total || 0
           console.log('加载领养服务列表成功:', services.value)
         } else {
@@ -713,30 +728,29 @@ export default {
     // 编辑服务
     const editService = (service) => {
       isEdit.value = true
-      Object.assign(serviceForm, {
-        name: service.name,
-        description: service.description,
-        category: typeof service.category === 'string' ? service.category : 'basic', // 确保category是字符串
-        price: service.price,
-        duration: service.duration,
-        bgColor: service.bgColor || '#fff3e0',
-        sortOrder: service.sortOrder || 0,
-        isRecommended: service.isRecommended || false,
-        tags: service.tags ? (typeof service.tags === 'string' ? 
-          (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
-            (() => {
-              try {
-                return JSON.parse(service.tags);
-              } catch (e) {
-                const match = service.tags.match(/\[(.*)\]/);
-                if (match && match[1]) {
-                  return match[1].split(',').map(tag => tag.trim().replace(/['"]/g, ''));
-                }
-                return [service.tags];
-              }
-            })() : [service.tags]) : 
-          service.tags) : []
-      })
+      // 确保所有字段都是正确的类型
+      const cleanService = {
+        name: service.name || '',
+        description: service.description || '',
+        category: typeof service.category === 'string' ? service.category : 'basic',
+        price: typeof service.price === 'number' ? service.price : 0,
+        duration: typeof service.duration === 'number' ? service.duration : 60,
+        bgColor: typeof service.bgColor === 'string' ? service.bgColor : '#fff3e0',
+        sortOrder: typeof service.sortOrder === 'number' ? service.sortOrder : 0,
+        isRecommended: typeof service.isRecommended === 'boolean' ? service.isRecommended : false,
+        tags: Array.isArray(service.tags) ? service.tags : 
+              (typeof service.tags === 'string' ? 
+                (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
+                  (() => {
+                    try {
+                      return JSON.parse(service.tags);
+                    } catch (e) {
+                      return [service.tags];
+                    }
+                  })() : [service.tags]) : [])
+      }
+      
+      Object.assign(serviceForm, cleanService)
       currentService.value = service
       serviceDialogVisible.value = true
     }
