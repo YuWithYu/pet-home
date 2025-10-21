@@ -303,7 +303,12 @@
         </el-form-item>
         
         <el-form-item label="服务分类" prop="category">
-          <el-select v-model="serviceForm.category" placeholder="请选择服务分类" style="width: 100%">
+          <el-select 
+            v-model="serviceForm.category" 
+            placeholder="请选择服务分类" 
+            style="width: 100%"
+            clearable
+          >
             <el-option label="基础领养服务" value="basic" />
             <el-option label="爱心领养服务" value="love" />
             <el-option label="专业领养服务" value="professional" />
@@ -509,7 +514,7 @@ export default {
     const loading = ref(false)
     const services = ref([])
     const searchText = ref('')
-    const selectedStatus = ref('')
+    const selectedStatus = ref(null) // 使用null而不是空字符串
     const currentPage = ref(1)
     const pageSize = ref(10)
     const total = ref(0)
@@ -518,7 +523,7 @@ export default {
     // 订单相关数据
     const serviceOrders = ref([])
     const orderSearchText = ref('')
-    const orderFilterStatus = ref('')
+    const orderFilterStatus = ref(null) // 使用null而不是空字符串
     const orderCurrentPage = ref(1)
     const orderPageSize = ref(10)
     const orderTotal = ref(0)
@@ -550,13 +555,13 @@ export default {
     const serviceForm = reactive({
       name: '',
       description: '',
-      category: '',
+      category: 'basic', // 设置默认值而不是空字符串
       price: 0,
       duration: 60,
       bgColor: '#fff3e0',
       sortOrder: 0,
       isRecommended: false,
-      tags: []
+      tags: [] // 确保tags是数组
     })
 
     // 表单验证规则
