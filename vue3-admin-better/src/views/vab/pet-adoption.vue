@@ -122,21 +122,21 @@
             <td>{{ adoption.id }}</td>
             <td>
               <div class="applicant-info">
-                <div class="applicant-name">{{ adoption.applicantName || '未知用户' }}</div>
-                <div class="applicant-phone">{{ adoption.applicantPhone }}</div>
+                <div class="applicant-name">{{ adoption.contactName || '未知用户' }}</div>
+                <div class="applicant-phone">{{ adoption.contactPhone }}</div>
               </div>
             </td>
             <td>
               <div class="pet-info">
-                <div class="pet-name">{{ adoption.petName || '未知宠物' }}</div>
-                <div class="pet-type">{{ adoption.petType }} - {{ adoption.petBreed }}</div>
+                <div class="pet-name">领养申请 #{{ adoption.id }}</div>
+                <div class="pet-type">预约时间: {{ adoption.appointmentDate }}</div>
               </div>
             </td>
             <td>{{ formatDateTime(adoption.createTime) }}</td>
             <td class="price-cell">¥{{ adoption.adoptionFee }}</td>
             <td>
               <span class="status-badge" :class="adoption.status">
-                {{ adoption.statusText }}
+                {{ getStatusText(adoption.status) }}
               </span>
             </td>
             <td>
@@ -402,10 +402,16 @@ export default {
     // 加载领养申请列表
     async loadAdoptions() {
       try {
-        // 从真实API获取数据
-        const response = await this.$http.get('http://172.17.209.218:8080/api/pet-adoption/list');
-        if (response.data.code === 200) {
-          let adoptions = response.data.data || [];
+        // 从正确的API获取领养申请数据
+        const response = await this.$http.get('http://172.17.209.218:8080/api/adoption-appointments/page', {
+          params: {
+            current: 1,
+            size: 100
+          }
+        });
+        
+        if (response.data.code === 0) {
+          let adoptions = response.data.data.records || [];
           
           // 应用筛选
           if (this.filters.status) {
@@ -415,16 +421,16 @@ export default {
           if (this.filters.search) {
             const searchLower = this.filters.search.toLowerCase();
             adoptions = adoptions.filter(adoption => 
-              adoption.applicantName?.toLowerCase().includes(searchLower) ||
-              adoption.petName?.toLowerCase().includes(searchLower) ||
-              adoption.applicantPhone?.includes(searchLower)
+              adoption.contactName?.toLowerCase().includes(searchLower) ||
+              adoption.contactPhone?.includes(searchLower) ||
+              adoption.reason?.toLowerCase().includes(searchLower)
             );
           }
           
           this.adoptions = adoptions;
-          this.updateStats(response.data.data || []);
+          this.updateStats(adoptions);
         } else {
-          console.error('获取领养申请列表失败:', response.data.msg);
+          console.error('获取领养申请列表失败:', response.data.message);
           this.adoptions = [];
         }
       } catch (error) {
@@ -459,17 +465,29 @@ export default {
       return date.toLocaleString('zh-CN');
     },
     
+    // 获取状态文本
+    getStatusText(status) {
+      const statusMap = {
+        'pending': '待审核',
+        'approved': '已通过',
+        'rejected': '已拒绝',
+        'completed': '已完成',
+        'cancelled': '已取消'
+      };
+      return statusMap[status] || status;
+    },
+    
     // 审核领养申请
     async reviewAdoption(adoption, status) {
       const action = status === 'approved' ? '通过' : '拒绝';
       if (confirm(`确定要${action}这个领养申请吗？`)) {
         const reviewComment = prompt(`请输入审核意见 (可选):`);
         try {
-          const response = await this.$http.put(`http://172.17.209.218:8080/api/pet-adoption/${adoption.id}/review?status=${status}&reviewerId=1&reviewComment=${encodeURIComponent(reviewComment || '')}`);
-          if (response.data.code === 200) {
+          const response = await this.$http.put(`http://172.17.209.218:8080/api/adoption-appointments/${adoption.id}/status?status=${status}`);
+          if (response.data.code === 0) {
             this.loadAdoptions();
           } else {
-            alert('审核失败: ' + response.data.msg);
+            alert('审核失败: ' + response.data.message);
           }
         } catch (error) {
           console.error('审核领养申请失败:', error);
@@ -482,11 +500,11 @@ export default {
     async completeAdoption(adoption) {
       if (confirm('确认完成这个领养申请吗？')) {
         try {
-          const response = await this.$http.put(`http://172.17.209.218:8080/api/pet-adoption/${adoption.id}/complete`);
-          if (response.data.code === 200) {
+          const response = await this.$http.put(`http://172.17.209.218:8080/api/adoption-appointments/${adoption.id}/status?status=completed`);
+          if (response.data.code === 0) {
             this.loadAdoptions();
           } else {
-            alert('完成领养失败: ' + response.data.msg);
+            alert('完成领养失败: ' + response.data.message);
           }
         } catch (error) {
           console.error('完成领养失败:', error);
