@@ -633,20 +633,42 @@ export default {
         if (response.code === 0) {
           // 清理数据，确保所有字段都是正确的类型
           const records = response.data.records || []
-          services.value = records.map(service => ({
-            ...service,
-            category: typeof service.category === 'string' ? service.category : 'basic',
-            tags: Array.isArray(service.tags) ? service.tags : 
-                  (typeof service.tags === 'string' ? 
-                    (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
-                      (() => {
-                        try {
-                          return JSON.parse(service.tags);
-                        } catch (e) {
-                          return [service.tags];
-                        }
-                      })() : [service.tags]) : [])
-          }))
+          
+          console.log('原始数据:', records)
+          
+          services.value = records.map(service => {
+            // 深度转换所有字段为基本类型
+            const cleanedService = {
+              id: service.id,
+              name: String(service.name || ''),
+              description: String(service.description || ''),
+              category: String(service.category || 'basic'),
+              price: Number(service.price) || 0,
+              duration: Number(service.duration) || 60,
+              imageUrl: String(service.imageUrl || ''),
+              bgColor: String(service.bgColor || '#fff3e0'),
+              sortOrder: Number(service.sortOrder) || 0,
+              isRecommended: Boolean(service.isRecommended),
+              tags: Array.isArray(service.tags) ? service.tags.map(t => String(t)) : 
+                    (typeof service.tags === 'string' ? 
+                      (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
+                        (() => {
+                          try {
+                            const parsed = JSON.parse(service.tags);
+                            return Array.isArray(parsed) ? parsed.map(t => String(t)) : [String(service.tags)];
+                          } catch (e) {
+                            return [String(service.tags)];
+                          }
+                        })() : [String(service.tags)]) : []),
+              status: String(service.status || 'active'),
+              createTime: service.createTime,
+              updateTime: service.updateTime
+            }
+            
+            console.log('清理后的服务:', cleanedService)
+            return cleanedService
+          })
+          
           total.value = response.data.total || 0
           console.log('加载领养服务列表成功:', services.value)
         } else {
@@ -730,27 +752,33 @@ export default {
     // 编辑服务
     const editService = (service) => {
       isEdit.value = true
-      // 确保所有字段都是正确的类型
+      
+      console.log('编辑服务原始数据:', service)
+      
+      // 深度转换所有字段为基本类型
       const cleanService = {
-        name: service.name || '',
-        description: service.description || '',
-        category: typeof service.category === 'string' ? service.category : 'basic',
-        price: typeof service.price === 'number' ? service.price : 0,
-        duration: typeof service.duration === 'number' ? service.duration : 60,
-        bgColor: typeof service.bgColor === 'string' ? service.bgColor : '#fff3e0',
-        sortOrder: typeof service.sortOrder === 'number' ? service.sortOrder : 0,
-        isRecommended: typeof service.isRecommended === 'boolean' ? service.isRecommended : false,
-        tags: Array.isArray(service.tags) ? service.tags : 
+        name: String(service.name || ''),
+        description: String(service.description || ''),
+        category: String(service.category || 'basic'),
+        price: Number(service.price) || 0,
+        duration: Number(service.duration) || 60,
+        bgColor: String(service.bgColor || '#fff3e0'),
+        sortOrder: Number(service.sortOrder) || 0,
+        isRecommended: Boolean(service.isRecommended),
+        tags: Array.isArray(service.tags) ? service.tags.map(t => String(t)) : 
               (typeof service.tags === 'string' ? 
                 (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
                   (() => {
                     try {
-                      return JSON.parse(service.tags);
+                      const parsed = JSON.parse(service.tags);
+                      return Array.isArray(parsed) ? parsed.map(t => String(t)) : [String(service.tags)];
                     } catch (e) {
-                      return [service.tags];
+                      return [String(service.tags)];
                     }
-                  })() : [service.tags]) : [])
+                  })() : [String(service.tags)]) : [])
       }
+      
+      console.log('编辑服务清理后数据:', cleanService)
       
       Object.assign(serviceForm, cleanService)
       currentService.value = service
