@@ -306,7 +306,11 @@
         </el-form-item>
         
         <el-form-item label="性别" prop="gender">
-          <el-select v-model="serviceForm.gender" placeholder="请选择性别">
+          <el-select 
+            :model-value="typeof serviceForm.gender === 'string' ? serviceForm.gender : 'Male'"
+            @update:model-value="(value) => serviceForm.gender = typeof value === 'string' ? value : 'Male'"
+            placeholder="请选择性别"
+          >
             <el-option label="公" value="Male" />
             <el-option label="母" value="Female" />
           </el-select>
@@ -344,7 +348,12 @@
         </el-form-item>
         
         <el-form-item label="宠物状态" prop="status">
-          <el-select v-model="serviceForm.status" placeholder="请选择宠物状态" style="width: 100%">
+          <el-select 
+            :model-value="typeof serviceForm.status === 'string' ? serviceForm.status : 'available'"
+            @update:model-value="(value) => serviceForm.status = typeof value === 'string' ? value : 'available'"
+            placeholder="请选择宠物状态" 
+            style="width: 100%"
+          >
             <el-option label="可领养" value="available" />
             <el-option label="已领养" value="adopted" />
           </el-select>
@@ -1043,8 +1052,16 @@ export default {
     // 组件挂载时加载数据
     onMounted(() => {
       // 确保初始数据是正确的类型
-      serviceForm.gender = typeof serviceForm.gender === 'string' ? serviceForm.gender : 'Male'
-      serviceForm.status = typeof serviceForm.status === 'string' ? serviceForm.status : 'available'
+      serviceForm.petName = String(serviceForm.petName || '')
+      serviceForm.breed = String(serviceForm.breed || '')
+      serviceForm.age = Number(serviceForm.age) || 1
+      serviceForm.gender = String(serviceForm.gender || 'Male')
+      serviceForm.description = String(serviceForm.description || '')
+      serviceForm.adoptionFee = Number(serviceForm.adoptionFee) || 0
+      serviceForm.location = String(serviceForm.location || '')
+      serviceForm.contactInfo = String(serviceForm.contactInfo || '')
+      serviceForm.imageUrl = String(serviceForm.imageUrl || '')
+      serviceForm.status = String(serviceForm.status || 'available')
       
       loadServices()
       loadServiceBanner()
