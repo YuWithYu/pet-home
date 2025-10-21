@@ -307,8 +307,7 @@
         
         <el-form-item label="性别" prop="gender">
           <el-select 
-            :model-value="typeof serviceForm.gender === 'string' ? serviceForm.gender : 'Male'"
-            @update:model-value="(value) => serviceForm.gender = typeof value === 'string' ? value : 'Male'"
+            v-model="serviceForm.gender"
             placeholder="请选择性别"
           >
             <el-option label="公" value="Male" />
@@ -349,8 +348,7 @@
         
         <el-form-item label="宠物状态" prop="status">
           <el-select 
-            :model-value="typeof serviceForm.status === 'string' ? serviceForm.status : 'available'"
-            @update:model-value="(value) => serviceForm.status = typeof value === 'string' ? value : 'available'"
+            v-model="serviceForm.status"
             placeholder="请选择宠物状态" 
             style="width: 100%"
           >
@@ -548,16 +546,16 @@ export default {
 
     // 表单数据
     const serviceForm = reactive({
-      petName: '',
-      breed: '',
-      age: 1,
-      gender: 'Male', // 设置默认性别
-      description: '',
-      adoptionFee: 0,
-      location: '',
-      contactInfo: '',
-      imageUrl: '',
-      status: 'available', // 设置默认状态
+      petName: String(''),
+      breed: String(''),
+      age: Number(1),
+      gender: String('Male'), // 强制设置为字符串
+      description: String(''),
+      adoptionFee: Number(0),
+      location: String(''),
+      contactInfo: String(''),
+      imageUrl: String(''),
+      status: String('available'), // 强制设置为字符串
       createTime: null,
       updateTime: null
     })
@@ -1057,17 +1055,21 @@ export default {
       // 强制重新渲染
       componentKey.value++
       
-      // 确保初始数据是正确的类型
-      serviceForm.petName = String(serviceForm.petName || '')
-      serviceForm.breed = String(serviceForm.breed || '')
-      serviceForm.age = Number(serviceForm.age) || 1
-      serviceForm.gender = String(serviceForm.gender || 'Male')
-      serviceForm.description = String(serviceForm.description || '')
-      serviceForm.adoptionFee = Number(serviceForm.adoptionFee) || 0
-      serviceForm.location = String(serviceForm.location || '')
-      serviceForm.contactInfo = String(serviceForm.contactInfo || '')
-      serviceForm.imageUrl = String(serviceForm.imageUrl || '')
-      serviceForm.status = String(serviceForm.status || 'available')
+      // 强制确保所有字段都是正确的类型
+      Object.assign(serviceForm, {
+        petName: String(serviceForm.petName || ''),
+        breed: String(serviceForm.breed || ''),
+        age: Number(serviceForm.age) || 1,
+        gender: String(serviceForm.gender || 'Male'),
+        description: String(serviceForm.description || ''),
+        adoptionFee: Number(serviceForm.adoptionFee) || 0,
+        location: String(serviceForm.location || ''),
+        contactInfo: String(serviceForm.contactInfo || ''),
+        imageUrl: String(serviceForm.imageUrl || ''),
+        status: String(serviceForm.status || 'available'),
+        createTime: serviceForm.createTime,
+        updateTime: serviceForm.updateTime
+      })
       
       loadServices()
       loadServiceBanner()
