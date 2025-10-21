@@ -415,7 +415,7 @@ export default {
           break
         case 'adoption':
           uni.navigateTo({
-            url: '/pages/appointment/adoption'
+            url: '/pages/service/adoption'
           })
           break
         case 'hospital':
