@@ -574,33 +574,45 @@ export default {
 
     // 表单数据
     const serviceForm = reactive({
-      name: '',
+      petName: '',
+      breed: '',
+      age: 1,
+      gender: 'Male', // 设置默认性别
       description: '',
-      category: 'basic', // 设置默认值而不是空字符串
-      price: 0,
-      duration: 60,
-      bgColor: '#fff3e0',
-      sortOrder: 0,
-      isRecommended: false,
-      tags: [] // 确保tags是数组
+      adoptionFee: 0,
+      location: '',
+      contactInfo: '',
+      imageUrl: '',
+      status: 'available', // 设置默认状态
+      createTime: null,
+      updateTime: null
     })
 
     // 表单验证规则
     const serviceFormRules = {
-      name: [
-        { required: true, message: '请输入服务名称', trigger: 'blur' }
+      petName: [
+        { required: true, message: '请输入宠物名称', trigger: 'blur' }
+      ],
+      breed: [
+        { required: true, message: '请输入宠物品种', trigger: 'blur' }
+      ],
+      age: [
+        { required: true, message: '请输入宠物年龄', trigger: 'blur' }
+      ],
+      gender: [
+        { required: true, message: '请选择宠物性别', trigger: 'change' }
       ],
       description: [
-        { required: true, message: '请输入商品介绍', trigger: 'blur' }
+        { required: true, message: '请输入宠物描述', trigger: 'blur' }
       ],
-      category: [
-        { required: true, message: '请选择服务分类', trigger: 'change' }
+      adoptionFee: [
+        { required: true, message: '请输入领养费用', trigger: 'blur' }
       ],
-      price: [
-        { required: true, message: '请输入服务价格', trigger: 'blur' }
+      location: [
+        { required: true, message: '请输入所在位置', trigger: 'blur' }
       ],
-      duration: [
-        { required: true, message: '请输入服务时长', trigger: 'blur' }
+      contactInfo: [
+        { required: true, message: '请输入联系方式', trigger: 'blur' }
       ]
     }
 
@@ -659,27 +671,16 @@ export default {
             // 深度转换所有字段为基本类型
             const cleanedService = {
               id: service.id,
-              name: String(service.name || ''),
+              petName: String(service.petName || ''),
+              breed: String(service.breed || ''),
+              age: Number(service.age) || 1,
+              gender: String(service.gender || 'Male'),
               description: String(service.description || ''),
-              category: String(service.category || 'basic'),
-              price: Number(service.price) || 0,
-              duration: Number(service.duration) || 60,
+              adoptionFee: Number(service.adoptionFee) || 0,
+              location: String(service.location || ''),
+              contactInfo: String(service.contactInfo || ''),
               imageUrl: String(service.imageUrl || ''),
-              bgColor: String(service.bgColor || '#fff3e0'),
-              sortOrder: Number(service.sortOrder) || 0,
-              isRecommended: Boolean(service.isRecommended),
-              tags: Array.isArray(service.tags) ? service.tags.map(t => String(t)) : 
-                    (typeof service.tags === 'string' ? 
-                      (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
-                        (() => {
-                          try {
-                            const parsed = JSON.parse(service.tags);
-                            return Array.isArray(parsed) ? parsed.map(t => String(t)) : [String(service.tags)];
-                          } catch (e) {
-                            return [String(service.tags)];
-                          }
-                        })() : [String(service.tags)]) : []),
-              status: String(service.status || 'active'),
+              status: String(service.status || 'available'),
               createTime: service.createTime,
               updateTime: service.updateTime
             }
@@ -776,25 +777,18 @@ export default {
       
       // 深度转换所有字段为基本类型
       const cleanService = {
-        name: String(service.name || ''),
+        petName: String(service.petName || ''),
+        breed: String(service.breed || ''),
+        age: Number(service.age) || 1,
+        gender: String(service.gender || 'Male'),
         description: String(service.description || ''),
-        category: String(service.category || 'basic'),
-        price: Number(service.price) || 0,
-        duration: Number(service.duration) || 60,
-        bgColor: String(service.bgColor || '#fff3e0'),
-        sortOrder: Number(service.sortOrder) || 0,
-        isRecommended: Boolean(service.isRecommended),
-        tags: Array.isArray(service.tags) ? service.tags.map(t => String(t)) : 
-              (typeof service.tags === 'string' ? 
-                (service.tags.startsWith('[') && service.tags.endsWith(']') ? 
-                  (() => {
-                    try {
-                      const parsed = JSON.parse(service.tags);
-                      return Array.isArray(parsed) ? parsed.map(t => String(t)) : [String(service.tags)];
-                    } catch (e) {
-                      return [String(service.tags)];
-                    }
-                  })() : [String(service.tags)]) : [])
+        adoptionFee: Number(service.adoptionFee) || 0,
+        location: String(service.location || ''),
+        contactInfo: String(service.contactInfo || ''),
+        imageUrl: String(service.imageUrl || ''),
+        status: String(service.status || 'available'),
+        createTime: service.createTime,
+        updateTime: service.updateTime
       }
       
       console.log('编辑服务清理后数据:', cleanService)
@@ -808,15 +802,18 @@ export default {
     // 重置表单
     const resetForm = () => {
       Object.assign(serviceForm, {
-        name: '',
+        petName: '',
+        breed: '',
+        age: 1,
+        gender: 'Male',
         description: '',
-        category: 'basic', // 设置默认值而不是空字符串
-        price: 0,
-        duration: 60,
-        bgColor: '#fff3e0',
-        sortOrder: 0,
-        isRecommended: false,
-        tags: []
+        adoptionFee: 0,
+        location: '',
+        contactInfo: '',
+        imageUrl: '',
+        status: 'available',
+        createTime: null,
+        updateTime: null
       })
     }
 
@@ -824,8 +821,7 @@ export default {
     const saveService = async () => {
       try {
         const data = {
-          ...serviceForm,
-          bgColor: serviceForm.bgColor
+          ...serviceForm
         }
         
         let response
@@ -853,7 +849,7 @@ export default {
     const deleteService = async (service) => {
       try {
         await ElMessageBox.confirm(
-          `确定要删除服务"${service.name}"吗？`,
+          `确定要删除宠物"${service.petName}"吗？`,
           '确认删除',
           {
             confirmButtonText: '确定',
