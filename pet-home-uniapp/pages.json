@@ -187,6 +187,12 @@
       }
     },
     {
+      "path": "pages/appointment/book-boarding",
+      "style": {
+        "navigationBarTitleText": "宠物寄养预约"
+      }
+    },
+    {
       "path": "pages/appointment/online-consultation",
       "style": {
         "navigationBarTitleText": "在线咨询"

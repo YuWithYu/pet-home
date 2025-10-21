@@ -425,7 +425,7 @@ export default {
           url = '/pages/appointment/book-door-cleaning'
           break
         case 'boarding':
-          url = '/pages/appointment/boarding'
+          url = `/pages/appointment/book-boarding?serviceName=${encodeURIComponent(this.serviceData.name || '宠物寄养服务')}`
           break
         case 'medical':
           url = '/pages/appointment/book-hospital'

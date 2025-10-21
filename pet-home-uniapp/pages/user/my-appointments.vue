@@ -154,11 +154,12 @@ export default {
       try {
         this.loading = true
         
-        // 同时获取上门铲屎服务、医院预约和洗护预约数据
-        const [doorCleaningRes, hospitalRes, groomingRes] = await Promise.all([
+        // 同时获取上门铲屎服务、医院预约、洗护预约和寄养预约数据
+        const [doorCleaningRes, hospitalRes, groomingRes, boardingRes] = await Promise.all([
           this.$api.getUserAppointments(this.userInfo.uid),
           this.$api.getUserHospitalAppointments(this.userInfo.uid),
-          this.$api.getUserGroomingAppointments(this.userInfo.uid)
+          this.$api.getUserGroomingAppointments(this.userInfo.uid),
+          this.$api.getUserBoardingAppointments(this.userInfo.uid)
         ])
 
         let allAppointments = []
@@ -188,6 +189,15 @@ export default {
             serviceType: 'grooming' // 添加服务类型标识
           }))
           allAppointments = allAppointments.concat(groomingAppointments)
+        }
+
+        // 处理寄养预约
+        if (boardingRes.code === 0 && boardingRes.data) {
+          const boardingAppointments = boardingRes.data.map(appointment => ({
+            ...appointment,
+            serviceType: 'boarding' // 添加服务类型标识
+          }))
+          allAppointments = allAppointments.concat(boardingAppointments)
         }
 
         // 按创建时间倒序排列
@@ -295,6 +305,8 @@ export default {
                 result = await this.$api.updateHospitalAppointmentStatus(appointment.id, 'cancelled')
               } else if (appointment.serviceType === 'grooming') {
                 result = await this.$api.updateGroomingAppointmentStatus(appointment.id, 'cancelled')
+              } else if (appointment.serviceType === 'boarding') {
+                result = await this.$api.updateBoardingAppointmentStatus(appointment.id, 'cancelled')
               } else {
                 result = await this.$api.updateAppointmentStatus(appointment.id, 'cancelled')
               }

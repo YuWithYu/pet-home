@@ -629,6 +629,50 @@ class ApiService {
     })
   }
 
+  // ==================== 宠物寄养预约相关 API ====================
+
+  // 创建宠物寄养预约
+  createBoardingAppointment(appointmentData) {
+    return this.request({
+      url: '/api/boarding-appointments/create',
+      method: 'POST',
+      data: appointmentData
+    })
+  }
+
+  // 获取宠物寄养预约列表
+  getBoardingAppointmentPage(pageNo = 1, pageSize = 10) {
+    return this.request({
+      url: '/api/boarding-appointments/page',
+      method: 'GET',
+      data: { pageNo, pageSize }
+    })
+  }
+
+  // 获取用户宠物寄养预约列表
+  getUserBoardingAppointments(userId) {
+    return this.request({
+      url: `/api/boarding-appointments/user/list/${userId}`,
+      method: 'GET'
+    })
+  }
+
+  // 更新宠物寄养预约状态
+  updateBoardingAppointmentStatus(id, status) {
+    return this.request({
+      url: `/api/boarding-appointments/${id}/status?status=${status}`,
+      method: 'PUT'
+    })
+  }
+
+  // 获取宠物寄养预约详情
+  getBoardingAppointmentDetail(id) {
+    return this.request({
+      url: `/api/boarding-appointments/${id}`,
+      method: 'GET'
+    })
+  }
+
 
   // ==================== 订单相关接口 ====================
 
