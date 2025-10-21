@@ -431,7 +431,7 @@ export default {
           url = '/pages/appointment/book-hospital'
           break
         case 'grooming':
-          url = `/pages/appointment/book-grooming?serviceName=${encodeURIComponent(this.service.title || '宠物洗护服务')}`
+          url = `/pages/appointment/book-grooming?serviceName=${encodeURIComponent(this.serviceData.name || '宠物洗护服务')}`
           break
         case 'adoption':
           url = '/pages/appointment/adoption'
@@ -450,8 +450,8 @@ export default {
 
     onBannerError(e) {
       console.log('展示图加载失败:', e)
-      // 设置默认图片
-      this.serviceData.bannerImage = '/static/images/default-banner.jpg'
+      // 设置默认图片（使用已存在的banner1.jpg）
+      this.serviceData.bannerImage = '/static/images/banner1.jpg'
     },
 
     // 处理图片URL，解决小程序HTTP协议限制问题
