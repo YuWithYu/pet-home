@@ -15,6 +15,16 @@ public class Order {
     private Integer status;
     private Integer paymentStatus;
     private Integer deliveryStatus;
+    private String shippingCompany;
+    private String shippingNumber;
+    private LocalDateTime shippingTime;
+    private String receiverName;
+    private String receiverPhone;
+    private String receiverProvince;
+    private String receiverCity;
+    private String receiverRegion;
+    private String receiverDetailAddress;
+    private String warehouseAddress; // 发货仓地址
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -77,6 +87,86 @@ public class Order {
 
     public void setDeliveryStatus(Integer deliveryStatus) {
         this.deliveryStatus = deliveryStatus;
+    }
+
+    public String getShippingCompany() {
+        return shippingCompany;
+    }
+
+    public void setShippingCompany(String shippingCompany) {
+        this.shippingCompany = shippingCompany;
+    }
+
+    public String getShippingNumber() {
+        return shippingNumber;
+    }
+
+    public void setShippingNumber(String shippingNumber) {
+        this.shippingNumber = shippingNumber;
+    }
+
+    public LocalDateTime getShippingTime() {
+        return shippingTime;
+    }
+
+    public void setShippingTime(LocalDateTime shippingTime) {
+        this.shippingTime = shippingTime;
+    }
+
+    public String getReceiverName() {
+        return receiverName;
+    }
+
+    public void setReceiverName(String receiverName) {
+        this.receiverName = receiverName;
+    }
+
+    public String getReceiverPhone() {
+        return receiverPhone;
+    }
+
+    public void setReceiverPhone(String receiverPhone) {
+        this.receiverPhone = receiverPhone;
+    }
+
+    public String getReceiverProvince() {
+        return receiverProvince;
+    }
+
+    public void setReceiverProvince(String receiverProvince) {
+        this.receiverProvince = receiverProvince;
+    }
+
+    public String getReceiverCity() {
+        return receiverCity;
+    }
+
+    public void setReceiverCity(String receiverCity) {
+        this.receiverCity = receiverCity;
+    }
+
+    public String getReceiverRegion() {
+        return receiverRegion;
+    }
+
+    public void setReceiverRegion(String receiverRegion) {
+        this.receiverRegion = receiverRegion;
+    }
+
+    public String getReceiverDetailAddress() {
+        return receiverDetailAddress;
+    }
+
+    public void setReceiverDetailAddress(String receiverDetailAddress) {
+        this.receiverDetailAddress = receiverDetailAddress;
+    }
+
+    public String getWarehouseAddress() {
+        return warehouseAddress;
+    }
+
+    public void setWarehouseAddress(String warehouseAddress) {
+        this.warehouseAddress = warehouseAddress;
     }
 
     public LocalDateTime getCreateTime() {

@@ -22,12 +22,18 @@ public class TimeSlotController {
 
     @GetMapping("/list")
     @ApiOperation("获取时间段列表")
-    public Map<String, Object> getTimeSlotList(@RequestParam String serviceType) {
+    public Map<String, Object> getTimeSlotList(@RequestParam String serviceType,
+                                               @RequestParam(required = false) Long storeId) {
         Map<String, Object> result = new HashMap<>();
         
         try {
             QueryWrapper<TimeSlot> wrapper = new QueryWrapper<>();
             wrapper.eq("service_type", serviceType);
+            if (storeId != null) {
+                wrapper.eq("store_id", storeId);
+            } else {
+                wrapper.isNull("store_id");
+            }
             wrapper.orderByAsc("time_slot");
             
             List<TimeSlot> timeSlots = timeSlotService.list(wrapper);
@@ -53,6 +59,11 @@ public class TimeSlotController {
             QueryWrapper<TimeSlot> wrapper = new QueryWrapper<>();
             wrapper.eq("service_type", timeSlot.getServiceType());
             wrapper.eq("time_slot", timeSlot.getTimeSlot());
+            if (timeSlot.getStoreId() != null) {
+                wrapper.eq("store_id", timeSlot.getStoreId());
+            } else {
+                wrapper.isNull("store_id");
+            }
             
             if (timeSlotService.count(wrapper) > 0) {
                 result.put("code", -1);

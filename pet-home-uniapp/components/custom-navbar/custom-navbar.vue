@@ -1,5 +1,9 @@
 <template>
-  <view class="custom-navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
+  <view
+    class="custom-navbar"
+    :class="themeClass"
+    :style="{ paddingTop: statusBarHeight + 'px' }"
+  >
     <!-- 渐变背景 -->
     <view class="navbar-content">
       <!-- 左侧返回按钮（如果有） -->
@@ -8,14 +12,14 @@
       </view>
       <view class="navbar-left" v-else></view>
       
-      <!-- 中间标题 -->
-      <view class="navbar-title" v-if="title">
-        <text>{{ title }}</text>
+      <!-- 中间标题（仅非空字符串时显示，避免误传 boolean 显示 "true"/"false"） -->
+      <view class="navbar-title" v-if="titleString">
+        <text class="navbar-title-text">{{ titleString }}</text>
       </view>
       
-      <!-- 右侧插槽 -->
+      <!-- 右侧插槽（使用默认插槽避免小程序下 named slot 编译问题） -->
       <view class="navbar-right">
-        <slot name="right"></slot>
+        <slot></slot>
       </view>
     </view>
   </view>
@@ -39,6 +43,11 @@ export default {
     onBack: {
       type: Function,
       default: null
+    },
+    // 主题：gradient 或 white
+    theme: {
+      type: String,
+      default: 'gradient'
     }
   },
   data() {
@@ -47,20 +56,44 @@ export default {
       navBarHeight: 44 // 导航栏高度（不含状态栏）
     }
   },
+  computed: {
+    themeClass() {
+      return this.theme === 'white' ? 'theme-white' : 'theme-gradient'
+    },
+    // 只显示有效标题，布尔、null、空、"true"/"false" 一律不显示
+    titleString() {
+      if (this.title == null || this.title === undefined) return ''
+      if (typeof this.title === 'boolean') return ''
+      const s = String(this.title).trim()
+      if (s === 'true' || s === 'false' || s === '') return ''
+      return s
+    }
+  },
   mounted() {
-    // 获取系统信息
-    uni.getSystemInfo({
-      success: (res) => {
-        this.statusBarHeight = res.statusBarHeight || 0
-        
-        // 根据平台设置导航栏高度
-        if (res.platform === 'ios') {
-          this.navBarHeight = 44
-        } else {
-          this.navBarHeight = 48
-        }
+    // 使用 getWindowInfo/getDeviceInfo 替代已废弃的 getSystemInfo
+    try {
+      if (typeof uni.getWindowInfo === 'function') {
+        const win = uni.getWindowInfo()
+        this.statusBarHeight = win.statusBarHeight || 0
       }
-    })
+      if (typeof uni.getDeviceInfo === 'function') {
+        const dev = uni.getDeviceInfo()
+        this.navBarHeight = dev.platform === 'ios' ? 44 : 48
+      } else if (typeof uni.getSystemInfoSync === 'function') {
+        const sys = uni.getSystemInfoSync()
+        this.statusBarHeight = this.statusBarHeight || sys.statusBarHeight || 0
+        this.navBarHeight = sys.platform === 'ios' ? 44 : 48
+      }
+    } catch (e) {
+      if (typeof uni.getSystemInfo === 'function') {
+        uni.getSystemInfo({
+          success: (res) => {
+            this.statusBarHeight = res.statusBarHeight || 0
+            this.navBarHeight = res.platform === 'ios' ? 44 : 48
+          }
+        })
+      }
+    }
   },
   methods: {
     handleBack() {
@@ -79,12 +112,20 @@ export default {
 <style lang="scss" scoped>
 .custom-navbar {
   width: 100%;
-  background: linear-gradient(to right, #FF8C00 0%, #FFD700 100%);
   position: fixed;
   top: 0;
   left: 0;
   z-index: 9999;
-  box-shadow: none; /* 移除阴影，避免白边 */
+  box-shadow: none;
+}
+
+.theme-gradient {
+  background: linear-gradient(to right, #FF8C00 0%, #FFD700 100%);
+}
+
+.theme-white {
+  background: #ffffff;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
 .navbar-content {
@@ -102,8 +143,7 @@ export default {
   align-items: center;
   
   .back-icon {
-    color: #fff;
-    font-size: 32rpx;
+    font-size: 26rpx;
     font-weight: bold;
     padding: 10rpx;
   }
@@ -115,11 +155,10 @@ export default {
   align-items: center;
   justify-content: center;
   
-  text {
-    color: #fff;
-    font-size: 36rpx;
-    font-weight: bold;
-    text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+  .navbar-title-text {
+    font-size: 28rpx;
+    font-weight: 500;
+    text-shadow: none;
   }
 }
 
@@ -128,6 +167,18 @@ export default {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
+
+.theme-gradient .back-icon,
+.theme-gradient .navbar-title .navbar-title-text,
+.theme-gradient .navbar-right {
+  color: #fff;
+}
+
+.theme-white .back-icon,
+.theme-white .navbar-title .navbar-title-text,
+.theme-white .navbar-right {
+  color: #333;
 }
 </style>
 

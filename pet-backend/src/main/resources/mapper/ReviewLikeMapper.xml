@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.ReviewLikeMapper">
+
+    <select id="findByReviewIdAndUserId" resultType="com.pethome.entity.ReviewLike">
+        SELECT * FROM review_like 
+        WHERE review_id = #{reviewId} 
+        AND user_id = #{userId}
+        LIMIT 1
+    </select>
+    
+    <select id="countByReviewId" resultType="int">
+        SELECT COUNT(*) FROM review_like 
+        WHERE review_id = #{reviewId}
+    </select>
+
+</mapper>

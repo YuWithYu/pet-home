@@ -20,11 +20,11 @@ public class Result<T> {
     }
 
     public static <T> Result<T> success(T data) {
-        return new Result<>(0, "success", data);
+        return new Result<>(200, "success", data);
     }
 
     public static <T> Result<T> success(String msg, T data) {
-        return new Result<>(0, msg, data);
+        return new Result<>(200, msg, data);
     }
 
     public static <T> Result<T> error(String msg) {

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.entity.Booking;
 import com.pethome.entity.TimeSlot;
 import com.pethome.service.BookingService;
+import com.pethome.service.RedisCacheService;
 import com.pethome.service.TimeSlotService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -13,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +32,12 @@ public class BookingController {
 
     @Autowired
     private TimeSlotService timeSlotService;
+
+    @Autowired
+    private com.pethome.service.AppointmentDelayService appointmentDelayService;
+
+    @Autowired(required = false)
+    private RedisCacheService redisCacheService;
 
     @GetMapping("/time-slots/available")
     @ApiOperation("获取可用时间段")
@@ -63,19 +73,29 @@ public class BookingController {
             
             // 构建可用时间段列表
             List<Map<String, Object>> availableSlots = new ArrayList<>();
+            LocalTime now = LocalDate.now().equals(bookingDate) ? LocalTime.now() : null;
+            DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
             for (TimeSlot slot : timeSlots) {
+                String timeSlotStr = slot.getTimeSlot();
+                if (now != null && timeSlotStr != null && !timeSlotStr.isEmpty()) {
+                    int dash = timeSlotStr.indexOf('-');
+                    String endStr = dash >= 0 ? timeSlotStr.substring(dash + 1).trim() : timeSlotStr.trim();
+                    try {
+                        LocalTime endTime = LocalTime.parse(endStr, timeFmt);
+                        if (!endTime.isAfter(now)) {
+                            continue;
+                        }
+                    } catch (DateTimeParseException ignored) {
+                    }
+                }
                 Map<String, Object> slotInfo = new HashMap<>();
-                slotInfo.put("time", slot.getTimeSlot());
-                
-                Long currentBookings = bookingCounts.getOrDefault(slot.getTimeSlot(), 0L);
+                slotInfo.put("time", timeSlotStr);
+                Long currentBookings = bookingCounts.getOrDefault(timeSlotStr, 0L);
                 boolean available = currentBookings < slot.getMaxBookings();
-                
                 slotInfo.put("available", available);
                 slotInfo.put("remaining", slot.getMaxBookings() - currentBookings);
-                
                 availableSlots.add(slotInfo);
             }
-            
             result.put("code", 0);
             result.put("msg", "success");
             result.put("data", availableSlots);
@@ -134,6 +154,11 @@ public class BookingController {
             boolean success = bookingService.save(booking);
             
             if (success) {
+                java.time.LocalDateTime aptTime = bookingDate != null ? bookingDate.atStartOfDay() : null;
+                appointmentDelayService.registerDelayKeys(serviceType, booking.getId(), aptTime, timeSlot);
+                Long uid = booking.getUserId();
+                String svc = serviceType != null ? serviceType.replace("-", "").replace("_", "") + "预约" : "服务预约";
+                appointmentDelayService.registerReminderKeys(serviceType, booking.getId(), uid, aptTime, svc);
                 result.put("code", 0);
                 result.put("msg", "预约成功");
                 result.put("data", booking);
@@ -190,7 +215,7 @@ public class BookingController {
     @ApiOperation("取消预约")
     public Map<String, Object> cancelBooking(@PathVariable Long id) {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             Booking booking = bookingService.getById(id);
             if (booking == null) {
@@ -198,17 +223,30 @@ public class BookingController {
                 result.put("msg", "预约不存在");
                 return result;
             }
-            
-            if ("cancelled".equals(booking.getStatus()) || "completed".equals(booking.getStatus())) {
+
+            // 检查是否可以取消（已取消、已完成、已失约的预约不能取消）
+            String status = booking.getStatus();
+            if ("cancelled".equals(status) || "completed".equals(status) || "no_show".equals(status)) {
                 result.put("code", -1);
                 result.put("msg", "该预约无法取消");
                 return result;
             }
-            
+
             booking.setStatus("cancelled");
             boolean success = bookingService.updateById(booking);
-            
+
             if (success) {
+                // 取消Redis延时任务key
+                appointmentDelayService.cancelDelayKeys(booking.getServiceType(), booking.getId());
+
+                // 释放时间段锁，允许其他用户预约
+                if (redisCacheService != null && booking.getBookingDate() != null
+                    && booking.getTimeSlot() != null && booking.getUserId() != null) {
+                    String cacheKey = "timeslot:" + booking.getServiceType() + ":"
+                        + booking.getBookingDate() + ":" + booking.getTimeSlot() + ":" + booking.getUserId();
+                    redisCacheService.deleteCache(cacheKey);
+                }
+
                 result.put("code", 0);
                 result.put("msg", "取消成功");
             } else {
@@ -219,7 +257,7 @@ public class BookingController {
             result.put("code", -1);
             result.put("msg", "取消失败: " + e.getMessage());
         }
-        
+
         return result;
     }
 }

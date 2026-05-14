@@ -1,71 +1,148 @@
 package com.pethome.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@TableName("door_cleaning_appointment")
+/**
+ * 统一预约实体类
+ * 用于管理所有类型的服务预约
+ */
+@Data
+@TableName("appointment")
 public class Appointment {
+    
     @TableId(type = IdType.AUTO)
     private Long id;
+    
+    /**
+     * 用户ID（小程序端用户）
+     */
     @TableField("user_id")
-    private Integer userId;
+    private Long userId;
+    
+    /**
+     * 宠物ID（可选）
+     */
     @TableField("pet_id")
-    private Integer petId;
+    private Long petId;
+    
+    /**
+     * 服务人员ID（分配后）
+     */
+    @TableField("member_id")
+    private Long memberId;
+    
+    /**
+     * 管理员ID（如果是后台创建）
+     */
+    @TableField("admin_id")
+    private Long adminId;
+    
+    /**
+     * 服务类型：上门铲屎、宠物洗护、宠物医院
+     */
     @TableField("service_type")
     private String serviceType;
+    
+    /**
+     * 预约日期时间
+     */
     @TableField("appointment_date")
     private LocalDateTime appointmentDate;
+    
+    /**
+     * 预约日期（冗余字段，便于查询）
+     */
     private LocalDate date;
+    
+    /**
+     * 时间段：09:00-10:00, 10:00-11:00 等
+     */
     @TableField("time_slot")
     private String timeSlot;
+    
+    /**
+     * 状态：pending（待分配）、assigned（已分配）、confirmed（已确认）、completed（已完成）、cancelled（已取消）
+     */
     private String status;
+    
+    /**
+     * 备注信息
+     */
     private String remark;
+    
+    /**
+     * 联系人姓名
+     */
     @TableField("contact_name")
     private String contactName;
+    
+    /**
+     * 联系电话
+     */
     @TableField("contact_phone")
     private String contactPhone;
-    private BigDecimal price;
+    
+    /**
+     * 服务地点
+     */
     private String location;
+    
+    /**
+     * 服务价格
+     */
+    private BigDecimal price;
+    
+    /**
+     * 验证码
+     */
     @TableField("verify_code")
     private String verifyCode;
+    
+    /**
+     * 是否已验证：0-未验证，1-已验证
+     */
     @TableField("is_verified")
     private Integer isVerified;
+    
+    /**
+     * 验证时间
+     */
     @TableField("verify_time")
     private LocalDateTime verifyTime;
-    @TableField("create_time")
+    
+    /**
+     * 创建时间
+     */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
-    @TableField("update_time")
+    
+    /**
+     * 更新时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
-
-    // 构造函数
-    public Appointment() {
+    
+    // 扩展字段（不存储到数据库）
+    @TableField(exist = false)
+    private String memberName; // 服务人员姓名
+    
+    @TableField(exist = false)
+    private String userName; // 用户姓名
+    
+    @TableField(exist = false)
+    private String petName; // 宠物名称
+    
+    // 手动添加 getter/setter 以确保兼容性（Lombok 可能在某些情况下无法正确生成）
+    public Integer getIsVerified() {
+        return isVerified;
     }
-
-    // Getter和Setter方法
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    public Integer getPetId() {
-        return petId;
-    }
-
-    public void setPetId(Integer petId) {
-        this.petId = petId;
+    
+    public void setIsVerified(Integer isVerified) {
+        this.isVerified = isVerified;
     }
 
     public String getServiceType() {
@@ -75,13 +152,46 @@ public class Appointment {
     public void setServiceType(String serviceType) {
         this.serviceType = serviceType;
     }
-
-    public LocalDateTime getAppointmentDate() {
-        return appointmentDate;
+    
+    // 手动添加 getter 方法以确保编译通过（Lombok 可能在某些情况下无法正确生成）
+    public Long getId() {
+        return id;
     }
 
-    public void setAppointmentDate(LocalDateTime appointmentDate) {
-        this.appointmentDate = appointmentDate;
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getMemberId() {
+        return memberId;
+    }
+
+    public void setMemberId(Long memberId) {
+        this.memberId = memberId;
+    }
+    
+    public Long getUserId() {
+        return userId;
+    }
+    
+    public String getContactPhone() {
+        return contactPhone;
+    }
+    
+    public String getLocation() {
+        return location;
+    }
+    
+    public BigDecimal getPrice() {
+        return price;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public LocalDate getDate() {
@@ -100,91 +210,23 @@ public class Appointment {
         this.timeSlot = timeSlot;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getRemark() {
-        return remark;
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public void setRemark(String remark) {
         this.remark = remark;
     }
 
-    public String getContactName() {
-        return contactName;
-    }
-
-    public void setContactName(String contactName) {
-        this.contactName = contactName;
-    }
-
-    public String getContactPhone() {
-        return contactPhone;
-    }
-
     public void setContactPhone(String contactPhone) {
         this.contactPhone = contactPhone;
     }
 
-    public BigDecimal getPrice() {
-        return price;
+    public void setPetId(Long petId) {
+        this.petId = petId;
     }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getVerifyCode() {
-        return verifyCode;
-    }
-
-    public void setVerifyCode(String verifyCode) {
-        this.verifyCode = verifyCode;
-    }
-
-    public Integer getIsVerified() {
-        return isVerified;
-    }
-
-    public void setIsVerified(Integer isVerified) {
-        this.isVerified = isVerified;
-    }
-
-    public LocalDateTime getVerifyTime() {
-        return verifyTime;
-    }
-
-    public void setVerifyTime(LocalDateTime verifyTime) {
-        this.verifyTime = verifyTime;
-    }
-
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(LocalDateTime createTime) {
-        this.createTime = createTime;
-    }
-
-    public LocalDateTime getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(LocalDateTime updateTime) {
-        this.updateTime = updateTime;
+    
+    public LocalDateTime getAppointmentDate() {
+        return appointmentDate;
     }
 }

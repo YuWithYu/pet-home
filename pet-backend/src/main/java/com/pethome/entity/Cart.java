@@ -14,6 +14,28 @@ public class Cart {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
+    // 非数据库字段：商品信息（用于前端显示）
+    @TableField(exist = false)
+    private String productName;
+    
+    @TableField(exist = false)
+    private String productPic;
+    
+    @TableField(exist = false)
+    private String productImage;
+    
+    @TableField(exist = false)
+    private java.math.BigDecimal price;
+    
+    @TableField(exist = false)
+    private String productAttr; // 商品属性（JSON字符串）
+    
+    @TableField(exist = false)
+    private String storeName; // 店铺名称
+    
+    @TableField(exist = false)
+    private Long storeId; // 店铺ID
+
     // 构造函数
     public Cart() {
     }
@@ -65,6 +87,63 @@ public class Cart {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+    
+    // 商品信息的getter和setter
+    public String getProductName() {
+        return productName;
+    }
+    
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+    
+    public String getProductPic() {
+        return productPic;
+    }
+    
+    public void setProductPic(String productPic) {
+        this.productPic = productPic;
+    }
+    
+    public String getProductImage() {
+        return productImage;
+    }
+    
+    public void setProductImage(String productImage) {
+        this.productImage = productImage;
+    }
+    
+    public BigDecimal getPrice() {
+        return price;
+    }
+    
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+    
+    public String getProductAttr() {
+        return productAttr;
+    }
+    
+    public void setProductAttr(String productAttr) {
+        this.productAttr = productAttr;
+    }
+    
+    public String getStoreName() {
+        return storeName;
+    }
+    
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+    
+    public Long getStoreId() {
+        return storeId;
+    }
+    
+    public void setStoreId(Long storeId) {
+        this.storeId = storeId;
     }
 }
 

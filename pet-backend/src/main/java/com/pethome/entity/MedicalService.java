@@ -31,4 +31,29 @@ public class MedicalService {
     private Integer updatedBy;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    
+    // 手动添加 getter/setter 方法以确保编译通过（Lombok 可能在某些情况下无法正确生成）
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+    
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+    
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+    
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

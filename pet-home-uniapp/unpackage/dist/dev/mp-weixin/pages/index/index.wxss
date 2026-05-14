@@ -1,338 +1,5 @@
 @charset "UTF-8";
 /* uni.scss */
-.u-button--primary.data-v-57280228 {
-  background-color: #ff6b35;
-  border-color: #ff6b35;
-}
-.u-button--primary.data-v-57280228:active {
-  background-color: #ff4602;
-  border-color: #ff4602;
-}
-.u-button--default.data-v-57280228 {
-  background-color: #ffffff;
-  border-color: #e0e0e0;
-  color: #333333;
-}
-.u-button--default.data-v-57280228:active {
-  background-color: #f8f8f8;
-}
-.u-input.data-v-57280228 {
-  background-color: #f8f8f8;
-  border-color: transparent;
-}
-.u-input.data-v-57280228:focus {
-  border-color: #ff6b35;
-  background-color: #ffffff;
-}
-.u-card.data-v-57280228 {
-  background-color: #ffffff;
-  border-radius: 12rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-}
-.u-tag--primary.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-tag--success.data-v-57280228 {
-  background-color: #52c41a;
-  color: white;
-}
-.u-tag--warning.data-v-57280228 {
-  background-color: #faad14;
-  color: white;
-}
-.u-tag--danger.data-v-57280228 {
-  background-color: #ff4d4f;
-  color: white;
-}
-.u-badge.data-v-57280228 {
-  background-color: #ff4d4f;
-  color: white;
-}
-.u-progress.data-v-57280228 {
-  background-color: #f0f0f0;
-}
-.u-progress__track.data-v-57280228 {
-  background-color: #ff6b35;
-}
-.u-navbar.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-tabs__item.data-v-57280228 {
-  color: #666666;
-}
-.u-tabs__item--active.data-v-57280228 {
-  color: #ff6b35;
-}
-.u-tabs__track.data-v-57280228 {
-  background-color: #ff6b35;
-}
-.u-radio__label.data-v-57280228 {
-  color: #333333;
-}
-.u-radio__label--checked.data-v-57280228 {
-  color: #ff6b35;
-}
-.u-checkbox__label.data-v-57280228 {
-  color: #333333;
-}
-.u-checkbox__label--checked.data-v-57280228 {
-  color: #ff6b35;
-}
-.u-switch.data-v-57280228 {
-  background-color: #ddd;
-}
-.u-switch__core.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-switch__core.data-v-57280228::after {
-  background-color: white;
-}
-.u-switch--checked.data-v-57280228 {
-  background-color: #ff6b35;
-}
-.u-switch--checked .u-switch__core.data-v-57280228 {
-  background-color: #ff6b35;
-}
-.u-slider.data-v-57280228 {
-  background-color: #f0f0f0;
-}
-.u-slider__track.data-v-57280228 {
-  background-color: #ff6b35;
-}
-.u-slider__thumb.data-v-57280228 {
-  background-color: #ffffff;
-  border-color: #ff6b35;
-}
-.u-rate__icon.data-v-57280228 {
-  color: #ddd;
-}
-.u-rate__icon--active.data-v-57280228 {
-  color: #ffca28;
-}
-.u-loading__spinner.data-v-57280228 {
-  border-color: #ff6b35;
-  border-top-color: transparent;
-}
-.u-popup.data-v-57280228 {
-  background-color: #ffffff;
-  border-radius: 12rpx 12rpx 0 0;
-}
-.u-action-sheet__item.data-v-57280228 {
-  color: #333333;
-}
-.u-action-sheet__item.data-v-57280228:active {
-  background-color: #f8f8f8;
-}
-.u-action-sheet__cancel.data-v-57280228 {
-  color: #666666;
-}
-.u-toast.data-v-57280228 {
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  border-radius: 8rpx;
-}
-.u-notice-bar.data-v-57280228 {
-  background-color: #fff7e6;
-  color: #d48806;
-  border-color: #ffeaa7;
-}
-.u-steps__item__title.data-v-57280228 {
-  color: #666666;
-}
-.u-steps__item__title--active.data-v-57280228 {
-  color: #ff6b35;
-}
-.u-steps__item__dot.data-v-57280228 {
-  background-color: #e0e0e0;
-}
-.u-steps__item__dot--active.data-v-57280228 {
-  background-color: #ff6b35;
-}
-.u-skeleton.data-v-57280228 {
-  background-color: #f0f0f0;
-}
-.u-skeleton__avatar.data-v-57280228 {
-  background-color: #e0e0e0;
-}
-.u-skeleton__paragraph.data-v-57280228 {
-  background-color: #e0e0e0;
-}
-.u-empty.data-v-57280228 {
-  color: #999999;
-}
-.u-empty__icon.data-v-57280228 {
-  color: #ddd;
-}
-.u-error-page.data-v-57280228 {
-  color: #999999;
-}
-.u-error-page__icon.data-v-57280228 {
-  color: #ddd;
-}
-.u-divider.data-v-57280228 {
-  color: #999999;
-  border-color: #f0f0f0;
-}
-.u-sticky.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-back-top.data-v-57280228 {
-  background-color: #ffffff;
-  border-color: #e0e0e0;
-}
-.u-back-top__icon.data-v-57280228 {
-  color: #666666;
-}
-.u-keyboard.data-v-57280228 {
-  background-color: #f0f0f0;
-}
-.u-keyboard__key.data-v-57280228 {
-  background-color: #ffffff;
-  color: #333333;
-}
-.u-keyboard__key.data-v-57280228:active {
-  background-color: #f8f8f8;
-}
-.u-keyboard__confirm.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-calendar.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-calendar__header.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-calendar__weekdays.data-v-57280228 {
-  color: #666666;
-}
-.u-calendar__day.data-v-57280228 {
-  color: #333333;
-}
-.u-calendar__day--selected.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-calendar__day--today.data-v-57280228 {
-  color: #ff6b35;
-}
-.u-picker.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-picker__header.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-picker__body.data-v-57280228 {
-  color: #333333;
-}
-.u-picker-view__item.data-v-57280228 {
-  color: #333333;
-}
-.u-picker-view__item--selected.data-v-57280228 {
-  color: #ff6b35;
-}
-.u-cascader.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-cascader__header.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-cascader__body.data-v-57280228 {
-  color: #333333;
-}
-.u-city-select.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-city-select__header.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-city-select__body.data-v-57280228 {
-  color: #333333;
-}
-.u-area-select.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-area-select__header.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-area-select__body.data-v-57280228 {
-  color: #333333;
-}
-.u-time-picker.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-time-picker__header.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-time-picker__body.data-v-57280228 {
-  color: #333333;
-}
-.u-datetime-picker.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-datetime-picker__header.data-v-57280228 {
-  background-color: #ff6b35;
-  color: white;
-}
-.u-datetime-picker__body.data-v-57280228 {
-  color: #333333;
-}
-.u-upload.data-v-57280228 {
-  background-color: #f8f8f8;
-  border-color: #e0e0e0;
-}
-.u-upload__button.data-v-57280228 {
-  color: #666666;
-}
-.u-upload__button.data-v-57280228:active {
-  background-color: #f8f8f8;
-}
-.u-upload__file.data-v-57280228 {
-  border-color: #e0e0e0;
-}
-.u-upload__file__status.data-v-57280228 {
-  color: #666666;
-}
-.u-cropper.data-v-57280228 {
-  background-color: rgba(0, 0, 0, 0.8);
-}
-.u-watermark.data-v-57280228 {
-  color: rgba(0, 0, 0, 0.1);
-}
-.u-charts.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-canvas.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-map.data-v-57280228 {
-  background-color: #f0f0f0;
-}
-.u-editor.data-v-57280228 {
-  background-color: #ffffff;
-  border-color: #e0e0e0;
-}
-.u-editor__toolbar.data-v-57280228 {
-  background-color: #f8f8f8;
-  border-color: #e0e0e0;
-}
-.u-file-preview.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-qrcode.data-v-57280228 {
-  background-color: #ffffff;
-}
-.u-barcode.data-v-57280228 {
-  background-color: #ffffff;
-}
 /* 自定义主题色 */
 /* 全局样式重置和扩展 */
 /* 页面容器 */
@@ -1001,27 +668,10 @@
   min-height: 100vh;
 }
 /* 搜索栏 */
-.search-bar.data-v-57280228 {
-  display: flex;
-  align-items: center;
-  padding: 20rpx 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-}
-.search-input.data-v-57280228 {
-  flex: 1;
-  background-color: #f5f5f5;
-  border-radius: 30rpx;
-  padding: 16rpx 30rpx;
-}
-.search-text.data-v-57280228 {
-  flex: 1;
-  font-size: 28rpx;
-  color: #333;
-}
 /* 轮播图 */
 .banner-swiper.data-v-57280228 {
-  height: 320rpx;
-  margin: 20rpx;
+  height: 400rpx;
+  margin: 10rpx 20rpx;
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
@@ -1036,6 +686,28 @@
   width: 100%;
   height: 100%;
   border-radius: 16rpx;
+}
+.banner-placeholder .placeholder.data-v-57280228 {
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 200% 100%;
+  -webkit-animation: banner-shine-data-v-57280228 1.2s ease-in-out infinite;
+          animation: banner-shine-data-v-57280228 1.2s ease-in-out infinite;
+}
+@-webkit-keyframes banner-shine-data-v-57280228 {
+0% {
+    background-position: 200% 0;
+}
+100% {
+    background-position: -200% 0;
+}
+}
+@keyframes banner-shine-data-v-57280228 {
+0% {
+    background-position: 200% 0;
+}
+100% {
+    background-position: -200% 0;
+}
 }
 .banner-overlay.data-v-57280228 {
   position: absolute;
@@ -1052,46 +724,22 @@
   font-weight: bold;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.5);
 }
-/* 公告栏 */
-.notice-bar.data-v-57280228 {
-  display: flex;
-  align-items: center;
-  padding: 20rpx 30rpx;
-  margin-bottom: 20rpx;
-  background-color: #fff7e6;
-  border: 1rpx solid #ffeaa7;
-  border-radius: 8rpx;
-  margin: 0 20rpx 20rpx;
-}
-.notice-icon.data-v-57280228 {
-  margin-right: 16rpx;
-  font-size: 28rpx;
-}
-.notice-swiper.data-v-57280228 {
-  height: 40rpx;
-  flex: 1;
-}
-.notice-text.data-v-57280228 {
-  font-size: 26rpx;
-  color: #d48806;
-  line-height: 40rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 /* 宠物服务 */
 .service-nav.data-v-57280228 {
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  padding: 24rpx 32rpx 28rpx;
+  margin-bottom: 10rpx;
 }
 .service-grid.data-v-57280228 {
   margin-bottom: 0;
+  width: 100%;
 }
 .service-item.data-v-57280228 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15rpx 5rpx;
+  justify-content: flex-start;
+  min-width: 0;
+  padding: 12rpx 8rpx;
   border-radius: 12rpx;
   transition: all 0.3s ease;
 }
@@ -1118,11 +766,11 @@
 }
 /* 热门商品 */
 .hot-goods.data-v-57280228 {
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  padding: 20rpx 30rpx;
+  margin-bottom: 10rpx;
 }
 .section-header.data-v-57280228 {
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
 }
 .section-title.data-v-57280228 {
   font-size: 32rpx;
@@ -1151,7 +799,15 @@
 .goods-image.data-v-57280228 {
   position: relative;
   width: 100%;
-  height: 280rpx;
+  padding-bottom: 100%;
+  overflow: hidden;
+}
+.goods-image image.data-v-57280228 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 .goods-image image.data-v-57280228 {
   width: 100%;
@@ -1195,8 +851,8 @@
 }
 /* 推荐商品 */
 .recommend-goods.data-v-57280228 {
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  padding: 20rpx 30rpx;
+  margin-bottom: 10rpx;
 }
 .goods-list.data-v-57280228 {
   margin-bottom: 0;
@@ -1207,7 +863,7 @@
   border-radius: 12rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-  margin-bottom: 20rpx;
+  margin-bottom: 15rpx;
   transition: all 0.3s ease;
 }
 .goods-item-horizontal.data-v-57280228:active {

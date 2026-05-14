@@ -1,51 +1,56 @@
+# 宠物之家 - 本地开发配置
+# 启动命令：mvn spring-boot:run
+
 server:
+  address: 0.0.0.0
   port: 8080
   servlet:
     context-path: /
   tomcat:
     uri-encoding: UTF-8
-    connection-timeout: 30000
+    connection-timeout: 300000
+    max-connections: 10000
+    threads:
+      max: 200
+      min-spare: 10
+  ssl:
+    enabled: false
 
 spring:
   application:
     name: pet-home-backend
-  
-  # 数据源配置
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/pet_home?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8&connectionCollation=utf8mb4_unicode_ci
+    url: jdbc:mysql://127.0.0.1:3306/pet_home?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8&connectionCollation=utf8mb4_unicode_ci&allowPublicKeyRetrieval=true
     username: root
     password: 123456
-  sql:
-    init:
-      mode: never
 
-  # H2数据库控制台配置
-  h2:
-    console:
-      enabled: false
-      path: /h2-console
-      settings:
-        web-allow-others: true
-    
-  # Jackson配置
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+    timeout: 6000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
     default-property-inclusion: non_null
     charset: UTF-8
-  
-  # 文件上传配置
+
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 100MB
+      max-file-size: 500MB
+      max-request-size: 1000MB
       enabled: true
-      file-size-threshold: 2KB
-      location: ${java.io.tmpdir}
-      resolve-lazily: false
 
-# MyBatis Plus配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -57,50 +62,68 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-      # 自动创建表结构（仅开发环境使用）
-      table-prefix: ""
-      capital-mode: true
-    banner: false
 
-# JWT配置
 jwt:
   secret: pet-home-secret-key-for-jwt-token-generation-2024
-  expiration: 7200 # 2小时，单位：秒
+  expiration: 7200
 
-# 微信支付配置
 wechat:
   pay:
-    app-id: wx2d696ea387550f34  # 小程序AppID
-    mch-id: 1710939204  # 商户号
-    api-key: 6671B4360FCADE952F0F22A854E5475DEC9B3BB9  # API密钥
-    notify-url: https://localhost:8080/api/payment/notify  # 支付回调地址（开发环境）
-    sandbox: false  # 生产环境
-    cert-path: ./certs/apiclient_cert.p12  # 证书路径
-    cert-password: 1710939204  # 证书密码（商户号）
+    app-id: wx2d696ea387550f34
+    mch-id: 1710939204
+    api-key: your_api_key_here
+    notify-url: http://localhost:8080/api/payment/notify
+    sandbox: false
+    cert-path: ./certs/apiclient_cert.p12
+    cert-password: 1710939204
   miniapp:
-    app-id: wx2d696ea387550f34  # 小程序AppID
-    secret: 7928edd8cf0d144e608009b1ceb56340  # 小程序Secret
+    app-id: wxcf8868d6bfdc0d6f
+    secret: your_app_secret_here
 
-# 日志配置
 logging:
   level:
     com.pethome: debug
-    org.springframework.security: debug
-    org.springframework.web: debug
-    org.hibernate: debug
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
-# 文件上传路径配置
+host: http://localhost:8080
+domain: http://localhost:8080
+app:
+  public-base-url: http://localhost:8080
+
 upload:
-  path: C:/Users/Yu/Desktop/pet-home/upload/
+  path: ./upload/
   url: http://localhost:8080/upload/
+  http-url: http://localhost:8080/upload/
+  image:
+    compress: true
+    max-width: 1024
+    max-height: 1024
+    quality: 0.75
+  video:
+    transcode:
+      enabled: false
 
-# Swagger配置
+video:
+  upload-path: ./upload/videos
+  base-url: http://localhost:8080/upload/videos
+
+logistics:
+  kuaidi100:
+    enabled: false
+    customer: your_customer_key
+    key: your_api_key
+
+ai:
+  enabled: false
+
+sms:
+  aliyun:
+    enabled: false
+    access-key-id: ${ALIBABA_CLOUD_ACCESS_KEY_ID:}
+    access-key-secret: ${ALIBABA_CLOUD_ACCESS_KEY_SECRET:}
+    sign-name: 验证码
+    template-code: "SMS_xxxxxx"
+
 springfox:
   documentation:
     swagger-ui:
       enabled: true
-    swagger:
-      v2:
-        path: /api-docs

@@ -18,7 +18,11 @@ const store = new Vuex.Store({
     config: {},
 
     // 位置信息
-    location: null
+    location: null,
+
+    // 帖子点赞/收藏状态缓存（从详情页返回时与发现页同步）
+    // key: postId, value: { isLiked, likeCount, isCollected?, collectCount? }
+    postLikeCache: {}
   },
 
   mutations: {
@@ -76,8 +80,16 @@ const store = new Vuex.Store({
       state.token = null
       state.cartCount = 0
       state.cartList = []
+      state.postLikeCache = {}
       uni.removeStorageSync('userInfo')
       uni.removeStorageSync('token')
+    },
+
+    // 同步帖子点赞状态（详情页点赞/取消后写入，发现页 onShow 时合并到列表）
+    SET_POST_LIKE(state, { postId, isLiked, likeCount }) {
+      if (!postId) return
+      const key = String(postId)
+      state.postLikeCache[key] = { ...(state.postLikeCache[key] || {}), isLiked, likeCount }
     }
   },
 
@@ -118,7 +130,6 @@ const store = new Vuex.Store({
         uni.removeStorageSync('location')
         uni.removeStorageSync('config')
         
-        console.log('用户数据清除完成')
       } catch (error) {
         console.error('清除用户数据失败:', error)
       }
@@ -151,6 +162,9 @@ const store = new Vuex.Store({
 
     // 是否已登录
     isLoggedIn: state => !!state.token,
+    
+    // 是否已登录（别名，兼容旧代码）
+    hasLogin: state => !!state.token,
 
     // 用户昵称
     userNickname: state => state.userInfo ? state.userInfo.nickname || state.userInfo.username : '',
@@ -162,7 +176,10 @@ const store = new Vuex.Store({
     totalCartCount: state => state.cartCount,
 
     // 购物车商品数量
-    cartItemCount: state => state.cartList.length
+    cartItemCount: state => state.cartList.length,
+
+    // 帖子点赞缓存（供发现页合并）
+    postLikeCache: state => state.postLikeCache
   }
 })
 

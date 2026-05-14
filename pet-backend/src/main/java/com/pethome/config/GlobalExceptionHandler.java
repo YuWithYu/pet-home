@@ -1,6 +1,9 @@
 package com.pethome.config;
 
 import com.pethome.common.Result;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -11,6 +14,18 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @ControllerAdvice
 @ResponseBody
 public class GlobalExceptionHandler {
+
+    /**
+     * 缺少必需请求参数时返回 400，避免 500
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Result<String>> handleMissingServletRequestParameter(
+            MissingServletRequestParameterException e) {
+        String paramName = e.getParameterName();
+        String msg = "缺少必要参数: " + paramName;
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Result.error(400, msg));
+    }
 
     /**
      * 处理运行时异常

@@ -8,12 +8,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@TableName("litter_services")
+@TableName(value = "litter_services", autoResultMap = true)
 public class LitterService {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String name;
     private String description;
+    @TableField(typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
+    private List<String> introduction;
+    @TableField(typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
+    private List<String> instructions;
     private BigDecimal price;
     private Integer duration;
     private String category;
@@ -58,6 +62,22 @@ public class LitterService {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<String> getIntroduction() {
+        return introduction;
+    }
+
+    public void setIntroduction(List<String> introduction) {
+        this.introduction = introduction;
+    }
+
+    public List<String> getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(List<String> instructions) {
+        this.instructions = instructions;
     }
 
     public BigDecimal getPrice() {

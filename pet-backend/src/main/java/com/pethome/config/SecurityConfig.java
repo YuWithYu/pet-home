@@ -1,126 +1,152 @@
 package com.pethome.config;
 
-import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import com.pethome.common.Const;
+import com.pethome.util.JSONUtil;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
+@Component
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private CorsConfigurationSource corsConfigurationSource;
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    // 过滤不用验证的路径
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/resources/**");
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));  // 允许所有域名
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
 
+    /**
+     * 绕过登录验证，采用我们之前自己写好的验证逻辑
+     *
+     * 但需要注意的是，走自己的认证逻辑，最后还是需要把认证后
+     * 的结果加到 SecurityContext 里面，因为Spring Security
+     * 默认会调用里面的结果进行权限判断
+     *
+     * */
+
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        // 允许管理员接口访问（无需 Spring Security 验证，使用自己的 JWT 验证）
+        http.authorizeRequests()
+        .antMatchers("/api/admin/login", "/api/admin/**").permitAll()
+        // 需要授权的才能访问的路径路径
+        .antMatchers(
+                "/user/setting",
+                "/user/upload",
+                "/user/profile",
+                "/discuss/add",
+                "/comment/add/**",
+                "/letter/**",
+                "/notice/**",
+                "/like",
+                "/follow",
+                "/unfollow"
+        )
+        .hasAnyAuthority(
+                Const.Role.ROLE_USER.getRole(),
+                Const.Role.ROLE_ADMIN.getRole()
+        )
+        .antMatchers(
+                "/discuss/top",  // 置顶
+                "/discuss/wonderful",  // 加精
+                "/discuss/delete"  // 删除
+                )
+        .hasAnyAuthority(
+                Const.Role.ROLE_ADMIN.getRole()  // 管理员
+                )
+        .anyRequest().permitAll() // 其他任何请求都允许通过
+        .and().cors().and().csrf().disable();  // 启用CORS并关闭 csrf 验证
+
+
+        /**
+         * 分为 没有登录 和 权限不够 的处理
+         *
+         * 请求又分为 异步请求 和 http请求
+         * */
+        http.exceptionHandling()
+                .authenticationEntryPoint(new AuthenticationEntryPoint() {
+                    // 没有登录
+                    @Override
+                    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException e) throws IOException, ServletException {
+                        String xRequestedWith = request.getHeader("x-requested-with");
+                        if ("XMLHttpRequest".equals(xRequestedWith)) {
+                            // 异步请求
+                            response.setContentType("application/plain;charset=utf-8");
+                            PrintWriter writer = response.getWriter();
+                            writer.write(JSONUtil.getJSONString(403, "你还没有登录"));
+                        }else {
+                            response.sendRedirect(request.getContextPath() + "/login");
+                        }
+                    }
+                })
+                .accessDeniedHandler(new AccessDeniedHandler() {
+                    // 权限不足
+                    @Override
+                    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException e) throws IOException, ServletException {
+                        String xRequestedWith = request.getHeader("x-requested-with");
+                        if ("XMLHttpRequest".equals(xRequestedWith)) {
+                            response.setContentType("application/plain;charset=utf-8");
+                            PrintWriter writer = response.getWriter();
+                            writer.write(JSONUtil.getJSONString(403, "你没有访问此功能的权限!"));
+                        } else {
+                            response.sendRedirect(request.getContextPath() + "/denied");
+                        }
+                    }
+                });
+
+        // Security底层默认会拦截/logout请求,进行退出处理.
+        // 覆盖它默认的逻辑,才能执行我们自己的退出代码.
+        http.logout().logoutUrl("/securitylogout");
+    }
+
+    /**
+     * 配置CORS过滤器，确保Spring Security允许跨域请求
+     */
+    @Bean
+    public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .cors().configurationSource(corsConfigurationSource())
-            .and()
-            .authorizeHttpRequests()
-                // 允许所有OPTIONS请求（CORS预检请求）
-                .requestMatchers(req -> "OPTIONS".equals(req.getMethod())).permitAll()
-                // 公开访问的接口
-                .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/users/register")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/users/login")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/users/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/products/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/categories/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/banners/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/doctors/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/appointment/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/appointments/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/door-cleaning/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/hospital-services/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/hospital-appointments/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/grooming-services/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/grooming-banners/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/grooming-appointments/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/boarding-appointments/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/adoption-appointments/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/pet-adoption/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/service-banners/page/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/orders/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/community/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/product/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/banner/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/medical-services/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/litter-services/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/litter-banners/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/boarding-services/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/adoption-services/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/boarding-banners/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/adoption-banners/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/time-slots/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/bookings/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/consultations/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/adoptions/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/feedback/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/notifications/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/service-config/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/cart/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/address/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/extension/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/vaccine/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/pet/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/pets/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/notification/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/feedback/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/adoption/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/consultation/**")).permitAll()
-                // 管理后台接口
-                .requestMatchers(new AntPathRequestMatcher("/api/admin/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/admin/**")).permitAll()
-                // 小程序接口
-                .requestMatchers(new AntPathRequestMatcher("/tz/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/api/tz/**")).permitAll()
-                // 静态资源
-                .requestMatchers(new AntPathRequestMatcher("/upload/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/static/**")).permitAll()
-                // Swagger文档
-                .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/v3/api-docs/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/swagger-resources/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/webjars/**")).permitAll()
-                // H2数据库控制台
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-                // 需要认证的请求
-                .anyRequest().authenticated();
-
-        return http.build();
+        CorsConfiguration config = new CorsConfiguration();
+        
+        // 允许所有来源
+        config.addAllowedOriginPattern("*");
+        // 允许所有请求头
+        config.addAllowedHeader("*");
+        // 允许所有HTTP方法
+        config.addAllowedMethod("*");
+        // 不发送凭证信息
+        config.setAllowCredentials(false);
+        // 预检请求的缓存时间
+        config.setMaxAge(3600L);
+        
+        // 对所有路径应用CORS配置
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
     }
 }
+
+
+
+
+
+
+
+

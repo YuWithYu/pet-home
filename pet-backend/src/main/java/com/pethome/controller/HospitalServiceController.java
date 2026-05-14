@@ -1,19 +1,20 @@
 package com.pethome.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pethome.common.Result;
 import com.pethome.entity.HospitalService;
 import com.pethome.service.HospitalServiceService;
-import com.pethome.common.Result;
+import com.pethome.util.FileUploadUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -24,24 +25,40 @@ public class HospitalServiceController {
     @Autowired
     private HospitalServiceService hospitalServiceService;
 
+    @Autowired
+    private FileUploadUtil fileUploadUtil;
+
     @GetMapping("/page")
     @ApiOperation("分页查询宠物医院服务")
     public Result<IPage<HospitalService>> getHospitalServicePage(
-            @ApiParam("当前页") @RequestParam(defaultValue = "1") Integer current,
-            @ApiParam("每页大小") @RequestParam(defaultValue = "10") Integer size,
-            @ApiParam("状态") @RequestParam(required = false) Integer status) {
-        
-        Page<HospitalService> page = new Page<>(current, size);
-        IPage<HospitalService> result = hospitalServiceService.page(page);
+            @RequestParam(defaultValue = "1") Integer pageNo,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String status) {
+
+        Page<HospitalService> page = new Page<>(pageNo, pageSize);
+        QueryWrapper<HospitalService> wrapper = new QueryWrapper<>();
+        wrapper.eq("is_deleted", 0);
+        if (StringUtils.hasText(name)) {
+            wrapper.like("name", name.trim());
+        }
+        if (StringUtils.hasText(status)) {
+            wrapper.eq("status", status.trim());
+        }
+        wrapper.orderByAsc("sort_order").orderByDesc("created_at");
+
+        IPage<HospitalService> result = hospitalServiceService.getHospitalServicePage(page, wrapper);
         return Result.success(result);
     }
 
     @GetMapping("/list")
     @ApiOperation("获取宠物医院服务列表")
-    public Result<List<HospitalService>> getHospitalServiceList(
-            @ApiParam("状态") @RequestParam(required = false) Integer status) {
-        
-        List<HospitalService> list = hospitalServiceService.list();
+    public Result<List<HospitalService>> getHospitalServiceList() {
+        List<HospitalService> list = hospitalServiceService.list(new QueryWrapper<HospitalService>()
+                .eq("is_deleted", 0)
+                .eq("status", "active")
+                .orderByAsc("sort_order"));
+        list.forEach(this::fillDerivedFields);
         return Result.success(list);
     }
 
@@ -50,6 +67,7 @@ public class HospitalServiceController {
     public Result<HospitalService> getHospitalServiceById(@PathVariable Long id) {
         HospitalService service = hospitalServiceService.getHospitalServiceById(id);
         if (service != null) {
+            fillDerivedFields(service);
             return Result.success(service);
         } else {
             return Result.error("服务不存在");
@@ -60,28 +78,26 @@ public class HospitalServiceController {
     @ApiOperation("创建宠物医院服务")
     public Result<HospitalService> createHospitalService(@RequestBody HospitalService service) {
         try {
-            boolean success = hospitalServiceService.save(service);
-            if (success) {
-                return Result.success("服务创建成功", service);
-            } else {
-                return Result.error("服务创建失败");
+            if (service.getCreatedAt() == null) {
+                service.setCreatedAt(LocalDateTime.now());
             }
+            service.setUpdatedAt(LocalDateTime.now());
+            HospitalService created = hospitalServiceService.createHospitalService(service);
+            fillDerivedFields(created);
+            return Result.success(created);
         } catch (Exception e) {
             return Result.error("服务创建失败: " + e.getMessage());
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update")
     @ApiOperation("更新宠物医院服务")
-    public Result<HospitalService> updateHospitalService(@PathVariable Long id, @RequestBody HospitalService service) {
+    public Result<HospitalService> updateHospitalService(@RequestBody HospitalService service) {
         try {
-            service.setId(id);
-            boolean success = hospitalServiceService.updateById(service);
-            if (success) {
-                return Result.success("服务更新成功", service);
-            } else {
-                return Result.error("服务更新失败");
-            }
+            service.setUpdatedAt(LocalDateTime.now());
+            HospitalService updated = hospitalServiceService.updateHospitalService(service);
+            fillDerivedFields(updated);
+            return Result.success(updated);
         } catch (Exception e) {
             return Result.error("服务更新失败: " + e.getMessage());
         }
@@ -91,7 +107,7 @@ public class HospitalServiceController {
     @ApiOperation("删除宠物医院服务")
     public Result<Boolean> deleteHospitalService(@PathVariable Long id) {
         try {
-            boolean success = hospitalServiceService.removeById(id);
+            boolean success = hospitalServiceService.deleteHospitalService(id);
             if (success) {
                 return Result.success("服务删除成功", true);
             } else {
@@ -104,71 +120,66 @@ public class HospitalServiceController {
 
     @PutMapping("/{id}/status")
     @ApiOperation("更新宠物医院服务状态")
-    public Result<Boolean> updateHospitalServiceStatus(@PathVariable Long id, @RequestParam Integer status) {
+    public Result<HospitalService> updateHospitalServiceStatus(@PathVariable Long id, @RequestParam String status) {
         try {
-            HospitalService service = hospitalServiceService.getById(id);
-            if (service != null) {
-                service.setStatus(status);
-                boolean success = hospitalServiceService.updateById(service);
-                if (success) {
-                    return Result.success("状态更新成功", true);
-                } else {
-                    return Result.error("状态更新失败");
-                }
-            } else {
+            HospitalService service = hospitalServiceService.getHospitalServiceById(id);
+            if (service == null) {
                 return Result.error("服务不存在");
             }
+            service.setStatus(status);
+            service.setUpdatedAt(LocalDateTime.now());
+            HospitalService updated = hospitalServiceService.updateHospitalService(service);
+            fillDerivedFields(updated);
+            return Result.success(updated);
         } catch (Exception e) {
             return Result.error("状态更新失败: " + e.getMessage());
         }
     }
 
     @PostMapping("/upload")
-    @ApiOperation("上传服务图片")
-    public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Long id) {
-        return updateServiceImage(id, file);
+    @ApiOperation("上传医院服务图片")
+    public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file,
+                                             @RequestParam(value = "id", required = false) Long id) {
+        try {
+            String imageUrl = fileUploadUtil.uploadImage(file, "files");
+            if (id != null) {
+                HospitalService service = hospitalServiceService.getHospitalServiceById(id);
+                if (service != null) {
+                    service.setImageUrl(imageUrl);
+                    service.setUpdatedAt(LocalDateTime.now());
+                    hospitalServiceService.updateHospitalService(service);
+                }
+            }
+            return Result.success(imageUrl);
+        } catch (Exception e) {
+            return Result.error("图片上传失败: " + e.getMessage());
+        }
     }
 
-    @PutMapping("/{id}/image")
-    @ApiOperation("更新服务图片")
+    @PostMapping("/{id}/image")
+    @ApiOperation("更新医院服务图片")
     public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
-            if (file.isEmpty()) {
-                return Result.error("请选择要上传的图片");
-            }
-
-            String contentType = file.getContentType();
-            if (contentType == null || (!contentType.startsWith("image/"))) {
-                return Result.error("只能上传图片文件");
-            }
-
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                : ".jpg";
-            String filename = "hospital-service-" + id + "-" + System.currentTimeMillis() + extension;
-
-            String uploadDir = "C:/Users/Yu/Desktop/pet-home/upload/hospital-service/";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            File targetFile = new File(dir, filename);
-            file.transferTo(targetFile);
-
-            String imageUrl = "/upload/hospital-service/" + filename;
-
+            String imageUrl = fileUploadUtil.uploadImage(file, "files");
             HospitalService service = hospitalServiceService.getHospitalServiceById(id);
-            if (service != null) {
-                service.setImageUrl(imageUrl);
-                hospitalServiceService.updateHospitalService(service);
-                return Result.success(imageUrl);
-            } else {
+            if (service == null) {
                 return Result.error("服务不存在");
             }
-        } catch (IOException e) {
+            service.setImageUrl(imageUrl);
+            service.setUpdatedAt(LocalDateTime.now());
+            hospitalServiceService.updateHospitalService(service);
+            return Result.success(imageUrl);
+        } catch (Exception e) {
             return Result.error("图片上传失败: " + e.getMessage());
+        }
+    }
+
+    private void fillDerivedFields(HospitalService service) {
+        if (service == null) {
+            return;
+        }
+        if (!StringUtils.hasText(service.getBgColor())) {
+            service.setBgColor("#ffffff");
         }
     }
 }

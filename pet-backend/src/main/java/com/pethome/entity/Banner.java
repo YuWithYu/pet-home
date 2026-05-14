@@ -1,6 +1,7 @@
 package com.pethome.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @TableName("banner")
@@ -21,6 +22,8 @@ public class Banner {
     private String status;
     @TableField("sort_order")
     private Integer sortOrder;
+    @TableField("link_url")
+    private String linkUrl;
     @TableField("create_time")
     private LocalDateTime createTime;
     @TableField("update_time")
@@ -109,6 +112,16 @@ public class Banner {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    @JsonIgnore
+    public String getLinkUrl() {
+        return linkUrl;
+    }
+
+    @JsonIgnore
+    public void setLinkUrl(String linkUrl) {
+        this.linkUrl = linkUrl;
     }
 
     public LocalDateTime getCreateTime() {

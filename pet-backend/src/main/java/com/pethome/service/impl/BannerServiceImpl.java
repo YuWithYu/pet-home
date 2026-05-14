@@ -1,5 +1,6 @@
 package com.pethome.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.entity.Banner;
@@ -8,8 +9,14 @@ import com.pethome.service.BannerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Service
 public class BannerServiceImpl implements BannerService {
+
+    /** 前台展示：兼容历史数据（active / 1 / enabled / NULL） */
+    private static final List<String> PUBLISHED_STATUS = Arrays.asList("active", "1", "enabled");
 
     @Autowired
     private BannerMapper bannerMapper;
@@ -43,6 +50,18 @@ public class BannerServiceImpl implements BannerService {
 
     @Override
     public java.util.List<Banner> getAllBanners() {
-        return bannerMapper.selectList(null);
+        QueryWrapper<Banner> q = new QueryWrapper<>();
+        q.and(w -> w.in("status", PUBLISHED_STATUS).or().isNull("status"))
+                .orderByAsc("sort_order")
+                .orderByDesc("id")
+                .last("limit 100");
+        return bannerMapper.selectList(q);
+    }
+
+    @Override
+    public java.util.List<Banner> getAllBannersForManagement() {
+        QueryWrapper<Banner> q = new QueryWrapper<>();
+        q.orderByDesc("id");
+        return bannerMapper.selectList(q);
     }
 }

@@ -1,6 +1,6 @@
-(global["webpackJsonp"] = global["webpackJsonp"] || []).push([["common/vendor"],[
-/* 0 */,
-/* 1 */
+(global["webpackJsonp"] = global["webpackJsonp"] || []).push([["common/vendor"],{
+
+/***/ 1:
 /*!*********************************************************!*\
   !*** ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js ***!
   \*********************************************************/
@@ -52,7 +52,262 @@ var _default = target[key];
 exports.default = _default;
 
 /***/ }),
-/* 2 */
+
+/***/ 10:
+/*!****************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/nonIterableRest.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+module.exports = _nonIterableRest, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 11:
+/*!***************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/defineProperty.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var toPropertyKey = __webpack_require__(/*! ./toPropertyKey.js */ 12);
+function _defineProperty(obj, key, value) {
+  key = toPropertyKey(key);
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+  return obj;
+}
+module.exports = _defineProperty, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 12:
+/*!**************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/toPropertyKey.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
+var toPrimitive = __webpack_require__(/*! ./toPrimitive.js */ 14);
+function toPropertyKey(t) {
+  var i = toPrimitive(t, "string");
+  return "symbol" == _typeof(i) ? i : i + "";
+}
+module.exports = toPropertyKey, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 123:
+/*!**************************************************************************!*\
+  !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/common/js/api/cart.js ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _api = __webpack_require__(/*! ../api.js */ 38);
+// 购物车相关API
+var _default = {
+  // 添加商品到购物车
+  addToCart: function addToCart(data) {
+    return _api.api.request({
+      url: '/api/cart/add',
+      method: 'POST',
+      data: data
+    });
+  },
+  // 获取购物车列表
+  fetchCartList: function fetchCartList(userId) {
+    // 构建URL，如果提供了userId，则作为参数传递
+    var url = '/api/cart/list';
+    if (userId) {
+      url += "?userId=".concat(userId);
+    }
+    return _api.api.request({
+      url: url,
+      method: 'GET'
+    });
+  },
+  // 删除购物车商品
+  deleteCartItem: function deleteCartItem(params) {
+    return _api.api.request({
+      url: '/api/cart/delete',
+      method: 'POST',
+      data: params
+    });
+  },
+  // 更新购物车商品数量
+  updateQuantity: function updateQuantity(params) {
+    return _api.api.request({
+      url: '/api/cart/update/quantity',
+      method: 'POST',
+      data: params
+    });
+  },
+  // 清空购物车
+  clearCartList: function clearCartList() {
+    return _api.api.request({
+      url: '/api/cart/clear',
+      method: 'POST'
+    });
+  }
+};
+exports.default = _default;
+
+/***/ }),
+
+/***/ 13:
+/*!*******************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/typeof.js ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _typeof(o) {
+  "@babel/helpers - typeof";
+
+  return (module.exports = _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+    return typeof o;
+  } : function (o) {
+    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _typeof(o);
+}
+module.exports = _typeof, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 14:
+/*!************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/toPrimitive.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
+function toPrimitive(t, r) {
+  if ("object" != _typeof(t) || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r || "default");
+    if ("object" != _typeof(i)) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r ? String : Number)(t);
+}
+module.exports = toPrimitive, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 15:
+/*!**********************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/construct.js ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var setPrototypeOf = __webpack_require__(/*! ./setPrototypeOf.js */ 16);
+var isNativeReflectConstruct = __webpack_require__(/*! ./isNativeReflectConstruct.js */ 17);
+function _construct(t, e, r) {
+  if (isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
+  var o = [null];
+  o.push.apply(o, e);
+  var p = new (t.bind.apply(t, o))();
+  return r && setPrototypeOf(p, r.prototype), p;
+}
+module.exports = _construct, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 16:
+/*!***************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/setPrototypeOf.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _setPrototypeOf(o, p) {
+  module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports;
+  return _setPrototypeOf(o, p);
+}
+module.exports = _setPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 17:
+/*!*************************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/isNativeReflectConstruct.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _isNativeReflectConstruct() {
+  try {
+    var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+  } catch (t) {}
+  return (module.exports = _isNativeReflectConstruct = function _isNativeReflectConstruct() {
+    return !!t;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports)();
+}
+module.exports = _isNativeReflectConstruct, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 18:
+/*!******************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/toConsumableArray.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithoutHoles = __webpack_require__(/*! ./arrayWithoutHoles.js */ 19);
+var iterableToArray = __webpack_require__(/*! ./iterableToArray.js */ 20);
+var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
+var nonIterableSpread = __webpack_require__(/*! ./nonIterableSpread.js */ 21);
+function _toConsumableArray(arr) {
+  return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
+}
+module.exports = _toConsumableArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 19:
+/*!******************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/arrayWithoutHoles.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) return arrayLikeToArray(arr);
+}
+module.exports = _arrayWithoutHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 2:
 /*!************************************************************!*\
   !*** ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js ***!
   \************************************************************/
@@ -2542,336 +2797,8 @@ exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js */ 1)["default"], __webpack_require__(/*! ./../../../webpack/buildin/global.js */ 3)))
 
 /***/ }),
-/* 3 */
-/*!***********************************!*\
-  !*** (webpack)/buildin/global.js ***!
-  \***********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
 
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || new Function("return this")();
-} catch (e) {
-	// This works if the window reference is available
-	if (typeof window === "object") g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 4 */
-/*!**********************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/interopRequireDefault.js ***!
-  \**********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {
-    "default": obj
-  };
-}
-module.exports = _interopRequireDefault, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 5 */
-/*!**************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/slicedToArray.js ***!
-  \**************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithHoles = __webpack_require__(/*! ./arrayWithHoles.js */ 6);
-var iterableToArrayLimit = __webpack_require__(/*! ./iterableToArrayLimit.js */ 7);
-var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
-var nonIterableRest = __webpack_require__(/*! ./nonIterableRest.js */ 10);
-function _slicedToArray(arr, i) {
-  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
-}
-module.exports = _slicedToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 6 */
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayWithHoles.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _arrayWithHoles(arr) {
-  if (Array.isArray(arr)) return arr;
-}
-module.exports = _arrayWithHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 7 */
-/*!*********************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js ***!
-  \*********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _iterableToArrayLimit(r, l) {
-  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-  if (null != t) {
-    var e,
-      n,
-      i,
-      u,
-      a = [],
-      f = !0,
-      o = !1;
-    try {
-      if (i = (t = t.call(r)).next, 0 === l) {
-        if (Object(t) !== t) return;
-        f = !1;
-      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0) {
-        ;
-      }
-    } catch (r) {
-      o = !0, n = r;
-    } finally {
-      try {
-        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
-      } finally {
-        if (o) throw n;
-      }
-    }
-    return a;
-  }
-}
-module.exports = _iterableToArrayLimit, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 8 */
-/*!***************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js ***!
-  \***************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
-function _unsupportedIterableToArray(o, minLen) {
-  if (!o) return;
-  if (typeof o === "string") return arrayLikeToArray(o, minLen);
-  var n = Object.prototype.toString.call(o).slice(8, -1);
-  if (n === "Object" && o.constructor) n = o.constructor.name;
-  if (n === "Map" || n === "Set") return Array.from(o);
-  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
-}
-module.exports = _unsupportedIterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 9 */
-/*!*****************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayLikeToArray.js ***!
-  \*****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _arrayLikeToArray(arr, len) {
-  if (len == null || len > arr.length) len = arr.length;
-  for (var i = 0, arr2 = new Array(len); i < len; i++) {
-    arr2[i] = arr[i];
-  }
-  return arr2;
-}
-module.exports = _arrayLikeToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 10 */
-/*!****************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/nonIterableRest.js ***!
-  \****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-module.exports = _nonIterableRest, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 11 */
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/defineProperty.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var toPropertyKey = __webpack_require__(/*! ./toPropertyKey.js */ 12);
-function _defineProperty(obj, key, value) {
-  key = toPropertyKey(key);
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-  return obj;
-}
-module.exports = _defineProperty, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 12 */
-/*!**************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toPropertyKey.js ***!
-  \**************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
-var toPrimitive = __webpack_require__(/*! ./toPrimitive.js */ 14);
-function toPropertyKey(t) {
-  var i = toPrimitive(t, "string");
-  return "symbol" == _typeof(i) ? i : i + "";
-}
-module.exports = toPropertyKey, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 13 */
-/*!*******************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/typeof.js ***!
-  \*******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _typeof(o) {
-  "@babel/helpers - typeof";
-
-  return (module.exports = _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-    return typeof o;
-  } : function (o) {
-    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _typeof(o);
-}
-module.exports = _typeof, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 14 */
-/*!************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toPrimitive.js ***!
-  \************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(/*! ./typeof.js */ 13)["default"];
-function toPrimitive(t, r) {
-  if ("object" != _typeof(t) || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r || "default");
-    if ("object" != _typeof(i)) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return ("string" === r ? String : Number)(t);
-}
-module.exports = toPrimitive, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 15 */
-/*!**********************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/construct.js ***!
-  \**********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var setPrototypeOf = __webpack_require__(/*! ./setPrototypeOf.js */ 16);
-var isNativeReflectConstruct = __webpack_require__(/*! ./isNativeReflectConstruct.js */ 17);
-function _construct(t, e, r) {
-  if (isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
-  var o = [null];
-  o.push.apply(o, e);
-  var p = new (t.bind.apply(t, o))();
-  return r && setPrototypeOf(p, r.prototype), p;
-}
-module.exports = _construct, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 16 */
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/setPrototypeOf.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _setPrototypeOf(o, p) {
-  module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
-    o.__proto__ = p;
-    return o;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports;
-  return _setPrototypeOf(o, p);
-}
-module.exports = _setPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 17 */
-/*!*************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/isNativeReflectConstruct.js ***!
-  \*************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _isNativeReflectConstruct() {
-  try {
-    var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-  } catch (t) {}
-  return (module.exports = _isNativeReflectConstruct = function _isNativeReflectConstruct() {
-    return !!t;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports)();
-}
-module.exports = _isNativeReflectConstruct, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 18 */
-/*!******************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toConsumableArray.js ***!
-  \******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithoutHoles = __webpack_require__(/*! ./arrayWithoutHoles.js */ 19);
-var iterableToArray = __webpack_require__(/*! ./iterableToArray.js */ 20);
-var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
-var nonIterableSpread = __webpack_require__(/*! ./nonIterableSpread.js */ 21);
-function _toConsumableArray(arr) {
-  return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
-}
-module.exports = _toConsumableArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 19 */
-/*!******************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayWithoutHoles.js ***!
-  \******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
-function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) return arrayLikeToArray(arr);
-}
-module.exports = _arrayWithoutHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-/* 20 */
+/***/ 20:
 /*!****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/iterableToArray.js ***!
   \****************************************************************/
@@ -2884,7 +2811,8 @@ function _iterableToArray(iter) {
 module.exports = _iterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 21 */
+
+/***/ 21:
 /*!******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/nonIterableSpread.js ***!
   \******************************************************************/
@@ -2897,7 +2825,8 @@ function _nonIterableSpread() {
 module.exports = _nonIterableSpread, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 22 */
+
+/***/ 22:
 /*!*************************************************************!*\
   !*** ./node_modules/@dcloudio/uni-i18n/dist/uni-i18n.es.js ***!
   \*************************************************************/
@@ -3433,7 +3362,8 @@ function resolveLocaleChain(locale) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"], __webpack_require__(/*! ./../../../webpack/buildin/global.js */ 3)))
 
 /***/ }),
-/* 23 */
+
+/***/ 23:
 /*!***************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/classCallCheck.js ***!
   \***************************************************************/
@@ -3448,7 +3378,8 @@ function _classCallCheck(instance, Constructor) {
 module.exports = _classCallCheck, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 24 */
+
+/***/ 24:
 /*!************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/createClass.js ***!
   \************************************************************/
@@ -3476,7 +3407,8 @@ function _createClass(Constructor, protoProps, staticProps) {
 module.exports = _createClass, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 25 */
+
+/***/ 25:
 /*!******************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/mp-vue/dist/mp.runtime.esm.js ***!
   \******************************************************************************************/
@@ -9557,7 +9489,8 @@ internalMixin(Vue);
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../../webpack/buildin/global.js */ 3)))
 
 /***/ }),
-/* 26 */
+
+/***/ 26:
 /*!***************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/pages.json ***!
   \***************************************************************/
@@ -9567,14 +9500,39 @@ internalMixin(Vue);
 
 
 /***/ }),
-/* 27 */,
-/* 28 */,
-/* 29 */,
-/* 30 */,
-/* 31 */,
-/* 32 */,
-/* 33 */,
-/* 34 */
+
+/***/ 3:
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || new Function("return this")();
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
+/***/ 34:
 /*!**********************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/runtime/componentNormalizer.js ***!
   \**********************************************************************************************************/
@@ -9705,7 +9663,8 @@ function normalizeComponent (
 
 
 /***/ }),
-/* 35 */
+
+/***/ 35:
 /*!*****************************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/uni.promisify.adaptor.js ***!
   \*****************************************************************************/
@@ -9750,7 +9709,8 @@ exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
-/* 36 */
+
+/***/ 36:
 /*!*******************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/store/index.js ***!
   \*******************************************************************/
@@ -9765,10 +9725,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
 var _vue = _interopRequireDefault(__webpack_require__(/*! vue */ 25));
 var _vuex = _interopRequireDefault(__webpack_require__(/*! vuex */ 37));
-// store/index.js
-
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 _vue.default.use(_vuex.default);
 var store = new _vuex.default.Store({
   state: {
@@ -9781,7 +9742,10 @@ var store = new _vuex.default.Store({
     // 系统配置
     config: {},
     // 位置信息
-    location: null
+    location: null,
+    // 帖子点赞/收藏状态缓存（从详情页返回时与发现页同步）
+    // key: postId, value: { isLiked, likeCount, isCollected?, collectCount? }
+    postLikeCache: {}
   },
   mutations: {
     // 设置用户信息
@@ -9831,14 +9795,27 @@ var store = new _vuex.default.Store({
       state.token = null;
       state.cartCount = 0;
       state.cartList = [];
+      state.postLikeCache = {};
       uni.removeStorageSync('userInfo');
       uni.removeStorageSync('token');
+    },
+    // 同步帖子点赞状态（详情页点赞/取消后写入，发现页 onShow 时合并到列表）
+    SET_POST_LIKE: function SET_POST_LIKE(state, _ref) {
+      var postId = _ref.postId,
+        isLiked = _ref.isLiked,
+        likeCount = _ref.likeCount;
+      if (!postId) return;
+      var key = String(postId);
+      state.postLikeCache[key] = _objectSpread(_objectSpread({}, state.postLikeCache[key] || {}), {}, {
+        isLiked: isLiked,
+        likeCount: likeCount
+      });
     }
   },
   actions: {
     // 初始化用户信息
-    initUserInfo: function initUserInfo(_ref) {
-      var commit = _ref.commit;
+    initUserInfo: function initUserInfo(_ref2) {
+      var commit = _ref2.commit;
       var userInfo = uni.getStorageSync('userInfo');
       var token = uni.getStorageSync('token');
       if (userInfo) {
@@ -9849,16 +9826,16 @@ var store = new _vuex.default.Store({
       }
     },
     // 登录
-    login: function login(_ref2, _ref3) {
-      var commit = _ref2.commit;
-      var userInfo = _ref3.userInfo,
-        token = _ref3.token;
+    login: function login(_ref3, _ref4) {
+      var commit = _ref3.commit;
+      var userInfo = _ref4.userInfo,
+        token = _ref4.token;
       commit('SET_USER_INFO', userInfo);
       commit('SET_TOKEN', token);
     },
     // 退出登录
-    logout: function logout(_ref4) {
-      var commit = _ref4.commit;
+    logout: function logout(_ref5) {
+      var commit = _ref5.commit;
       try {
         // 清除用户相关数据
         commit('CLEAR_USER');
@@ -9872,29 +9849,28 @@ var store = new _vuex.default.Store({
         uni.removeStorageSync('cartCount');
         uni.removeStorageSync('location');
         uni.removeStorageSync('config');
-        console.log('用户数据清除完成');
       } catch (error) {
         console.error('清除用户数据失败:', error);
       }
     },
     // 更新购物车数量
-    updateCartCount: function updateCartCount(_ref5, count) {
-      var commit = _ref5.commit;
+    updateCartCount: function updateCartCount(_ref6, count) {
+      var commit = _ref6.commit;
       commit('SET_CART_COUNT', count);
     },
     // 更新购物车列表
-    updateCartList: function updateCartList(_ref6, list) {
-      var commit = _ref6.commit;
+    updateCartList: function updateCartList(_ref7, list) {
+      var commit = _ref7.commit;
       commit('SET_CART_LIST', list);
     },
     // 更新系统配置
-    updateConfig: function updateConfig(_ref7, config) {
-      var commit = _ref7.commit;
+    updateConfig: function updateConfig(_ref8, config) {
+      var commit = _ref8.commit;
       commit('SET_CONFIG', config);
     },
     // 更新位置信息
-    updateLocation: function updateLocation(_ref8, location) {
-      var commit = _ref8.commit;
+    updateLocation: function updateLocation(_ref9, location) {
+      var commit = _ref9.commit;
       commit('SET_LOCATION', location);
     }
   },
@@ -9905,6 +9881,10 @@ var store = new _vuex.default.Store({
     },
     // 是否已登录
     isLoggedIn: function isLoggedIn(state) {
+      return !!state.token;
+    },
+    // 是否已登录（别名，兼容旧代码）
+    hasLogin: function hasLogin(state) {
       return !!state.token;
     },
     // 用户昵称
@@ -9922,6 +9902,10 @@ var store = new _vuex.default.Store({
     // 购物车商品数量
     cartItemCount: function cartItemCount(state) {
       return state.cartList.length;
+    },
+    // 帖子点赞缓存（供发现页合并）
+    postLikeCache: function postLikeCache(state) {
+      return state.postLikeCache;
     }
   }
 });
@@ -9930,7 +9914,8 @@ exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
-/* 37 */
+
+/***/ 37:
 /*!**************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vuex3/dist/vuex.common.js ***!
   \**************************************************************************************/
@@ -11186,182 +11171,8 @@ module.exports = index_cjs;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../../webpack/buildin/global.js */ 3)))
 
 /***/ }),
-/* 38 */
-/*!********************************************************************!*\
-  !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/router/index.js ***!
-  \********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-var _interopRequireDefault = __webpack_require__(/*! @babel/runtime/helpers/interopRequireDefault */ 4);
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/typeof */ 13));
-var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ 5));
-function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
-function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || (0, _typeof2.default)(obj) !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-// router/index.js
-// 路由配置
-
-var routes = [{
-  path: '/pages/index/index',
-  name: 'Index',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/index/index.vue */ 39));
-    });
-  }
-}, {
-  path: '/pages/category/index',
-  name: 'Category',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/category/index.vue */ 48));
-    });
-  }
-}, {
-  path: '/pages/goods/list',
-  name: 'GoodsList',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/goods/list.vue */ 55));
-    });
-  }
-}, {
-  path: '/pages/goods/detail',
-  name: 'GoodsDetail',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/goods/detail.vue */ 62));
-    });
-  }
-}, {
-  path: '/pages/cart/index',
-  name: 'Cart',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/cart/index.vue */ 72));
-    });
-  }
-}, {
-  path: '/pages/user/index',
-  name: 'User',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/user/index.vue */ 79));
-    });
-  }
-}, {
-  path: '/pages/user/login',
-  name: 'Login',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/user/login.vue */ 86));
-    });
-  }
-}, {
-  path: '/pages/user/register',
-  name: 'Register',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/user/register.vue */ 93));
-    });
-  }
-}, {
-  path: '/pages/user/profile',
-  name: 'Profile',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/user/profile.vue */ 100));
-    });
-  }
-}, {
-  path: '/pages/user/pets',
-  name: 'Pets',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/user/pets.vue */ 107));
-    });
-  }
-}, {
-  path: '/pages/user/pets/add',
-  name: 'AddPet',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/user/pets/add.vue */ 114));
-    });
-  }
-}, {
-  path: '/pages/user/orders',
-  name: 'Orders',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/user/orders.vue */ 121));
-    });
-  }
-}, {
-  path: '/pages/appointment/medical',
-  name: 'Medical',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/appointment/medical.vue */ 128));
-    });
-  }
-}, {
-  path: '/pages/appointment/grooming',
-  name: 'Grooming',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/appointment/grooming.vue */ 135));
-    });
-  }
-}, {
-  path: '/pages/appointment/boarding',
-  name: 'Boarding',
-  component: function component() {
-    return Promise.resolve().then(function () {
-      return _interopRequireWildcard(__webpack_require__(/*! ../pages/appointment/boarding.vue */ 142));
-    });
-  }
-}];
-
-// 简化版的路由对象，仅用于组件引用
-var router = {
-  routes: routes,
-  currentRoute: null,
-  // 获取当前路由
-  getCurrentRoute: function getCurrentRoute() {
-    return this.currentRoute;
-  },
-  // 解析路由参数
-  parseQuery: function parseQuery(queryString) {
-    if (!queryString) return {};
-    var params = {};
-    queryString.split('&').forEach(function (item) {
-      var _item$split = item.split('='),
-        _item$split2 = (0, _slicedToArray2.default)(_item$split, 2),
-        key = _item$split2[0],
-        value = _item$split2[1];
-      params[decodeURIComponent(key)] = decodeURIComponent(value);
-    });
-    return params;
-  }
-};
-var _default = router;
-exports.default = _default;
-
-/***/ }),
-/* 39 */,
-/* 40 */,
-/* 41 */,
-/* 42 */,
-/* 43 */,
-/* 44 */
+/***/ 38:
 /*!*********************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/common/js/api.js ***!
   \*********************************************************************/
@@ -11376,21 +11187,55 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.api = void 0;
+var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ 18));
+var _objectWithoutProperties2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/objectWithoutProperties */ 39));
+var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/typeof */ 13));
 var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
 var _classCallCheck2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ 23));
 var _createClass2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/createClass */ 24));
-var _util = __webpack_require__(/*! ./util.js */ 45);
+var _util = __webpack_require__(/*! ./util.js */ 41);
+var _excluded = ["showLoading"],
+  _excluded2 = ["showLoading"],
+  _excluded3 = ["storeId", "showLoading"],
+  _excluded4 = ["showLoading"],
+  _excluded5 = ["showLoading"],
+  _excluded6 = ["showLoading"];
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 // API接口封装
 var ApiService = /*#__PURE__*/function () {
   function ApiService() {
     (0, _classCallCheck2.default)(this, ApiService);
-    this.baseURL = 'http://localhost:8080';
+    this.baseURL = _util.util.getApiBaseUrl();
   }
-
-  // 请求封装
   (0, _createClass2.default)(ApiService, [{
+    key: "setBaseUrl",
+    value: function setBaseUrl(baseUrl) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      if (typeof baseUrl !== 'string') return;
+      var normalized = baseUrl.trim().replace(/\/+$/, '');
+      if (!normalized) return;
+      this.baseURL = normalized;
+      if (options.persist !== false) {
+        _util.util.setApiBaseUrl(normalized);
+        // 移除API base URL设置日志以提升性能
+      }
+    }
+  }, {
+    key: "getBaseUrl",
+    value: function getBaseUrl() {
+      // 始终返回最新存储值，保证外部修改后立即生效
+      var current = _util.util.getApiBaseUrl();
+      if (current !== this.baseURL) {
+        this.baseURL = current;
+        // 移除API base URL更新日志以提升性能
+      }
+
+      return this.baseURL;
+    }
+
+    // 请求封装（options.authToken 可覆盖默认 token，用于工作人员接口）
+  }, {
     key: "request",
     value: function request(options) {
       var _this = this;
@@ -11402,14 +11247,32 @@ var ApiService = /*#__PURE__*/function () {
         _options$header = options.header,
         header = _options$header === void 0 ? {} : _options$header,
         _options$showLoading = options.showLoading,
-        showLoading = _options$showLoading === void 0 ? true : _options$showLoading;
+        showLoading = _options$showLoading === void 0 ? true : _options$showLoading,
+        authToken = options.authToken,
+        timeoutOpt = options.timeout,
+        _options$retryOnTimeo = options.retryOnTimeout,
+        retryOnTimeout = _options$retryOnTimeo === void 0 ? false : _options$retryOnTimeo,
+        _options$retryCount = options.retryCount,
+        retryCount = _options$retryCount === void 0 ? 0 : _options$retryCount;
+      var timeoutMs = typeof timeoutOpt === 'number' && timeoutOpt > 0 ? timeoutOpt : 30000;
+      var storedBase = this.getBaseUrl();
+      var overrideBase = typeof options.baseURL === 'string' && options.baseURL.trim() ? options.baseURL.trim().replace(/\/+$/, '') : '';
+      var baseURL = overrideBase || storedBase;
+      var fullUrl = url && url.startsWith('/') ? "".concat(baseURL).concat(url) : "".concat(baseURL, "/").concat(url || '');
 
-      // 显示加载提示
+      // 使用计数器管理 loading，避免多个请求时 showLoading/hideLoading 不匹配
+      var loadingShown = false;
       if (showLoading) {
-        uni.showLoading({
-          title: '加载中...',
-          mask: true
-        });
+        // 使用 util 的 loading 管理函数，支持计数器
+        if (typeof _util.util !== 'undefined' && _util.util.showLoading) {
+          _util.util.showLoading('加载中...');
+        } else {
+          uni.showLoading({
+            title: '加载中...',
+            mask: true
+          });
+        }
+        loadingShown = true;
       }
 
       // 构建请求头
@@ -11417,52 +11280,145 @@ var ApiService = /*#__PURE__*/function () {
         'Content-Type': 'application/json'
       }, header);
 
-      // 如果有token，添加到请求头
-      var token = uni.getStorageSync('token');
+      // 如果有token，添加到请求头（authToken 优先，用于工作人员接口）
+      var token = authToken || uni.getStorageSync('token');
       if (token) {
         requestHeader['Authorization'] = "Bearer ".concat(token);
+        // 移除频繁的token日志输出以提升性能
+      } else {
+        // 移除token不存在的警告日志以提升性能
+      }
+
+      // GET 请求不传 undefined/null 或字符串 "undefined"/"null"，避免后端 Long 解析报错
+      var requestData = data;
+      if (method && method.toUpperCase() === 'GET' && data && (0, _typeof2.default)(data) === 'object') {
+        requestData = {};
+        Object.keys(data).forEach(function (k) {
+          var v = data[k];
+          if (v === undefined || v === null) return;
+          if (v === 'undefined' || v === 'null') return;
+          if (typeof v === 'string' && (v === '' || v === 'undefined' || v === 'null')) return;
+          requestData[k] = v;
+        });
       }
       return new Promise(function (resolve, reject) {
         uni.request({
-          url: _this.baseURL + url,
+          url: fullUrl,
           method: method,
-          data: data,
+          data: requestData,
           header: requestHeader,
+          timeout: timeoutMs,
           success: function success(res) {
+            console.log('最终请求URL:', fullUrl);
+            // 移除频繁的日志输出以提升性能
             if (res.statusCode === 200) {
               // 兼容不同接口返回格式
               var result = res.data;
-              if (result.code === 0 || result.success) {
+              // 移除频繁的日志输出以提升性能
+
+              // 如果result为null或undefined，尝试使用res.data
+              if (!result && res.data) {
+                result = res.data;
+              }
+
+              // 修复：后端返回 code: 200 表示成功
+              if (result && (result.code === 200 || result.code === 0 || result.success)) {
                 resolve(result);
               } else {
-                uni.showToast({
-                  title: result.msg || '请求失败',
-                  icon: 'none',
-                  duration: 2000
-                });
-                reject(new Error(result.msg || '请求失败'));
+                var _result;
+                // 不在这里显示 toast，让调用方决定是否显示错误提示
+                var errorMsg = result && (result.msg || result.message) || '系统异常，请稍后重试';
+                console.error('[API响应错误]', fullUrl, '错误信息:', errorMsg, '完整响应:', result, '响应code:', (_result = result) === null || _result === void 0 ? void 0 : _result.code);
+                reject(new Error(errorMsg));
               }
-            } else {
+            } else if (res.statusCode === 401) {
+              // 401未授权错误，检查当前页面，避免在登录/注册页面清除存储
+              try {
+                var pages = getCurrentPages();
+                var currentPage = pages && pages.length > 0 ? pages[pages.length - 1] : null;
+                var currentRoute = currentPage ? currentPage.route : '';
+
+                // 如果当前在登录或注册页面，不清除存储（可能是刚登录）
+                if (currentRoute && (currentRoute.includes('login') || currentRoute.includes('register'))) {
+                  reject(new Error('未授权，请重新登录'));
+                  return;
+                }
+
+                // 检查是否是刚登录后的请求（5分钟内）
+                var loginTime = uni.getStorageSync('loginTime');
+                var _token = uni.getStorageSync('token');
+                var userId = uni.getStorageSync('userId');
+                var now = Date.now();
+                var isRecentLogin = loginTime && now - loginTime < 5 * 60 * 1000; // 5分钟内
+
+                if (_token && userId && isRecentLogin) {
+                  // 不清除存储，只返回错误，让调用方处理
+                  reject(new Error('认证失败，请稍后重试'));
+                  return;
+                }
+
+                // 检查是否是用户主页且token存在，可能是token还未完全生效
+                if (currentRoute && currentRoute.includes('main/index')) {
+                  if (_token && userId) {
+                    // 不清除存储，只返回错误，让调用方处理
+                    reject(new Error('认证失败，请稍后重试'));
+                    return;
+                  }
+                }
+              } catch (e) {
+                // 静默处理错误
+              }
+
+              // 401未授权错误，清除token并跳转到登录页
+              uni.removeStorageSync('token');
+              uni.removeStorageSync('userId');
+              uni.removeStorageSync('userInfo');
+              uni.removeStorageSync('username');
+              uni.removeStorageSync('loginTime'); // 清除登录时间戳
               uni.showToast({
-                title: '网络错误',
+                title: '登录已过期，请重新登录',
                 icon: 'none',
                 duration: 2000
               });
-              reject(new Error('网络错误'));
+              setTimeout(function () {
+                uni.reLaunch({
+                  url: '/pages-auth/login'
+                });
+              }, 1500);
+              reject(new Error('未授权，请重新登录'));
+            } else {
+              // 502等服务器错误，记录详细错误信息
+              console.error("[API\u8BF7\u6C42\u5931\u8D25] ".concat(method, " ").concat(fullUrl, " - \u72B6\u6001\u7801: ").concat(res.statusCode), res);
+              var _errorMsg = res.statusCode === 502 ? '服务器网关错误，请检查后端服务是否正常运行' : res.statusCode === 503 ? '服务暂时不可用' : res.statusCode === 504 ? '请求超时' : '网络错误';
+              reject(new Error(_errorMsg));
             }
           },
           fail: function fail(err) {
-            uni.showToast({
-              title: '网络请求失败',
-              icon: 'none',
-              duration: 2000
-            });
-            reject(err);
+            // 网络请求失败，记录详细错误信息
+            console.error("[API\u8BF7\u6C42\u5931\u8D25] ".concat(method, " ").concat(fullUrl), err);
+            var errMsg = err && err.errMsg ? String(err.errMsg) : '';
+            var isTimeout = errMsg.toLowerCase().includes('timeout');
+            if (isTimeout && retryOnTimeout && retryCount < 1) {
+              // 超时自动重试一次（隐藏重复 loading，避免闪烁）
+              _this.request(_objectSpread(_objectSpread({}, options), {}, {
+                showLoading: false,
+                retryOnTimeout: true,
+                retryCount: retryCount + 1,
+                timeout: Math.max(timeoutMs, 90000)
+              })).then(resolve).catch(reject);
+              return;
+            }
+            var errorMsg = err.errMsg || '网络请求失败';
+            reject(new Error(errorMsg));
           },
           complete: function complete() {
-            // 隐藏加载提示
-            if (showLoading) {
-              uni.hideLoading();
+            // 隐藏加载提示，使用 util 的 hideLoading 支持计数器
+            if (loadingShown) {
+              if (typeof _util.util !== 'undefined' && _util.util.hideLoading) {
+                _util.util.hideLoading();
+              } else {
+                uni.hideLoading();
+              }
             }
           }
         });
@@ -11474,7 +11430,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "getConfig",
     value: function getConfig(keys) {
       return this.request({
-        url: '/tz/config/values',
+        url: '/api/config/values',
         method: 'GET',
         data: {
           keys: keys
@@ -11482,16 +11438,159 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
-    // 获取轮播图列表
+    // 获取轮播图列表（仅启用的）
   }, {
     key: "getBannerList",
-    value: function getBannerList(type) {
+    value: function getBannerList() {
+      var showLoading = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
       return this.request({
-        url: '/tz/banner/list',
+        url: '/api/banner/active',
+        method: 'GET',
+        showLoading: showLoading,
+        timeout: 90000,
+        retryOnTimeout: true
+      });
+    }
+
+    // 获取轮播图/专题Banner详情
+  }, {
+    key: "getBannerDetail",
+    value: function getBannerDetail(id) {
+      return this.request({
+        url: "/api/banner/".concat(id),
+        method: 'GET'
+      });
+    }
+
+    // 获取每日专题数据（含 banners、topics 等）
+  }, {
+    key: "getDailyTopics",
+    value: function getDailyTopics() {
+      return this.request({
+        url: '/api/daily-topics',
+        method: 'GET'
+      });
+    }
+
+    // 获取专题主题分类列表（与后台「主题分类管理」同步，用于宠物专题 Tab）
+  }, {
+    key: "getDailyTopicThemes",
+    value: function getDailyTopicThemes() {
+      return this.request({
+        url: '/api/daily-topics/themes',
+        method: 'GET'
+      });
+    }
+
+    // 获取专题详情（管理员后台创建的官方专题，可选 userId 用于点赞/收藏状态）
+    // showLoading 默认 false：详情页自带 loading 态，避免与 uni.showLoading 叠加重影/难关闭
+  }, {
+    key: "getDailyTopicDetail",
+    value: function getDailyTopicDetail(id) {
+      var userId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      var url = "/api/daily-topics/".concat(id);
+      if (userId) url += "?userId=".concat(userId);
+      return this.request({
+        url: url,
+        method: 'GET',
+        showLoading: showLoading
+      });
+    }
+
+    // 点赞专题
+  }, {
+    key: "likeTopic",
+    value: function likeTopic(topicId, userId) {
+      return this.request({
+        url: "/api/daily-topics/".concat(topicId, "/like?userId=").concat(userId),
+        method: 'POST'
+      });
+    }
+
+    // 取消点赞专题
+  }, {
+    key: "unlikeTopic",
+    value: function unlikeTopic(topicId, userId) {
+      return this.request({
+        url: "/api/daily-topics/".concat(topicId, "/like?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 收藏专题（收藏到「我的收藏-文章」）
+  }, {
+    key: "collectTopic",
+    value: function collectTopic(topicId, userId) {
+      return this.request({
+        url: "/api/daily-topics/".concat(topicId, "/collect?userId=").concat(userId),
+        method: 'POST'
+      });
+    }
+
+    // 取消收藏专题
+  }, {
+    key: "uncollectTopic",
+    value: function uncollectTopic(topicId, userId) {
+      return this.request({
+        url: "/api/daily-topics/".concat(topicId, "/collect?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 检查专题收藏状态
+  }, {
+    key: "checkTopicCollectStatus",
+    value: function checkTopicCollectStatus(topicId, userId) {
+      return this.request({
+        url: "/api/daily-topics/".concat(topicId, "/collect/status?userId=").concat(userId),
+        method: 'GET'
+      });
+    }
+
+    // 获取用户收藏的专题列表（用于「我的收藏-文章」）
+  }, {
+    key: "getCollectedTopics",
+    value: function getCollectedTopics() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var _params$showLoading = params.showLoading,
+        showLoading = _params$showLoading === void 0 ? true : _params$showLoading,
+        rest = (0, _objectWithoutProperties2.default)(params, _excluded);
+      return this.request({
+        url: '/api/daily-topics/collected',
         method: 'GET',
         data: {
-          type: type
-        }
+          userId: rest.userId,
+          page: rest.page || 1,
+          size: rest.size || 20
+        },
+        showLoading: showLoading
+      });
+    }
+
+    // 获取专题评论列表（详情页建议 showLoading=false，由页面自行控制加载态）
+  }, {
+    key: "getTopicComments",
+    value: function getTopicComments(topicId) {
+      var userId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      var url = "/api/daily-topics/".concat(topicId, "/comments");
+      if (userId) url += "?userId=".concat(userId);
+      return this.request({
+        url: url,
+        method: 'GET',
+        showLoading: showLoading
+      });
+    }
+
+    // 添加专题评论
+  }, {
+    key: "addTopicComment",
+    value: function addTopicComment(topicId, commentData) {
+      return this.request({
+        url: "/api/daily-topics/".concat(topicId, "/comments"),
+        method: 'POST',
+        data: commentData
       });
     }
 
@@ -11506,6 +11605,16 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
+    // 根据ID获取铲屎服务详情
+  }, {
+    key: "getLitterServiceById",
+    value: function getLitterServiceById(id) {
+      return this.request({
+        url: "/api/litter-services/".concat(id),
+        method: 'GET'
+      });
+    }
+
     // 获取宠物医院服务列表
   }, {
     key: "getHospitalServicePage",
@@ -11517,14 +11626,36 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
-    // 获取寄养服务列表
+    // 根据ID获取宠物医院服务详情
   }, {
-    key: "getBoardingServicePage",
-    value: function getBoardingServicePage(params) {
+    key: "getHospitalServiceById",
+    value: function getHospitalServiceById(id) {
       return this.request({
-        url: '/api/boarding-services/page',
+        url: "/api/hospital-services/".concat(id),
+        method: 'GET'
+      });
+    }
+
+    // 获取宠物医院服务列表
+  }, {
+    key: "getHospitalServiceList",
+    value: function getHospitalServiceList() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/hospital-services/list',
         method: 'GET',
         data: params
+      });
+    }
+
+    // 获取宠物医院展示图
+  }, {
+    key: "getHospitalBanner",
+    value: function getHospitalBanner() {
+      var position = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'hospital-page-top';
+      return this.request({
+        url: "/api/hospital-banners/position/".concat(position),
+        method: 'GET'
       });
     }
 
@@ -11550,6 +11681,28 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
+    // 获取启用的洗护服务列表
+  }, {
+    key: "getGroomingServiceList",
+    value: function getGroomingServiceList() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/grooming-services/list',
+        method: 'GET',
+        data: params
+      });
+    }
+
+    // 根据ID获取洗护服务详情
+  }, {
+    key: "getGroomingServiceById",
+    value: function getGroomingServiceById(id) {
+      return this.request({
+        url: "/api/grooming-services/".concat(id),
+        method: 'GET'
+      });
+    }
+
     // 获取领养服务列表
   }, {
     key: "getAdoptionServicePage",
@@ -11564,18 +11717,33 @@ var ApiService = /*#__PURE__*/function () {
     // 获取可用时间段
   }, {
     key: "getAvailableTimeSlots",
-    value: function getAvailableTimeSlots(params) {
+    value:
+    // ==================== 服务预约时间与智能分配相关接口 ====================
+
+    // 获取可预约时间段（storeId 可选，传入时仅返回该门店的排班）
+    function getAvailableTimeSlots(serviceType, date, storeId) {
+      var showLoading = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+      var params = {
+        serviceType: serviceType,
+        date: date
+      };
+      if (storeId != null && storeId !== '' && !isNaN(Number(storeId))) {
+        params.storeId = Number(storeId);
+      }
       return this.request({
-        url: '/api/time-slots/available',
+        url: '/api/schedule/available',
         method: 'GET',
-        data: params
+        data: params,
+        showLoading: showLoading
       });
     }
 
-    // 创建预约
+    // 获取服务人员列表
   }, {
     key: "createBooking",
-    value: function createBooking(data) {
+    value:
+    // 创建预约
+    function createBooking(data) {
       return this.request({
         url: '/api/bookings/create',
         method: 'POST',
@@ -11609,7 +11777,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "wxappAuthorize",
     value: function wxappAuthorize(params) {
       return this.request({
-        url: '/tz/user/wxapp/authorize',
+        url: '/api/user/wxapp/authorize',
         method: 'POST',
         data: params
       });
@@ -11620,7 +11788,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "loginByPhone",
     value: function loginByPhone(phone, password) {
       return this.request({
-        url: '/tz/user/login',
+        url: '/api/user/login',
         method: 'POST',
         data: {
           phone: phone,
@@ -11634,7 +11802,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "loginByWechat",
     value: function loginByWechat(code) {
       return this.request({
-        url: '/tz/user/wxapp/login',
+        url: '/api/user/wxapp/login',
         method: 'POST',
         data: {
           code: code
@@ -11642,19 +11810,102 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
-    // 用户注册
+    // 用户注册（smsCode 在有短信服务时必填；勿传字符串 "undefined"）
   }, {
     key: "register",
     value: function register(phone, password, nickname, smsCode) {
+      var data = {
+        phone: String(phone),
+        password: String(password),
+        nickname: String(nickname || '')
+      };
+      if (smsCode != null && smsCode !== '' && String(smsCode) !== 'undefined') {
+        data.smsCode = String(smsCode).trim();
+      }
       return this.request({
-        url: '/tz/user/register',
+        url: '/api/user/register',
+        method: 'POST',
+        data: data
+      });
+    }
+
+    // 忘记密码：通过手机号+验证码重置密码
+  }, {
+    key: "resetPassword",
+    value: function resetPassword(phone, smsCode, newPassword) {
+      return this.request({
+        url: '/api/user/forgot-password',
         method: 'POST',
         data: {
           phone: String(phone),
-          password: String(password),
-          nickname: String(nickname || ''),
+          smsCode: String(smsCode),
+          newPassword: String(newPassword)
+        }
+      });
+    }
+
+    // 修改密码（登录后，需携带 token）
+  }, {
+    key: "changePassword",
+    value: function changePassword(oldPassword, newPassword) {
+      return this.request({
+        url: '/api/user/change-password',
+        method: 'POST',
+        data: {
+          oldPassword: String(oldPassword),
+          newPassword: String(newPassword)
+        }
+      });
+    }
+
+    // 绑定手机号（使用其它号码时：需先发验证码，再传 phone + smsCode）
+  }, {
+    key: "bindPhone",
+    value: function bindPhone(phone, smsCode) {
+      return this.request({
+        url: '/api/user/bind-phone',
+        method: 'POST',
+        data: {
+          phone: String(phone),
           smsCode: String(smsCode)
         }
+      });
+    }
+
+    // 解绑手机号（需登录）。解绑后该号码可被其他账号绑定，当前账号可再绑定其他号码
+  }, {
+    key: "unbindPhone",
+    value: function unbindPhone() {
+      return this.request({
+        url: '/api/user/unbind-phone',
+        method: 'POST'
+      });
+    }
+
+    // 提交投诉举报（可不登录）
+  }, {
+    key: "submitComplaint",
+    value: function submitComplaint(type, content, contactInfo, images) {
+      return this.request({
+        url: '/api/complaint/submit',
+        method: 'POST',
+        data: {
+          type: type || '其他',
+          content: String(content),
+          contactInfo: contactInfo ? String(contactInfo) : '',
+          images: Array.isArray(images) && images.length ? images : null
+        },
+        showLoading: true
+      });
+    }
+
+    // 注销账号
+  }, {
+    key: "deleteAccount",
+    value: function deleteAccount() {
+      return this.request({
+        url: '/api/user/delete',
+        method: 'POST'
       });
     }
 
@@ -11663,7 +11914,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "getUserDetail",
     value: function getUserDetail(token) {
       return this.request({
-        url: '/tz/user/detail',
+        url: '/api/user/detail',
         method: 'GET',
         data: {
           token: token
@@ -11676,7 +11927,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "getUserAmount",
     value: function getUserAmount(token) {
       return this.request({
-        url: '/tz/user/amount',
+        url: '/api/user/amount',
         method: 'GET',
         data: {
           token: token
@@ -11688,12 +11939,104 @@ var ApiService = /*#__PURE__*/function () {
   }, {
     key: "getLastNotice",
     value: function getLastNotice(type) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this.request({
-        url: '/tz/notice/last-one',
+        url: '/api/notice/last-one',
         method: 'GET',
         data: {
           type: type
-        }
+        },
+        showLoading: showLoading
+      });
+    }
+    // 获取公告列表（系统公告页用，status=1 已发布）
+  }, {
+    key: "getNoticeList",
+    value: function getNoticeList(type) {
+      var status = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+      var limit = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 50;
+      var showLoading = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+      return this.request({
+        url: '/api/notice/list',
+        method: 'GET',
+        data: {
+          type: type,
+          status: status,
+          limit: limit
+        },
+        showLoading: showLoading
+      });
+    }
+
+    // ========== 通知中心（预约提醒、订单状态、系统公告、社区互动） ==========
+  }, {
+    key: "getMyNotifications",
+    value: function getMyNotifications() {
+      var pageNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      var pageSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 20;
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      return this.request({
+        url: '/api/notifications/my',
+        method: 'GET',
+        data: {
+          pageNo: pageNo,
+          pageSize: pageSize
+        },
+        showLoading: showLoading
+      });
+    }
+  }, {
+    key: "getNotificationUnreadCount",
+    value: function getNotificationUnreadCount() {
+      var showLoading = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+      return this.request({
+        url: '/api/notifications/unread-count',
+        method: 'GET',
+        showLoading: showLoading
+      });
+    }
+  }, {
+    key: "markNotificationRead",
+    value: function markNotificationRead(id) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+      return this.request({
+        url: "/api/notifications/".concat(id, "/read"),
+        method: 'POST',
+        showLoading: showLoading
+      });
+    }
+  }, {
+    key: "markAllNotificationsRead",
+    value: function markAllNotificationsRead() {
+      var showLoading = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+      return this.request({
+        url: '/api/notifications/read-all',
+        method: 'POST',
+        showLoading: showLoading
+      });
+    }
+  }, {
+    key: "getUnreadNotices",
+    value: function getUnreadNotices() {
+      var limit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 20;
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+      return this.request({
+        url: '/api/notifications/notices-unread',
+        method: 'GET',
+        data: {
+          limit: limit
+        },
+        showLoading: showLoading
+      });
+    }
+  }, {
+    key: "markNoticeAsRead",
+    value: function markNoticeAsRead(noticeId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+      return this.request({
+        url: "/api/notifications/notice/".concat(noticeId, "/read"),
+        method: 'POST',
+        showLoading: showLoading
       });
     }
 
@@ -11722,50 +12065,32 @@ var ApiService = /*#__PURE__*/function () {
   }, {
     key: "getGoodsDetail",
     value: function getGoodsDetail(id) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this.request({
         url: "/api/product/".concat(id),
+        method: 'GET',
+        showLoading: showLoading
+      });
+    }
+
+    // 获取商品评价
+  }, {
+    key: "getProductReviews",
+    value: function getProductReviews(productId) {
+      return this.request({
+        url: "/api/product/".concat(productId, "/reviews"),
         method: 'GET'
       });
     }
 
-    // 获取商品动态
+    // 提交商品评价
   }, {
-    key: "getGoodsDynamic",
-    value: function getGoodsDynamic() {
-      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+    key: "submitReview",
+    value: function submitReview(reviewData) {
       return this.request({
-        url: '/tz/shop/goods/dynamic',
-        method: 'GET',
-        data: {
-          type: type
-        }
-      });
-    }
-
-    // 批量获取广告位
-  }, {
-    key: "getAdPositionBatch",
-    value: function getAdPositionBatch(keys) {
-      return this.request({
-        url: '/tz/site/adPosition/batch',
-        method: 'GET',
-        data: {
-          keys: keys
-        }
-      });
-    }
-
-    // 获取商品动态（备用接口）
-  }, {
-    key: "getSiteGoodsDynamic",
-    value: function getSiteGoodsDynamic() {
-      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-      return this.request({
-        url: '/tz/site/goods/dynamic',
-        method: 'GET',
-        data: {
-          type: type
-        }
+        url: '/api/reviews',
+        method: 'POST',
+        data: reviewData
       });
     }
 
@@ -11774,7 +12099,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "getMyCards",
     value: function getMyCards(token) {
       return this.request({
-        url: '/tz/card/my',
+        url: '/api/card/my',
         method: 'GET',
         data: {
           token: token
@@ -11787,7 +12112,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "getShoppingCartInfo",
     value: function getShoppingCartInfo(token, type) {
       return this.request({
-        url: '/tz/shopping-cart/info',
+        url: '/api/shopping-cart/info',
         method: 'GET',
         data: {
           token: token,
@@ -11803,7 +12128,7 @@ var ApiService = /*#__PURE__*/function () {
     key: "sendSmsCode",
     value: function sendSmsCode(phone) {
       return this.request({
-        url: '/tz/sms/send',
+        url: '/api/sms/send',
         method: 'POST',
         data: {
           phone: phone
@@ -11816,19 +12141,38 @@ var ApiService = /*#__PURE__*/function () {
     key: "login",
     value: function login(loginData) {
       return this.request({
-        url: '/tz/user/login',
+        url: '/api/user/login',
         method: 'POST',
         data: loginData
       });
     }
 
-    // 获取当前用户信息
+    // 获取当前用户信息（params.showLoading 为 false 时不显示全局加载中，用于「我的」页静默刷新）
   }, {
     key: "getCurrentUser",
     value: function getCurrentUser() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var _params$showLoading2 = params.showLoading,
+        showLoading = _params$showLoading2 === void 0 ? true : _params$showLoading2,
+        rest = (0, _objectWithoutProperties2.default)(params, _excluded2);
+      var url = '/api/user/current';
+      var queryParams = [];
+      if (rest.userId != null && rest.userId !== undefined && rest.userId !== '') {
+        var userId = typeof rest.userId === 'string' ? parseInt(rest.userId) : rest.userId;
+        if (!isNaN(userId) && userId > 0) {
+          queryParams.push("userId=".concat(userId));
+        }
+      }
+      if (rest.username) {
+        queryParams.push("username=".concat(encodeURIComponent(rest.username)));
+      }
+      if (queryParams.length > 0) {
+        url += '?' + queryParams.join('&');
+      }
       return this.request({
-        url: '/tz/user/current',
-        method: 'GET'
+        url: url,
+        method: 'GET',
+        showLoading: showLoading
       });
     }
 
@@ -11837,27 +12181,149 @@ var ApiService = /*#__PURE__*/function () {
     key: "updateUser",
     value: function updateUser(userData) {
       return this.request({
-        url: '/tz/user/update',
+        url: '/api/user/update',
         method: 'POST',
         data: userData
       });
     }
 
+    // 更新用户资料（个人资料页面使用）
+  }, {
+    key: "updateUserProfile",
+    value: function updateUserProfile(userData) {
+      return this.request({
+        url: '/api/user/update',
+        method: 'POST',
+        data: userData
+      });
+    }
+
+    // 修改账号（格式：字母或下划线开头，6-20位，仅字母数字下划线减号）
+  }, {
+    key: "changeUsername",
+    value: function changeUsername(newUsername) {
+      return this.request({
+        url: '/api/user/change-username',
+        method: 'POST',
+        data: {
+          newUsername: newUsername
+        }
+      });
+    }
+
+    // 检查当前账号是否已设置密码（微信登录可能无密码）
+  }, {
+    key: "hasPassword",
+    value: function hasPassword() {
+      return this.request({
+        url: '/api/user/has-password',
+        method: 'GET'
+      });
+    }
+
+    // 验证当前账号登录密码（修改账号前）
+  }, {
+    key: "verifyPassword",
+    value: function verifyPassword(password) {
+      return this.request({
+        url: '/api/user/verify-password',
+        method: 'POST',
+        data: {
+          password: password
+        }
+      });
+    }
+
+    // 获取微信手机号（通过code换取）
+  }, {
+    key: "getPhoneNumber",
+    value: function getPhoneNumber(data) {
+      return this.request({
+        url: '/api/user/getPhoneNumber',
+        method: 'POST',
+        data: data
+      });
+    }
+
+    // 获取用户统计信息（关注、粉丝、动态、获赞）
+  }, {
+    key: "getUserStats",
+    value: function getUserStats() {
+      var userId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var url = '/api/user/stats';
+      if (userId) {
+        url += "?userId=".concat(userId);
+      }
+      return this.request({
+        url: url,
+        method: 'GET',
+        showLoading: showLoading
+      });
+    }
+
+    // 获取用户宠物列表
+  }, {
+    key: "getPetList",
+    value: function getPetList() {
+      var userId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var params = {
+        pageNo: 1,
+        pageSize: 100
+      };
+      if (userId) {
+        params.userId = userId;
+      }
+      return this.request({
+        url: '/api/pets/page',
+        method: 'GET',
+        data: params,
+        showLoading: showLoading
+      });
+    }
+
     // ==================== 商品相关接口 ====================
 
-    // 分页查询商品
+    // 分页查询商品（可选 storeId 筛选店铺商品；options.showLoading 控制 loading）
   }, {
     key: "getProductPage",
     value: function getProductPage() {
       var pageNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var pageSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      var _ref = options && (0, _typeof2.default)(options) === 'object' ? options : {},
+        storeId = _ref.storeId,
+        _ref$showLoading = _ref.showLoading,
+        showLoading = _ref$showLoading === void 0 ? true : _ref$showLoading,
+        extra = (0, _objectWithoutProperties2.default)(_ref, _excluded3);
+      var data = _objectSpread({
+        pageNo: pageNo,
+        pageSize: pageSize
+      }, extra);
+      if (storeId != null && storeId !== '') {
+        data.storeId = storeId;
+      }
       return this.request({
         url: '/api/product/page',
         method: 'GET',
+        data: data,
+        showLoading: showLoading
+      });
+    }
+
+    /** C 端：店铺基本信息（公开接口） */
+  }, {
+    key: "getStoreInfo",
+    value: function getStoreInfo(storeId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      return this.request({
+        url: '/api/store/info',
+        method: 'GET',
         data: {
-          pageNo: pageNo,
-          pageSize: pageSize
-        }
+          storeId: storeId
+        },
+        showLoading: showLoading
       });
     }
 
@@ -11866,12 +12332,16 @@ var ApiService = /*#__PURE__*/function () {
     key: "getHotProducts",
     value: function getHotProducts() {
       var limit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 10;
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this.request({
         url: '/api/product/hot',
         method: 'GET',
         data: {
           limit: limit
-        }
+        },
+        showLoading: showLoading,
+        timeout: 90000,
+        retryOnTimeout: true
       });
     }
 
@@ -11880,12 +12350,14 @@ var ApiService = /*#__PURE__*/function () {
     key: "getRecommendProducts",
     value: function getRecommendProducts() {
       var limit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 4;
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this.request({
         url: '/api/product/recommend',
         method: 'GET',
         data: {
           limit: limit
-        }
+        },
+        showLoading: showLoading
       });
     }
 
@@ -11956,11 +12428,8 @@ var ApiService = /*#__PURE__*/function () {
     key: "getCartCount",
     value: function getCartCount(userId) {
       return this.request({
-        url: '/api/cart/count',
-        method: 'GET',
-        data: {
-          userId: userId
-        }
+        url: "/api/cart/count?userId=".concat(userId),
+        method: 'GET'
       });
     }
 
@@ -11973,6 +12442,7 @@ var ApiService = /*#__PURE__*/function () {
       var pageNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
       var pageSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
       var userId = arguments.length > 2 ? arguments[2] : undefined;
+      var showLoading = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
       return this.request({
         url: '/api/pets/page',
         method: 'GET',
@@ -11980,7 +12450,8 @@ var ApiService = /*#__PURE__*/function () {
           pageNo: pageNo,
           pageSize: pageSize,
           userId: userId
-        }
+        },
+        showLoading: showLoading
       });
     }
 
@@ -12026,6 +12497,8 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
+    // 备注：疫苗记录/健康状况/就医记录（宠物医疗模块）已移除
+
     // ==================== 预约相关接口 ====================
 
     // 分页查询预约
@@ -12059,23 +12532,34 @@ var ApiService = /*#__PURE__*/function () {
   }, {
     key: "updateAppointmentStatus",
     value: function updateAppointmentStatus(id, status) {
-      console.log('调用更新预约状态API:', {
-        id: id,
-        status: status
-      });
+      // 移除更新预约状态API日志以提升性能
       return this.request({
         url: "/api/door-cleaning/".concat(id, "/status?status=").concat(status),
         method: 'PUT'
       });
     }
 
-    // 获取用户预约列表
+    // 获取用户预约列表（上门铲屎）
   }, {
     key: "getUserAppointments",
     value: function getUserAppointments(userId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this.request({
         url: "/api/door-cleaning/user/list/".concat(userId),
-        method: 'GET'
+        method: 'GET',
+        showLoading: showLoading
+      });
+    }
+
+    // 获取用户全部预约（统一接口：上门铲屎+医院+洗护，一次请求，避免三个接口都失败导致整页加载失败）
+  }, {
+    key: "getUserAppointmentsUnified",
+    value: function getUserAppointmentsUnified(userId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      return this.request({
+        url: "/api/user-appointments/list/".concat(userId),
+        method: 'GET',
+        showLoading: showLoading
       });
     }
 
@@ -12096,6 +12580,80 @@ var ApiService = /*#__PURE__*/function () {
       return this.request({
         url: "/api/door-cleaning/".concat(id),
         method: 'GET'
+      });
+    }
+
+    // 提交服务评价（对已完成订单的服务人员评分）
+  }, {
+    key: "submitAppointmentRating",
+    value: function submitAppointmentRating(data) {
+      return this.request({
+        url: '/api/appointment/rating',
+        method: 'POST',
+        data: data
+      });
+    }
+
+    // 检查是否已评价
+  }, {
+    key: "checkAppointmentRated",
+    value: function checkAppointmentRated(appointmentType, appointmentId) {
+      return this.request({
+        url: "/api/appointment/rating/check?appointmentType=".concat(encodeURIComponent(appointmentType), "&appointmentId=").concat(appointmentId),
+        method: 'GET',
+        showLoading: false
+      });
+    }
+  }, {
+    key: "getServiceMembers",
+    value: function getServiceMembers(serviceType) {
+      return this.request({
+        url: '/api/service-member/list',
+        method: 'GET',
+        data: {
+          serviceType: serviceType
+        }
+      });
+    }
+
+    // 自动分配服务人员
+  }, {
+    key: "autoAssignMember",
+    value: function autoAssignMember(serviceType, date, timeSlot) {
+      return this.request({
+        url: '/api/service-member/auto-assign',
+        method: 'POST',
+        data: {
+          serviceType: serviceType,
+          date: date,
+          timeSlot: timeSlot
+        }
+      });
+    }
+
+    // 获取服务人员工作量
+  }, {
+    key: "getMemberWorkload",
+    value: function getMemberWorkload(memberId, date) {
+      return this.request({
+        url: "/api/service-member/workload/".concat(memberId),
+        method: 'GET',
+        data: {
+          date: date
+        }
+      });
+    }
+
+    // 获取服务人员日程
+  }, {
+    key: "getMemberSchedule",
+    value: function getMemberSchedule(memberId, date) {
+      return this.request({
+        url: "/api/schedule/member/".concat(memberId),
+        method: 'GET',
+        data: {
+          date: date
+        }
       });
     }
 
@@ -12132,9 +12690,11 @@ var ApiService = /*#__PURE__*/function () {
   }, {
     key: "getUserHospitalAppointments",
     value: function getUserHospitalAppointments(userId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this.request({
         url: "/api/hospital-appointments/user/list/".concat(userId),
-        method: 'GET'
+        method: 'GET',
+        showLoading: showLoading
       });
     }
 
@@ -12181,8 +12741,8 @@ var ApiService = /*#__PURE__*/function () {
         url: '/api/grooming-appointments/page',
         method: 'GET',
         data: {
-          pageNo: pageNo,
-          pageSize: pageSize
+          current: pageNo,
+          size: pageSize
         }
       });
     }
@@ -12191,9 +12751,11 @@ var ApiService = /*#__PURE__*/function () {
   }, {
     key: "getUserGroomingAppointments",
     value: function getUserGroomingAppointments(userId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       return this.request({
         url: "/api/grooming-appointments/user/list/".concat(userId),
-        method: 'GET'
+        method: 'GET',
+        showLoading: showLoading
       });
     }
 
@@ -12217,71 +12779,96 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
-    // ==================== 宠物寄养预约相关 API ====================
-
-    // 创建宠物寄养预约
+    // 获取洗护服务展示图
   }, {
-    key: "createBoardingAppointment",
-    value: function createBoardingAppointment(appointmentData) {
+    key: "getGroomingBanner",
+    value: function getGroomingBanner() {
+      var position = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'grooming-page-top';
       return this.request({
-        url: '/api/boarding-appointments/create',
+        url: "/api/grooming-banners/position/".concat(position),
+        method: 'GET'
+      });
+    }
+
+    // 预约变更申请：用户提交变更（提交后预约状态为「变更待确认」，工作人员同意后生效）
+  }, {
+    key: "submitAppointmentChangeRequest",
+    value: function submitAppointmentChangeRequest(data) {
+      return this.request({
+        url: '/api/appointment-change-request/submit',
         method: 'POST',
-        data: appointmentData
+        data: data
       });
     }
 
-    // 获取宠物寄养预约列表
+    // 按预约查询待处理变更（用于展示「变更待确认」）
   }, {
-    key: "getBoardingAppointmentPage",
-    value: function getBoardingAppointmentPage() {
-      var pageNo = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-      var pageSize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
+    key: "getPendingChangeByAppointment",
+    value:
+    // 按预约查询待处理变更请求
+    function getPendingChangeByAppointment(appointmentType, appointmentId) {
+      var q = "appointmentType=".concat(encodeURIComponent(appointmentType || ''), "&appointmentId=").concat(appointmentId || '');
       return this.request({
-        url: '/api/boarding-appointments/page',
+        url: "/api/appointment-change-request/pending-by-appointment?".concat(q),
         method: 'GET',
-        data: {
-          pageNo: pageNo,
-          pageSize: pageSize
-        }
+        showLoading: false
       });
     }
 
-    // 获取用户宠物寄养预约列表
+    // 按预约查询待处理取消请求
   }, {
-    key: "getUserBoardingAppointments",
-    value: function getUserBoardingAppointments(userId) {
+    key: "hasAnyAppointmentChangeRequest",
+    value:
+    // 查询某预约是否已有任意变更记录（用于隐藏「申请变更」按钮）
+    function hasAnyAppointmentChangeRequest(appointmentType, appointmentId) {
+      var q = "appointmentType=".concat(encodeURIComponent(appointmentType || ''), "&appointmentId=").concat(appointmentId || '');
       return this.request({
-        url: "/api/boarding-appointments/user/list/".concat(userId),
-        method: 'GET'
+        url: "/api/appointment-change-request/has-any?".concat(q),
+        method: 'GET',
+        showLoading: false
       });
     }
 
-    // 更新宠物寄养预约状态
+    // 用户取消变更申请（仅工作人员未确认时可取消）
   }, {
-    key: "updateBoardingAppointmentStatus",
-    value: function updateBoardingAppointmentStatus(id, status) {
+    key: "cancelAppointmentChangeRequest",
+    value: function cancelAppointmentChangeRequest(data) {
       return this.request({
-        url: "/api/boarding-appointments/".concat(id, "/status?status=").concat(status),
-        method: 'PUT'
+        url: '/api/appointment-change-request/cancel',
+        method: 'POST',
+        data: data
       });
     }
 
-    // 获取宠物寄养预约详情
+    // 取消预约申请：已确认订单填写原因提交，工作人员同意后取消（含 0-2 小时违约金）
   }, {
-    key: "getBoardingAppointmentDetail",
-    value: function getBoardingAppointmentDetail(id) {
+    key: "submitCancellationRequest",
+    value: function submitCancellationRequest(data) {
       return this.request({
-        url: "/api/boarding-appointments/".concat(id),
-        method: 'GET'
+        url: '/api/appointment-cancellation-request/submit',
+        method: 'POST',
+        data: data
+      });
+    }
+  }, {
+    key: "getPendingCancellationByAppointment",
+    value: function getPendingCancellationByAppointment(appointmentType, appointmentId) {
+      var q = "appointmentType=".concat(encodeURIComponent(appointmentType || ''), "&appointmentId=").concat(appointmentId || '');
+      return this.request({
+        url: "/api/appointment-cancellation-request/pending-by-appointment?".concat(q),
+        method: 'GET',
+        showLoading: false
       });
     }
 
+    // 工作人员：获取我的工单列表（与管理员后台规则一致，仅自己的工单）
+  }, {
+    key: "createAdoptionAppointment",
+    value:
     // ==================== 宠物领养预约相关 API ====================
 
     // 创建宠物领养预约
-  }, {
-    key: "createAdoptionAppointment",
-    value: function createAdoptionAppointment(appointmentData) {
+    function createAdoptionAppointment(appointmentData) {
       return this.request({
         url: '/api/adoption-appointments/create',
         method: 'POST',
@@ -12357,28 +12944,38 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
-    // ==================== 订单相关接口 ====================
-
-    // 获取订单列表
+    // 获取领养服务背景图
   }, {
-    key: "getOrderList",
-    value: function getOrderList(status) {
+    key: "getAdoptionBackground",
+    value: function getAdoptionBackground() {
       return this.request({
-        url: '/api/orders/list',
-        method: 'GET',
-        data: {
-          status: status
-        }
+        url: '/api/adoption-background/position/adoption-page-background',
+        method: 'GET'
       });
     }
+
+    // ==================== 订单相关接口 ====================
+
+    // 获取订单列表（已合并到下面的方法，保留此方法以兼容旧代码）
+    // getOrderList(status) {
+    //   return this.request({
+    //     url: '/api/orders/list',
+    //     method: 'GET',
+    //     data: { status }
+    //   })
+    // }
 
     // 获取订单详情
   }, {
     key: "getOrderDetail",
-    value: function getOrderDetail(orderId) {
+    value:
+    // 获取订单详情
+    function getOrderDetail(orderId) {
       return this.request({
         url: "/api/orders/".concat(orderId),
-        method: 'GET'
+        method: 'GET',
+        timeout: 90000,
+        retryOnTimeout: true
       });
     }
 
@@ -12398,20 +12995,52 @@ var ApiService = /*#__PURE__*/function () {
     key: "updateOrderStatus",
     value: function updateOrderStatus(orderId, status) {
       return this.request({
-        url: "/api/orders/".concat(orderId, "/status"),
-        method: 'PUT',
-        data: {
-          status: status
-        }
+        url: "/api/orders/".concat(orderId, "/status?status=").concat(status),
+        method: 'PUT'
       });
     }
 
+    // 删除订单（软删除：服务端设置为 deleted，跨设备生效）
+  }, {
+    key: "deleteOrder",
+    value: function deleteOrder(orderId) {
+      return this.request({
+        url: "/api/orders/".concat(orderId, "/status?status=deleted"),
+        method: 'PUT'
+      });
+    }
+
+    // 获取订单物流信息
+  }, {
+    key: "getOrderLogistics",
+    value: function getOrderLogistics(orderId) {
+      return this.request({
+        url: "/api/orders/".concat(orderId, "/logistics"),
+        method: 'GET',
+        timeout: 90000,
+        retryOnTimeout: true
+      });
+    }
+
+    // 更新订单物流信息（管理员用）
+  }, {
+    key: "updateOrderLogistics",
+    value: function updateOrderLogistics(orderId, logisticsData) {
+      return this.request({
+        url: "/api/orders/".concat(orderId, "/logistics"),
+        method: 'PUT',
+        data: logisticsData
+      });
+    }
+
+    // 申请退款
+  }, {
+    key: "getGroomingAppointments",
+    value:
     // ==================== 美容服务预约订单 ====================
 
     // 获取美容服务预约订单列表
-  }, {
-    key: "getGroomingAppointments",
-    value: function getGroomingAppointments(status) {
+    function getGroomingAppointments(status) {
       return this.request({
         url: '/api/orders/grooming-appointments',
         method: 'GET',
@@ -12443,9 +13072,137 @@ var ApiService = /*#__PURE__*/function () {
       });
     }
 
+    // ==================== 工作人员相关接口 ====================
+
+    // 工作人员登录（使用 Admin 表，username + password）
+  }, {
+    key: "staffLogin",
+    value: function staffLogin(username, password) {
+      return this.request({
+        url: '/api/admin/login',
+        method: 'POST',
+        data: {
+          username: username,
+          password: password
+        },
+        showLoading: true
+      });
+    }
+
+    // 核销验证（使用工作人员 token，用于小程序端工作人员核销）
+  }, {
+    key: "verifyCodeForStaff",
+    value: function verifyCodeForStaff(verifyCode) {
+      var staffToken = uni.getStorageSync('staffToken');
+      return this.request({
+        url: '/api/verify/verify-code',
+        method: 'POST',
+        data: {
+          verifyCode: verifyCode
+        },
+        authToken: staffToken
+      });
+    }
+
+    // 工作人员：同意预约变更请求
+  }, {
+    key: "approveChangeRequest",
+    value: function approveChangeRequest(changeRequestId) {
+      var staffToken = uni.getStorageSync('staffToken');
+      return this.request({
+        url: "/api/appointment-change-request/".concat(changeRequestId, "/approve"),
+        method: 'POST',
+        authToken: staffToken
+      });
+    }
+
+    // 工作人员：拒绝预约变更请求
+  }, {
+    key: "rejectChangeRequest",
+    value: function rejectChangeRequest(changeRequestId) {
+      var staffToken = uni.getStorageSync('staffToken');
+      return this.request({
+        url: "/api/appointment-change-request/".concat(changeRequestId, "/reject"),
+        method: 'POST',
+        authToken: staffToken
+      });
+    }
+
+    // 工作人员：同意取消预约请求
+  }, {
+    key: "approveCancellationRequest",
+    value: function approveCancellationRequest(cancellationRequestId) {
+      var staffToken = uni.getStorageSync('staffToken');
+      return this.request({
+        url: "/api/appointment-cancellation-request/".concat(cancellationRequestId, "/approve"),
+        method: 'POST',
+        authToken: staffToken
+      });
+    }
+
+    // 工作人员：拒绝取消预约请求
+  }, {
+    key: "rejectCancellationRequest",
+    value: function rejectCancellationRequest(cancellationRequestId, rejectReason) {
+      var staffToken = uni.getStorageSync('staffToken');
+      return this.request({
+        url: "/api/appointment-cancellation-request/".concat(cancellationRequestId, "/reject"),
+        method: 'POST',
+        data: {
+          rejectReason: rejectReason
+        },
+        authToken: staffToken
+      });
+    }
+  }, {
+    key: "getStaffWorkOrders",
+    value: function getStaffWorkOrders() {
+      var staffToken = uni.getStorageSync('staffToken');
+      return this.request({
+        url: '/api/admin/self/work-orders',
+        method: 'GET',
+        authToken: staffToken,
+        showLoading: false
+      });
+    }
+
+    // 工作人员：获取我的真实评价列表（来自后端评价表）
+  }, {
+    key: "getStaffMyReviews",
+    value: function getStaffMyReviews() {
+      var staffToken = uni.getStorageSync('staffToken');
+      return this.request({
+        url: '/api/admin/self/reviews',
+        method: 'GET',
+        authToken: staffToken,
+        showLoading: false
+      });
+    }
+
+    // 工作人员：更新预约状态（确认/完成/拒绝；拒绝时可传 rejectReason，用户端会展示）
+  }, {
+    key: "updateAppointmentStatusForStaff",
+    value: function updateAppointmentStatusForStaff(serviceType, id, status, rejectReason) {
+      var staffToken = uni.getStorageSync('staffToken');
+      var data = {
+        id: id,
+        serviceType: serviceType,
+        status: status
+      };
+      if (rejectReason != null && String(rejectReason).trim() !== '') {
+        data.rejectReason = String(rejectReason).trim();
+      }
+      return this.request({
+        url: '/api/admin/self/work-orders/status',
+        method: 'POST',
+        data: data,
+        authToken: staffToken
+      });
+    }
+
     // ==================== 核销相关接口 ====================
 
-    // 核销验证
+    // 核销验证（通用，使用当前 token）
   }, {
     key: "verifyCode",
     value: function verifyCode(_verifyCode) {
@@ -12467,6 +13224,1055 @@ var ApiService = /*#__PURE__*/function () {
         method: 'GET'
       });
     }
+
+    // ==================== 服务门店相关接口 ====================
+
+    // 获取所有营业中的门店
+  }, {
+    key: "getAllStores",
+    value: function getAllStores() {
+      return this.request({
+        url: '/api/stores/all',
+        method: 'GET'
+      });
+    }
+
+    // 根据服务类型获取门店列表
+  }, {
+    key: "getStoresByService",
+    value: function getStoresByService(serviceType) {
+      return this.request({
+        url: "/api/stores/by-service/".concat(serviceType),
+        method: 'GET'
+      });
+    }
+
+    // 获取默认门店
+  }, {
+    key: "getDefaultStore",
+    value: function getDefaultStore() {
+      return this.request({
+        url: '/api/stores/default',
+        method: 'GET'
+      });
+    }
+
+    // ==================== 地区选择相关接口 ====================
+
+    // 获取所有省份
+  }, {
+    key: "getProvinces",
+    value: function getProvinces() {
+      return this.request({
+        url: '/api/regions/provinces',
+        method: 'GET'
+      });
+    }
+
+    // 根据省份代码获取城市
+  }, {
+    key: "getCities",
+    value: function getCities(parentCode) {
+      return this.request({
+        url: '/api/regions/cities',
+        method: 'GET',
+        data: {
+          parentCode: parentCode
+        }
+      });
+    }
+
+    // 根据城市代码获取区县
+  }, {
+    key: "getDistricts",
+    value: function getDistricts(parentCode) {
+      return this.request({
+        url: '/api/regions/districts',
+        method: 'GET',
+        data: {
+          parentCode: parentCode
+        }
+      });
+    }
+
+    // 根据父级代码获取子级地区
+  }, {
+    key: "getChildren",
+    value: function getChildren(parentCode) {
+      return this.request({
+        url: '/api/regions/children',
+        method: 'GET',
+        data: {
+          parentCode: parentCode
+        }
+      });
+    }
+
+    // 根据代码获取地区信息
+  }, {
+    key: "getRegionByCode",
+    value: function getRegionByCode(code) {
+      return this.request({
+        url: "/api/regions/".concat(code),
+        method: 'GET'
+      });
+    }
+
+    // 获取订单列表（extra.timeout 可加长超时，避免弱网/慢接口被误判为「无订单」）
+  }, {
+    key: "getOrderList",
+    value: function getOrderList() {
+      var status = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var userId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      var extra = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+      var url = '/api/orders/list';
+      var params = [];
+
+      // 如果传入的是字符串且是状态值，则作为status处理
+      if (status && typeof status === 'string' && ['all', 'pending', 'paid', 'shipped', 'completed', 'cancelled'].includes(status)) {
+        if (status !== 'all') {
+          params.push("status=".concat(status));
+        }
+      } else if (status && typeof status === 'number') {
+        // 如果传入的是数字，可能是userId（兼容旧代码）
+        params.push("userId=".concat(status));
+      }
+
+      // 如果明确传入了userId，使用userId
+      if (userId) {
+        // 移除可能存在的userId参数，使用新的userId
+        var filteredParams = params.filter(function (p) {
+          return !p.startsWith('userId=');
+        });
+        filteredParams.push("userId=".concat(userId));
+        params.length = 0;
+        params.push.apply(params, (0, _toConsumableArray2.default)(filteredParams));
+      }
+      if (params.length > 0) {
+        url += '?' + params.join('&');
+      }
+      return this.request({
+        url: url,
+        method: 'GET',
+        showLoading: showLoading,
+        timeout: extra.timeout != null ? extra.timeout : 60000,
+        header: {
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+  }, {
+    key: "requestRefund",
+    value: function requestRefund(orderId, refundData) {
+      return this.request({
+        url: "/api/orders/".concat(orderId, "/refund"),
+        method: 'POST',
+        data: refundData
+      });
+    }
+
+    // 取消退款申请（用户侧）
+  }, {
+    key: "cancelRefund",
+    value: function cancelRefund(orderId) {
+      return this.request({
+        url: "/api/orders/".concat(orderId, "/refund/cancel"),
+        method: 'PUT'
+      });
+    }
+
+    // ==================== 签到任务相关接口 ====================
+
+    // 获取签到数据（余额、连续签到天数、签到日历）
+  }, {
+    key: "getSignInData",
+    value: function getSignInData() {
+      return this.request({
+        url: '/api/signin/data',
+        method: 'GET'
+      });
+    }
+
+    // 执行签到
+  }, {
+    key: "doSignIn",
+    value: function doSignIn() {
+      return this.request({
+        url: '/api/signin/do',
+        method: 'POST'
+      });
+    }
+
+    // 获取每日任务列表
+  }, {
+    key: "getDailyTasks",
+    value: function getDailyTasks() {
+      return this.request({
+        url: '/api/tasks/daily',
+        method: 'GET'
+      });
+    }
+
+    // 领取任务奖励
+  }, {
+    key: "claimTaskReward",
+    value: function claimTaskReward(taskId) {
+      return this.request({
+        url: '/api/tasks/claim',
+        method: 'POST',
+        data: {
+          taskId: taskId
+        }
+      });
+    }
+
+    // 获取任务进度
+  }, {
+    key: "getTaskProgress",
+    value: function getTaskProgress() {
+      return this.request({
+        url: '/api/tasks/progress',
+        method: 'GET'
+      });
+    }
+
+    // ==================== 积分商城相关接口 ====================
+
+    // 获取积分商城产品列表
+  }, {
+    key: "getPointsMallProducts",
+    value: function getPointsMallProducts() {
+      var extra = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/points/products',
+        method: 'GET',
+        showLoading: false,
+        // 由页面自己控制loading
+        timeout: extra.timeout
+      });
+    }
+
+    // 兑换积分商品
+  }, {
+    key: "exchangeProduct",
+    value: function exchangeProduct(data) {
+      // 兼容旧版本：如果传入的是数字，转换为对象
+      if (typeof data === 'number' || typeof data === 'string' && /^\d+$/.test(data)) {
+        data = {
+          productId: data
+        };
+      }
+      return this.request({
+        url: '/api/points/exchange',
+        method: 'POST',
+        data: data
+      });
+    }
+
+    // 获取兑换记录（可选 userId：与订单列表一致；extra.timeout 可选）
+  }, {
+    key: "getExchangeHistory",
+    value: function getExchangeHistory() {
+      var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 20;
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      var userId = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+      var extra = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+      var url = "/api/points/exchange/history?page=".concat(page, "&size=").concat(size);
+      if (userId != null && userId !== '' && userId !== 'undefined' && userId !== 'null') {
+        url += "&userId=".concat(userId);
+      }
+      return this.request({
+        url: url,
+        method: 'GET',
+        showLoading: showLoading,
+        timeout: extra.timeout
+      });
+    }
+
+    // 获取积分记录
+  }, {
+    key: "getPointsRecords",
+    value: function getPointsRecords() {
+      var userId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'earn';
+      var url = '/api/user/points/records';
+      // GET 请求参数拼接到 URL
+      var params = [];
+      if (type) {
+        params.push("type=".concat(type));
+      }
+      if (userId) {
+        params.push("userId=".concat(userId));
+      }
+      if (params.length > 0) {
+        url += '?' + params.join('&');
+      }
+      return this.request({
+        url: url,
+        method: 'GET'
+      });
+    }
+
+    // 获取积分统计
+  }, {
+    key: "getPointsStatistics",
+    value: function getPointsStatistics() {
+      var userId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      var url = '/api/user/points/statistics';
+      // GET 请求参数拼接到 URL
+      if (userId) {
+        url += "?userId=".concat(userId);
+      }
+      return this.request({
+        url: url,
+        method: 'GET'
+      });
+    }
+
+    // ==================== 社区相关接口 ====================
+
+    // 获取帖子列表
+  }, {
+    key: "getPostList",
+    value: function getPostList() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/community/posts',
+        method: 'GET',
+        data: params
+      });
+    }
+
+    // 获取帖子详情（默认不弹全局 loading，由详情页自行展示，避免与 uni.showLoading 叠加导致难关闭）
+  }, {
+    key: "getPostDetail",
+    value: function getPostDetail(postId) {
+      var userId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      var params = userId ? {
+        userId: userId
+      } : {};
+      return this.request({
+        url: "/api/community/posts/".concat(postId),
+        method: 'GET',
+        data: params,
+        showLoading: showLoading
+      });
+    }
+
+    // 发布帖子
+  }, {
+    key: "publishPost",
+    value: function publishPost(postData) {
+      return this.request({
+        url: '/api/community/posts',
+        method: 'POST',
+        data: postData,
+        // 发布流程可能包含服务端审核/转码等耗时，避免默认 30s 误判超时
+        timeout: 120000
+      });
+    }
+
+    // ==================== 标签相关接口 ====================
+
+    // 获取热门标签
+  }, {
+    key: "getHotTags",
+    value: function getHotTags() {
+      var limit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 10;
+      return this.request({
+        url: "/api/tag/hot?limit=".concat(limit),
+        method: 'GET',
+        showLoading: false // 这个接口不需要loading，因为不是关键操作
+      });
+    }
+
+    // 根据标签查询帖子
+  }, {
+    key: "getPostsByTag",
+    value: function getPostsByTag(tag) {
+      var page = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+      var size = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 20;
+      return this.request({
+        url: "/api/tag/posts?tag=".concat(encodeURIComponent(tag), "&page=").concat(page, "&size=").concat(size),
+        method: 'GET',
+        showLoading: false
+      });
+    }
+
+    // 获取推荐帖子
+  }, {
+    key: "getRecommendPosts",
+    value: function getRecommendPosts() {
+      var limit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 10;
+      return this.request({
+        url: "/api/tag/recommend?limit=".concat(limit),
+        method: 'GET',
+        showLoading: false
+      });
+    }
+
+    // 更新帖子
+  }, {
+    key: "updatePost",
+    value: function updatePost(postId, postData, userId) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId),
+        method: 'PUT',
+        data: _objectSpread(_objectSpread({}, postData), {}, {
+          userId: userId
+        })
+      });
+    }
+
+    // 删除帖子
+  }, {
+    key: "deletePost",
+    value: function deletePost(postId, userId) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 点赞帖子
+  }, {
+    key: "likePost",
+    value: function likePost(postId, userId) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "/like?userId=").concat(userId),
+        method: 'POST'
+      });
+    }
+
+    // 取消点赞帖子
+  }, {
+    key: "unlikePost",
+    value: function unlikePost(postId, userId) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "/like?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 获取热门帖子
+  }, {
+    key: "getHotPosts",
+    value: function getHotPosts() {
+      var limit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 10;
+      return this.request({
+        url: '/api/community/posts/hot',
+        method: 'GET',
+        data: {
+          limit: limit
+        }
+      });
+    }
+
+    // 视频推荐流（类抖音）：登录用户走个性化，未登录走热度分页
+  }, {
+    key: "getVideoFeed",
+    value: function getVideoFeed() {
+      var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+      var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
+      var userId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      var data = {
+        page: page,
+        size: size
+      };
+      if (userId !== null && userId !== undefined && userId !== '') {
+        data.userId = userId;
+      }
+      return this.request({
+        url: '/api/community/posts/video-feed',
+        method: 'GET',
+        data: data,
+        showLoading: false
+      });
+    }
+
+    // 获取关注用户的帖子
+  }, {
+    key: "getFollowingPosts",
+    value: function getFollowingPosts(userId) {
+      var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      if (!userId || userId === null || userId === undefined) {
+        return Promise.reject(new Error('用户ID不能为空'));
+      }
+      return this.request({
+        url: '/api/community/posts/following',
+        method: 'GET',
+        data: _objectSpread({
+          userId: userId
+        }, params)
+      });
+    }
+
+    // 获取帖子评论列表（showLoading 可选，列表页/详情页批量请求时传 false 避免长时间 loading）
+  }, {
+    key: "getPostComments",
+    value: function getPostComments(postId, userId) {
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      var url = "/api/community/posts/".concat(postId, "/comments");
+      if (userId) {
+        url += "?userId=".concat(userId);
+      }
+      return this.request({
+        url: url,
+        method: 'GET',
+        showLoading: !!showLoading
+      });
+    }
+
+    // 获取评论的回复列表（showLoading 可选，详情页按评论逐条请求时传 false 避免长时间 loading）
+  }, {
+    key: "getCommentReplies",
+    value: function getCommentReplies(commentId, userId) {
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      var url = "/api/community/comments/".concat(commentId, "/replies");
+      if (userId) {
+        url += "?userId=".concat(userId);
+      }
+      return this.request({
+        url: url,
+        method: 'GET',
+        showLoading: !!showLoading
+      });
+    }
+
+    // 获取@提及用户列表（抖音式：输入@后弹出选择）
+  }, {
+    key: "getMentionUsers",
+    value: function getMentionUsers(postId, userId) {
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "/mention-users"),
+        method: 'GET',
+        data: {
+          userId: userId
+        },
+        showLoading: !!showLoading
+      });
+    }
+
+    // 添加评论
+  }, {
+    key: "addComment",
+    value: function addComment(postId, commentData) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "/comments"),
+        method: 'POST',
+        data: commentData
+      });
+    }
+
+    // 删除评论
+  }, {
+    key: "deleteComment",
+    value: function deleteComment(commentId, userId) {
+      return this.request({
+        url: "/api/community/comments/".concat(commentId, "?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 点赞评论
+  }, {
+    key: "likeComment",
+    value: function likeComment(commentId, userId) {
+      return this.request({
+        url: "/api/community/comments/".concat(commentId, "/like?userId=").concat(userId),
+        method: 'POST'
+      });
+    }
+
+    // 取消点赞评论
+  }, {
+    key: "unlikeComment",
+    value: function unlikeComment(commentId, userId) {
+      return this.request({
+        url: "/api/community/comments/".concat(commentId, "/like?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 关注用户
+  }, {
+    key: "followUser",
+    value: function followUser(followingId, followerId) {
+      return this.request({
+        url: "/api/community/follow?followingId=".concat(followingId, "&followerId=").concat(followerId),
+        method: 'POST'
+      });
+    }
+
+    // 取消关注用户
+  }, {
+    key: "unfollowUser",
+    value: function unfollowUser(followingId, followerId) {
+      return this.request({
+        url: "/api/community/follow?followingId=".concat(followingId, "&followerId=").concat(followerId),
+        method: 'DELETE'
+      });
+    }
+
+    // 获取用户关注列表
+  }, {
+    key: "getFollowingList",
+    value: function getFollowingList(userId) {
+      return this.request({
+        url: "/api/community/users/".concat(userId, "/following"),
+        method: 'GET'
+      });
+    }
+
+    // 获取用户粉丝列表
+  }, {
+    key: "getFollowerList",
+    value: function getFollowerList(userId) {
+      return this.request({
+        url: "/api/community/users/".concat(userId, "/followers"),
+        method: 'GET'
+      });
+    }
+
+    // 检查关注状态
+  }, {
+    key: "checkFollowStatus",
+    value: function checkFollowStatus(followerId, followingId) {
+      return this.request({
+        url: '/api/community/follow/status',
+        method: 'GET',
+        data: {
+          followerId: followerId,
+          followingId: followingId
+        }
+      });
+    }
+
+    // 获取用户关注的用户列表
+  }, {
+    key: "getFollowedUsers",
+    value: function getFollowedUsers(userId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      if (!userId || userId === null || userId === undefined) {
+        return Promise.reject(new Error('用户ID不能为空'));
+      }
+      return this.request({
+        url: "/api/community/users/".concat(userId, "/followed"),
+        method: 'GET',
+        showLoading: showLoading
+      });
+    }
+
+    // 获取推荐用户列表（社区关注页）
+  }, {
+    key: "getRecommendedUsers",
+    value:
+    // 获取推荐用户（params.userId 必填，否则后端会报 NumberFormatException）
+    function getRecommendedUsers() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var _params$showLoading3 = params.showLoading,
+        showLoading = _params$showLoading3 === void 0 ? true : _params$showLoading3,
+        rest = (0, _objectWithoutProperties2.default)(params, _excluded4);
+      var data = {
+        limit: rest.limit || 10
+      };
+      if (rest.userId != null && rest.userId !== '') data.userId = rest.userId;
+      return this.request({
+        url: '/api/messages/recommended-users',
+        method: 'GET',
+        data: data,
+        showLoading: showLoading
+      });
+    }
+  }, {
+    key: "getPostFeed",
+    value:
+    // 获取帖子Feed（置顶+热门+最新+关注区+发现区）
+    function getPostFeed() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/community/posts/feed',
+        method: 'GET',
+        data: params
+      });
+    }
+
+    /**
+     * 发现页规则型推荐（小红书风格）
+     * 服务端按 score = 兴趣匹配(+5) + 点赞×2 + 收藏×3 + 评论×4 + 浏览×0.2 + 新帖24h(+20) 排序
+     */
+  }, {
+    key: "getDiscoverRecommend",
+    value: function getDiscoverRecommend() {
+      var _params$page, _params$size;
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var data = {
+        page: (_params$page = params.page) !== null && _params$page !== void 0 ? _params$page : 1,
+        size: (_params$size = params.size) !== null && _params$size !== void 0 ? _params$size : 20
+      };
+      if (params.userId != null && params.userId !== '') {
+        data.userId = params.userId;
+      }
+      if (params.tag != null && params.tag !== '') {
+        data.tag = params.tag;
+      }
+      return this.request({
+        url: '/api/community/posts/recommend',
+        method: 'GET',
+        data: data
+      });
+    }
+
+    // 获取发现页标签
+  }, {
+    key: "getDiscoverTags",
+    value: function getDiscoverTags() {
+      return this.request({
+        url: '/api/tag/all',
+        method: 'GET',
+        showLoading: false
+      });
+    }
+
+    // 协同过滤推荐（预留接口）
+  }, {
+    key: "getCollaborativeFiltering",
+    value: function getCollaborativeFiltering(userId) {
+      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 20;
+      return this.request({
+        url: '/api/recommendation/collaborative-filtering',
+        method: 'GET',
+        data: {
+          userId: userId,
+          limit: limit
+        }
+      });
+    }
+
+    // 获取用户兴趣标签
+  }, {
+    key: "getUserInterests",
+    value: function getUserInterests(userId) {
+      return this.request({
+        url: '/api/recommendation/user-interests',
+        method: 'GET',
+        data: {
+          userId: userId
+        }
+      });
+    }
+
+    // 获取最新帖子（分页）
+  }, {
+    key: "getLatestPosts",
+    value: function getLatestPosts() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/community/posts',
+        method: 'GET',
+        data: {
+          page: params.page || 1,
+          size: params.size || 10,
+          category: params.category || null
+        }
+      });
+    }
+
+    // 首页搜索 - 商品和服务
+  }, {
+    key: "searchHome",
+    value: function searchHome(keyword) {
+      return this.request({
+        url: '/api/search/home',
+        method: 'GET',
+        data: {
+          keyword: keyword
+        }
+      });
+    }
+
+    // 社区搜索 - 帖子
+  }, {
+    key: "searchCommunity",
+    value: function searchCommunity(keyword) {
+      return this.request({
+        url: '/api/search/community',
+        method: 'GET',
+        data: {
+          keyword: keyword
+        }
+      });
+    }
+
+    // 获取热搜关键词
+  }, {
+    key: "getHotKeywords",
+    value: function getHotKeywords() {
+      return this.request({
+        url: '/api/search/hot',
+        method: 'GET'
+      });
+    }
+
+    // 收藏帖子
+  }, {
+    key: "collectPost",
+    value: function collectPost(postId, userId) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "/collect?userId=").concat(userId),
+        method: 'POST'
+      });
+    }
+
+    // 取消收藏帖子
+  }, {
+    key: "uncollectPost",
+    value: function uncollectPost(postId, userId) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "/collect?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 检查收藏状态
+  }, {
+    key: "checkCollectStatus",
+    value: function checkCollectStatus(postId, userId) {
+      return this.request({
+        url: "/api/community/posts/".concat(postId, "/collect/status?userId=").concat(userId),
+        method: 'GET'
+      });
+    }
+
+    // 获取收藏的帖子列表
+  }, {
+    key: "getCollectedPosts",
+    value: function getCollectedPosts() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var _params$showLoading4 = params.showLoading,
+        showLoading = _params$showLoading4 === void 0 ? true : _params$showLoading4,
+        rest = (0, _objectWithoutProperties2.default)(params, _excluded5);
+      return this.request({
+        url: '/api/community/posts/collected',
+        method: 'GET',
+        data: {
+          userId: rest.userId,
+          page: rest.page || 1,
+          size: rest.size || 10,
+          type: rest.type || null
+        },
+        showLoading: showLoading
+      });
+    }
+
+    // ========== 商品收藏相关接口 ==========
+
+    // 收藏商品
+  }, {
+    key: "collectProduct",
+    value: function collectProduct(productId, userId) {
+      return this.request({
+        url: "/api/product/".concat(productId, "/collect?userId=").concat(userId),
+        method: 'POST'
+      });
+    }
+
+    // 取消收藏商品
+  }, {
+    key: "uncollectProduct",
+    value: function uncollectProduct(productId, userId) {
+      return this.request({
+        url: "/api/product/".concat(productId, "/collect?userId=").concat(userId),
+        method: 'DELETE'
+      });
+    }
+
+    // 检查商品收藏状态
+  }, {
+    key: "checkProductCollectStatus",
+    value: function checkProductCollectStatus(productId, userId) {
+      return this.request({
+        url: "/api/product/".concat(productId, "/collect/status?userId=").concat(userId),
+        method: 'GET'
+      });
+    }
+
+    // 获取收藏的商品列表
+  }, {
+    key: "getCollectedProducts",
+    value: function getCollectedProducts() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var _params$showLoading5 = params.showLoading,
+        showLoading = _params$showLoading5 === void 0 ? true : _params$showLoading5,
+        rest = (0, _objectWithoutProperties2.default)(params, _excluded6);
+      return this.request({
+        url: '/api/product/collected',
+        method: 'GET',
+        data: {
+          userId: rest.userId,
+          page: rest.page || 1,
+          size: rest.size || 10
+        },
+        showLoading: showLoading
+      });
+    }
+
+    // ========== 私信相关接口 ==========
+
+    // 获取私信列表
+  }, {
+    key: "getPrivateMessages",
+    value: function getPrivateMessages() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var queryParams = {
+        userId: params.userId,
+        page: params.page || 1,
+        size: params.size || 20
+      };
+
+      // 如果提供了conversationId，使用它（用于客服消息）
+      if (params.conversationId) {
+        queryParams.conversationId = params.conversationId;
+      } else if (params.targetUserId) {
+        queryParams.targetUserId = params.targetUserId;
+      }
+      return this.request({
+        url: '/api/messages/private',
+        method: 'GET',
+        data: queryParams,
+        showLoading: params.showLoading !== false // 默认显示loading，轮询时可传false
+      });
+    }
+
+    // 发送私信
+  }, {
+    key: "sendPrivateMessage",
+    value: function sendPrivateMessage(data) {
+      return this.request({
+        url: '/api/messages/private',
+        method: 'POST',
+        data: {
+          senderId: data.senderId,
+          receiverId: data.receiverId,
+          content: data.content,
+          conversationId: data.conversationId // 支持传递会话ID（用于客服会话）
+        }
+      });
+    }
+
+    // 发送客服消息
+  }, {
+    key: "sendServiceMessage",
+    value: function sendServiceMessage(data) {
+      return this.request({
+        url: '/api/messages/service',
+        method: 'POST',
+        data: {
+          userId: data.userId,
+          storeId: data.storeId,
+          content: data.content
+        }
+      });
+    }
+
+    // 获取会话列表
+  }, {
+    key: "getConversationList",
+    value: function getConversationList(userId) {
+      var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      return this.request({
+        url: '/api/messages/conversations',
+        method: 'GET',
+        data: {
+          userId: userId
+        },
+        showLoading: showLoading
+      });
+    }
+
+    /** 服务端持久化隐藏会话（清缓存后不再出现），conversationId 与列表一致，医师会话为 doctor_{id} */
+  }, {
+    key: "hideConversation",
+    value: function hideConversation(userId, conversationId) {
+      var showLoading = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      return this.request({
+        url: '/api/messages/conversations/hide',
+        method: 'POST',
+        data: {
+          userId: userId,
+          conversationId: conversationId
+        },
+        showLoading: showLoading
+      });
+    }
+
+    // 标记消息为已读
+  }, {
+    key: "markMessagesAsRead",
+    value: function markMessagesAsRead(data) {
+      return this.request({
+        url: '/api/messages/read',
+        method: 'POST',
+        data: {
+          userId: data.userId,
+          conversationId: data.conversationId
+        }
+      });
+    }
+
+    // ========== 互动消息相关接口 ==========
+
+    // 获取点赞和收藏列表
+  }, {
+    key: "getLikesAndCollections",
+    value: function getLikesAndCollections() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/messages/likes',
+        method: 'GET',
+        data: {
+          userId: params.userId,
+          page: params.page || 1,
+          size: params.size || 20
+        }
+      });
+    }
+
+    // 获取新增关注列表
+  }, {
+    key: "getNewFollows",
+    value: function getNewFollows() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/messages/follows',
+        method: 'GET',
+        data: {
+          userId: params.userId,
+          page: params.page || 1,
+          size: params.size || 20
+        }
+      });
+    }
+
+    // 获取评论和@列表
+  }, {
+    key: "getCommentsAndMentions",
+    value: function getCommentsAndMentions() {
+      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return this.request({
+        url: '/api/messages/comments',
+        method: 'GET',
+        data: {
+          userId: params.userId,
+          page: params.page || 1,
+          size: params.size || 20
+        }
+      });
+    }
   }]);
   return ApiService;
 }(); // 创建API实例
@@ -12475,7 +14281,74 @@ exports.api = api;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
-/* 45 */
+
+/***/ 39:
+/*!************************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/objectWithoutProperties.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var objectWithoutPropertiesLoose = __webpack_require__(/*! ./objectWithoutPropertiesLoose.js */ 40);
+function _objectWithoutProperties(source, excluded) {
+  if (source == null) return {};
+  var target = objectWithoutPropertiesLoose(source, excluded);
+  var key, i;
+  if (Object.getOwnPropertySymbols) {
+    var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
+    for (i = 0; i < sourceSymbolKeys.length; i++) {
+      key = sourceSymbolKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+      target[key] = source[key];
+    }
+  }
+  return target;
+}
+module.exports = _objectWithoutProperties, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 4:
+/*!**********************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/interopRequireDefault.js ***!
+  \**********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {
+    "default": obj
+  };
+}
+module.exports = _interopRequireDefault, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 40:
+/*!*****************************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js ***!
+  \*****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
+  }
+  return target;
+}
+module.exports = _objectWithoutPropertiesLoose, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 41:
 /*!**********************************************************************!*\
   !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/common/js/util.js ***!
   \**********************************************************************/
@@ -12496,38 +14369,689 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 // common/js/util.js 工具函数
 
+var API_BASE_STORAGE_KEY = 'PETHOME_API_BASE_URL';
+var INTERNAL_IP_STORAGE_KEY = 'PETHOME_INTERNAL_IP'; // 存储原始内网IP，用于图片URL转换
+// 微信开发者工具在 Windows 上可能无法访问内网 IP，使用 localhost
+var DEFAULT_HTTP_BASE = 'http://localhost:8080';
+var DEFAULT_HTTPS_BASE = 'https://localhost';
+var DEFAULT_BACKEND_PORT = '8080';
+// 图片 URL 中 localhost 替换兜底（与 main.js 中 DEV_API_BASE 保持一致，避免子包/时序导致未替换）
+var FALLBACK_DEV_IMAGE_ORIGIN = 'http://10.43.238.18:8080';
+// 线上图片域名兜底：接口/数据库返回 localhost 时，若未替换则用此域名，避免封面黑块（与 main.js API_BASE 一致）
+var PRODUCTION_IMAGE_ORIGIN = 'https://situationship.icu';
+
+// 解析URL的辅助函数（替代URL构造函数，兼容小程序环境）
+function parseUrl(url) {
+  if (typeof url !== 'string' || !url) {
+    return null;
+  }
+  var urlStr = url.trim();
+  if (!urlStr) return null;
+
+  // 匹配协议、主机名、端口、路径
+  // 格式: http://hostname:port/path 或 https://hostname:port/path
+  var match = urlStr.match(/^(https?):\/\/([^\/:]+)(:(\d+))?(\/.*)?$/);
+  if (!match) {
+    // 如果没有协议，尝试匹配 hostname:port/path
+    var matchNoProtocol = urlStr.match(/^([^\/:]+)(:(\d+))?(\/.*)?$/);
+    if (matchNoProtocol) {
+      return {
+        protocol: 'http',
+        hostname: matchNoProtocol[1] || '',
+        port: matchNoProtocol[3] || '',
+        pathname: matchNoProtocol[4] || '/',
+        origin: "http://".concat(matchNoProtocol[1]).concat(matchNoProtocol[3] ? ":".concat(matchNoProtocol[3]) : '')
+      };
+    }
+    return null;
+  }
+  return {
+    protocol: match[1] || 'http',
+    hostname: match[2] || '',
+    port: match[4] || '',
+    pathname: match[5] || '/',
+    origin: "".concat(match[1], "://").concat(match[2]).concat(match[4] ? ":".concat(match[4]) : '')
+  };
+}
+function normalizeBaseUrl(url) {
+  if (typeof url !== 'string') return '';
+  var normalized = url.trim();
+  if (!normalized) return '';
+  // 去掉末尾的斜杠，保留协议
+  normalized = normalized.replace(/\/+$/, '');
+  return normalized;
+}
+function safeGetFromStorage(key) {
+  try {
+    if (typeof uni !== 'undefined' && uni.getStorageSync) {
+      return uni.getStorageSync(key) || '';
+    }
+  } catch (err) {}
+  return '';
+}
+function safeSetToStorage(key, value) {
+  try {
+    if (typeof uni !== 'undefined' && uni.setStorageSync) {
+      uni.setStorageSync(key, value);
+    }
+  } catch (err) {}
+}
+function resolveBaseFromWindow() {
+  if (typeof window === 'undefined' || !window.location) return '';
+  var _window$location = window.location,
+    protocol = _window$location.protocol,
+    hostname = _window$location.hostname;
+  if (!hostname) return '';
+  var targetPort = (window.__PETHOME_BACKEND_PORT__ || DEFAULT_BACKEND_PORT || '').toString();
+  var needPort = targetPort && targetPort !== '80' && targetPort !== '443';
+  return "".concat(protocol, "//").concat(hostname).concat(needPort ? ":".concat(targetPort) : '');
+}
+function resolveBaseFromLaunchOptions() {
+  if (typeof uni === 'undefined' || !uni.getLaunchOptionsSync) return '';
+  try {
+    var options = uni.getLaunchOptionsSync();
+    if (!options) return '';
+    if (options.query && options.query.apiBaseUrl) {
+      return decodeURIComponent(options.query.apiBaseUrl);
+    }
+    if (options.referrerInfo && options.referrerInfo.extraData && options.referrerInfo.extraData.apiBaseUrl) {
+      return options.referrerInfo.extraData.apiBaseUrl;
+    }
+  } catch (err) {}
+  return '';
+}
+function sanitizeBaseUrl(url) {
+  var normalized = normalizeBaseUrl(url);
+  if (!normalized) return '';
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+  return "http://".concat(normalized);
+}
+
+// 检测是否是真机环境（使用新的API避免废弃警告）
+function isRealDevice() {
+  try {
+    if (typeof uni !== 'undefined') {
+      // 优先使用新的API
+      if (uni.getDeviceInfo) {
+        try {
+          var deviceInfo = uni.getDeviceInfo();
+          return deviceInfo.platform !== 'devtools';
+        } catch (e) {
+          // 如果新API失败，回退到旧API
+        }
+      }
+      // 回退到旧API（兼容性）
+      if (uni.getSystemInfoSync) {
+        var systemInfo = uni.getSystemInfoSync();
+        // 真机环境：platform 不是 'devtools'
+        return systemInfo.platform !== 'devtools';
+      }
+    }
+  } catch (err) {
+    // 静默处理错误
+  }
+  return false;
+}
+function getApiBaseUrl() {
+  var cached = normalizeBaseUrl(safeGetFromStorage(API_BASE_STORAGE_KEY));
+  var isReal = isRealDevice();
+
+  // 开发环境：如果缓存的是错误的虚拟网卡IP（172.27.x.x），忽略它
+  // 因为这种IP通常是Clash/TUN等虚拟网卡，手机无法访问
+  if (cached && /^https?:\/\/172\.27\./.test(cached)) {
+    // 清除错误的缓存
+    safeSetToStorage(API_BASE_STORAGE_KEY, '');
+    // 继续执行，使用默认值或启动参数
+  }
+
+  if (cached && !/^https?:\/\/172\.27\./.test(cached)) {
+    // 如果缓存的是内网 IP 地址（10.x.x.x, 172.16-31.x.x, 192.168.x.x）
+    var isInternalIP = /^https?:\/\/(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(cached);
+    if (isInternalIP) {
+      // 保存原始内网IP，用于图片URL转换
+      try {
+        var parsed = parseUrl(cached);
+        if (parsed && parsed.hostname) {
+          safeSetToStorage(INTERNAL_IP_STORAGE_KEY, parsed.hostname);
+          // 移除内网IP保存日志以提升性能
+        }
+      } catch (err) {
+        // 静默处理错误
+      }
+
+      // 真机环境：使用内网 IP（手机可以访问）
+      // 开发者工具：使用 localhost（工具可以访问）
+      if (isReal) {
+        // 移除真机环境日志以提升性能
+        return cached;
+      } else {
+        // 移除开发者工具环境切换日志以提升性能
+        safeSetToStorage(API_BASE_STORAGE_KEY, DEFAULT_HTTP_BASE);
+        return DEFAULT_HTTP_BASE;
+      }
+    }
+    if (cached.includes('localhost') || cached.includes('127.0.0.1')) {
+      return cached;
+    }
+    return cached;
+  }
+  var launchBase = normalizeBaseUrl(resolveBaseFromLaunchOptions());
+  if (launchBase) {
+    // 检查启动参数中的地址是否是内网 IP
+    var _isInternalIP = /^https?:\/\/(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(launchBase);
+    if (_isInternalIP) {
+      // 保存原始内网IP，用于图片URL转换
+      try {
+        var _parsed = parseUrl(launchBase);
+        if (_parsed && _parsed.hostname) {
+          safeSetToStorage(INTERNAL_IP_STORAGE_KEY, _parsed.hostname);
+          // 移除内网IP保存日志以提升性能
+        }
+      } catch (err) {
+        // 静默处理错误
+      }
+
+      // 真机环境：使用内网 IP（手机可以访问）
+      // 开发者工具：使用 localhost（工具可以访问）
+      if (isReal) {
+        // 移除启动参数内网IP日志以提升性能
+        safeSetToStorage(API_BASE_STORAGE_KEY, launchBase);
+        return launchBase;
+      } else {
+        // 移除开发者工具环境切换日志以提升性能
+        safeSetToStorage(API_BASE_STORAGE_KEY, DEFAULT_HTTP_BASE);
+        return DEFAULT_HTTP_BASE;
+      }
+    }
+    safeSetToStorage(API_BASE_STORAGE_KEY, launchBase);
+    return launchBase;
+  }
+  var windowBase = normalizeBaseUrl(resolveBaseFromWindow());
+  if (windowBase) {
+    safeSetToStorage(API_BASE_STORAGE_KEY, windowBase);
+    return windowBase;
+  }
+  return DEFAULT_HTTP_BASE;
+}
+function setApiBaseUrl(url) {
+  var sanitized = sanitizeBaseUrl(url);
+  if (!sanitized) return;
+  safeSetToStorage(API_BASE_STORAGE_KEY, sanitized);
+}
+function getHttpBase() {
+  return getApiBaseUrl() || DEFAULT_HTTP_BASE;
+}
+function getHttpsBase() {
+  var httpBase = getHttpBase();
+  try {
+    var parsed = parseUrl(httpBase);
+    if (!parsed || !parsed.hostname) {
+      return DEFAULT_HTTPS_BASE;
+    }
+    if (parsed.protocol === 'https') {
+      return parsed.origin;
+    }
+
+    // 针对内网 / 开发环境，保留端口号（如果存在且不是80/443）
+    var hostname = parsed.hostname;
+    var portPart = '';
+
+    // 开发环境：如果原端口是8080，转换为8443（HTTPS端口）
+    if (parsed.port === '8080') {
+      portPart = ':8443';
+    } else if (parsed.port && parsed.port !== '80' && parsed.port !== '443') {
+      // 其他端口保留
+      portPart = ":".concat(parsed.port);
+    }
+    return "https://".concat(hostname).concat(portPart);
+  } catch (err) {
+    return DEFAULT_HTTPS_BASE;
+  }
+}
+
 /**
  * 处理图片URL，解决小程序HTTP协议限制问题
  * @param {string} imageUrl 原始图片URL
  * @returns {string} 处理后的图片URL
  */
 function getImageUrl(imageUrl) {
+  var HTTP_BASE = getHttpBase();
+  var HTTPS_BASE = getHttpsBase();
+  var isReal = isRealDevice(); // 判断是否是真机环境
+
+  // 调试日志：输出环境信息（减少日志输出，只在关键转换时输出）
+  // if (imageUrl && (imageUrl.includes('upload') || imageUrl.includes('images'))) {
+  //   console.log(`[图片URL处理] 环境: ${isReal ? '真机' : '开发者工具'}, HTTP_BASE: ${HTTP_BASE}, HTTPS_BASE: ${HTTPS_BASE}, 原始URL: ${imageUrl}`)
+  // }
+
+  // 判断是否是内网/本地地址（需要保持HTTP）
+  var isLocalOrInternal = function isLocalOrInternal(url) {
+    if (!url) return false;
+    // localhost 和 127.0.0.1
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+      return true;
+    }
+    // 内网IP地址：10.x.x.x, 172.16-31.x.x, 192.168.x.x
+    var internalIpPattern = /(^|\/)(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/;
+    if (internalIpPattern.test(url)) {
+      return true;
+    }
+    return false;
+  };
+
+  // 判断是否是IP地址（包括公网IP和内网IP）
+  var isIpAddress = function isIpAddress(url) {
+    if (!url) return false;
+    // 匹配IP地址格式：xxx.xxx.xxx.xxx
+    var ipPattern = /\b(\d{1,3}\.){3}\d{1,3}\b/;
+    return ipPattern.test(url);
+  };
+
+  // 判断是否是合法域名（不是IP地址）
+  var isLegalDomain = function isLegalDomain(url) {
+    if (!url) return false;
+    // 如果包含域名特征（如 .com, .cn, .io, .net 等），且不是IP地址
+    var domainPattern = /^https?:\/\/[^\/]+/;
+    var match = url.match(domainPattern);
+    if (match) {
+      var host = match[0].replace(/^https?:\/\//, '');
+      // 如果是IP地址，返回false
+      if (isIpAddress(host)) {
+        return false;
+      }
+      // 如果包含域名特征，返回true
+      return /\./.test(host) && !host.startsWith('localhost');
+    }
+    return false;
+  };
+
+  // 默认图片直接使用静态资源路径（/static/目录下的资源不需要转换为HTTP URL）
+  var defaultImage = '/static/images/garfield-default-avatar.png';
   if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
-    return '/static/images/pet-paw.png'; // 默认图片
+    return defaultImage;
   }
 
-  // 如果已经是完整URL
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    // 开发环境：localhost的图片直接返回（微信开发者工具支持）
-    if (imageUrl.startsWith('http://localhost:8080')) {
-      return imageUrl; // ✅ 正确返回完整URL
-    }
+  // 转换为字符串并去除首尾空格
+  imageUrl = String(imageUrl).trim();
 
+  // 如果是空字符串，返回默认图片
+  if (imageUrl === '') {
+    return defaultImage;
+  }
+
+  // 兜底：后端或数据里可能误把完整 URL 存成 "/https://..." 或 "/http://..."，导致被当成相对路径拼出错误地址，先去掉前导 /
+  if (imageUrl.startsWith('/https://') || imageUrl.startsWith('/http://')) {
+    imageUrl = imageUrl.slice(1);
+  }
+
+  // 只要图片地址是 localhost/127.0.0.1（任意端口），就统一换成可用的域名，避免封面黑屏、ERR_CONNECTION_REFUSED
+  var apiBaseRaw = getApiBaseUrl();
+  var imageOrigin = (apiBaseRaw || '').trim().replace(/\/api\/?$/, '').replace(/\/+$/, '');
+  var isProductionDomain = imageOrigin && /^https?:\/\//.test(imageOrigin) && !/localhost|127\.0\.0\.1/.test(imageOrigin);
+  var isLocalhostImage = (imageUrl.includes('localhost') || imageUrl.includes('127.0.0.1')) && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'));
+  if (isLocalhostImage) {
+    var pathMatch = imageUrl.match(/^https?:\/\/[^/]+(\/.*)$/);
+    if (pathMatch && pathMatch[1]) {
+      var path = pathMatch[1].trim();
+      var isApiLocalhost = imageOrigin && (imageOrigin.includes('localhost') || imageOrigin.includes('127.0.0.1'));
+      if (isProductionDomain) {
+        imageUrl = imageOrigin + path;
+      } else if (isApiLocalhost) {
+        // 本地开发：API 和图片都在 localhost，保持原样，避免替换成线上域名导致新上传图片 404
+        // imageUrl 已是 localhost 地址，无需修改
+      } else {
+        // 配置未设置或仍是 localhost 时，用线上域名兜底，确保社区/发现流封面能加载
+        imageUrl = PRODUCTION_IMAGE_ORIGIN + path;
+      }
+    }
+  }
+  // 若后端返回了带 :8443 的完整 URL，且上面未替换（pathMatch 未命中），再改为使用与接口同源的 base（图片用无 /api 的 origin）
+  if ((imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) && imageUrl.includes(':8443')) {
+    var _pathMatch = imageUrl.match(/^https?:\/\/[^/]+(\/.*)$/);
+    if (_pathMatch) {
+      var _path = _pathMatch[1];
+      var base = (apiBaseRaw || '').replace(/\/api\/?$/, '').replace(/\/+$/, '');
+      if (base) imageUrl = base + _path;
+    }
+  }
+
+  // 如果包含URL编码的引号（%22），说明可能是被错误编码的字符串，尝试解码
+  if (imageUrl.includes('%22') || imageUrl.includes('%27')) {
+    try {
+      imageUrl = decodeURIComponent(imageUrl);
+      // 如果解码后包含引号，去掉引号
+      imageUrl = imageUrl.replace(/^["']|["']$/g, '').trim();
+    } catch (e) {
+      // 静默处理错误
+    }
+  }
+
+  // 如果以 [ 开头和 ] 结尾，说明可能是数组格式的字符串，尝试提取URL
+  if (imageUrl.startsWith('[') && imageUrl.endsWith(']')) {
+    try {
+      var parsed = JSON.parse(imageUrl);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        imageUrl = String(parsed[0]).trim();
+      } else {
+        return defaultImage;
+      }
+    } catch (e) {
+      // 如果不是有效的JSON，尝试提取引号内的内容
+      var match = imageUrl.match(/["']([^"']+)["']/);
+      if (match && match[1]) {
+        imageUrl = match[1].trim();
+      } else {
+        return defaultImage;
+      }
+    }
+  }
+
+  // 优先处理临时路径（tmp或__tmp__），必须在HTTP检查之前
+  // 匹配 /tmp/、/__tmp__/、http://tmp/xxx、http://__tmp__/xxx、tmp/xxx、__tmp__/xxx 等格式
+  if (imageUrl.startsWith('/tmp/') || imageUrl.startsWith('/__tmp__/') || imageUrl.startsWith('http://tmp/') || imageUrl.startsWith('http://__tmp__/') || imageUrl.startsWith('https://tmp/') || imageUrl.startsWith('https://__tmp__/') || imageUrl.startsWith('tmp/') && !imageUrl.includes('://') || imageUrl.startsWith('__tmp__/') && !imageUrl.includes('://')) {
+    return defaultImage;
+  }
+
+  // 尽早将 localhost/127.0.0.1 替换为当前配置的后端地址，避免个人页/商品/店铺等图片在真机或模拟器加载失败
+  if ((imageUrl.includes('localhost') || imageUrl.includes('127.0.0.1')) && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+    // 开发者工具下：若配置已是线上域名，上面已替换；否则用当前配置的 host:port（避免强制 8443 导致 REFUSED）
+    if (!isReal) {
+      var devBase = getApiBaseUrl();
+      var devParsed = parseUrl(devBase);
+      var isDevLocalhost = devParsed && devParsed.hostname && /localhost|127\.0\.0\.1/.test(devParsed.hostname);
+      var devOrigin;
+      if (isDevLocalhost) {
+        devOrigin = "http://".concat(devParsed.hostname).concat(devParsed.port ? ':' + devParsed.port : ':8080');
+      } else if (devParsed && devParsed.hostname && !/localhost|127\.0\.0\.1/.test(devParsed.hostname)) {
+        devOrigin = devParsed.protocol === 'https' ? devParsed.origin : "https://".concat(devParsed.hostname).concat(devParsed.port ? ':' + devParsed.port : '');
+      } else {
+        devOrigin = devParsed && devParsed.hostname ? "https://".concat(devParsed.hostname).concat(devParsed.port ? ':' + devParsed.port : ':8443') : 'https://localhost:8443';
+      }
+      var _pathMatch2 = imageUrl.match(/^https?:\/\/[^/]+(\/.*)$/);
+      imageUrl = _pathMatch2 && _pathMatch2[1] ? devOrigin.replace(/\/+$/, '') + _pathMatch2[1] : imageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, 'http://localhost:8080');
+    } else {
+      var originToUse = '';
+      try {
+        var _base = getApiBaseUrl();
+        var _parsed2 = parseUrl(_base);
+        if (_parsed2 && _parsed2.hostname && !/localhost|127\.0\.0\.1/.test(_parsed2.hostname)) {
+          originToUse = "http://".concat(_parsed2.hostname).concat(_parsed2.port ? ':' + _parsed2.port : ':8080');
+        }
+      } catch (e) {}
+      if (!originToUse) {
+        originToUse = FALLBACK_DEV_IMAGE_ORIGIN;
+      }
+      imageUrl = imageUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, originToUse);
+    }
+  }
+  var replaceToHttps = function replaceToHttps(url) {
+    if (!url) return url;
+    // 处理各种 localhost 格式
+    if (url.startsWith('http://localhost:8080/')) {
+      return url.replace('http://localhost:8080', HTTPS_BASE);
+    }
+    if (url.startsWith('http://localhost:8443/')) {
+      return url.replace('http://localhost:8443', HTTPS_BASE);
+    }
+    if (url.startsWith('http://localhost/')) {
+      return url.replace('http://localhost', HTTPS_BASE);
+    }
+    if (url.startsWith('http://127.0.0.1:8080/')) {
+      return url.replace('http://127.0.0.1:8080', HTTPS_BASE);
+    }
+    if (url.startsWith('http://127.0.0.1:8443/')) {
+      return url.replace('http://127.0.0.1:8443', HTTPS_BASE);
+    }
+    if (url.startsWith('http://127.0.0.1/')) {
+      return url.replace('http://127.0.0.1', HTTPS_BASE);
+    }
+    // 处理 HTTP_BASE
+    if (url.startsWith("".concat(HTTP_BASE, "/"))) {
+      return url.replace(HTTP_BASE, HTTPS_BASE);
+    }
+    // 通用HTTP转HTTPS
+    if (url.startsWith('http://')) {
+      return url.replace(/^http:/, 'https:');
+    }
+    return url;
+  };
+
+  // 如果是本地静态资源（/static/），直接返回，不转换为HTTP URL
+  // 在uniapp中，/static/目录下的资源在编译时会被打包到小程序中，不需要从服务器加载
+  if (imageUrl.startsWith('/static/')) {
+    // 移除静态资源日志以提升性能（频繁调用）
     return imageUrl;
   }
 
-  // 如果是相对路径（/upload/...），拼接完整URL
-  if (imageUrl.startsWith('/upload/') || imageUrl.startsWith('/static/')) {
-    return 'http://localhost:8080' + imageUrl;
+  // 如果是相对路径 /upload/... 或 /images/...
+  // 开发环境（localhost/127.0.0.1）统一用 HTTP 8080，避免 8443 证书导致商品图/轮播图不显示
+  if (imageUrl.startsWith('/upload/') || imageUrl.startsWith('/images/')) {
+    var apiBaseIsDomain = isLegalDomain(HTTP_BASE) || isLegalDomain(HTTPS_BASE);
+    var finalUrl;
+    if (apiBaseIsDomain) {
+      finalUrl = "".concat(HTTPS_BASE).concat(imageUrl);
+    } else {
+      // 本地/内网环境：用 HTTP_BASE（8080）拼图，保证「不校验合法域名」时能加载
+      finalUrl = "".concat(HTTP_BASE).concat(imageUrl);
+    }
+    // 若拼接后仍是 172.27（虚拟网卡），在开发者工具中改为 localhost 避免超时
+    if (!isReal && /^https?:\/\/172\.27\.\d+\.\d+/.test(finalUrl)) {
+      finalUrl = finalUrl.replace(/^https?:\/\/172\.27\.\d+\.\d+(?::\d+)?/, 'http://localhost:8080');
+    }
+    return finalUrl;
   }
 
-  // 如果只是文件名，拼接完整URL
-  if (!imageUrl.startsWith('/')) {
-    return 'http://localhost:8080/upload/' + imageUrl;
+  // 如果是以 / 开头的其他路径（如 /upload/product/xxx）
+  if (imageUrl.startsWith('/')) {
+    var _apiBaseIsDomain = isLegalDomain(HTTP_BASE) || isLegalDomain(HTTPS_BASE);
+    if (_apiBaseIsDomain) {
+      return "".concat(HTTPS_BASE).concat(imageUrl);
+    }
+    // 本地/内网：用 HTTP 8080 拼图，保证商品图等能加载
+    return "".concat(HTTP_BASE).concat(imageUrl);
+  }
+
+  // 相对路径无前导 /（如 product/product-xxx.jpg、upload/xxx），数据库商品图常见格式，拼成 /upload/... 再走 base
+  if (!imageUrl.startsWith('http') && imageUrl.length > 0) {
+    var withLeadingSlash = imageUrl.startsWith('upload/') || imageUrl.startsWith('upload\\') ? '/' + imageUrl.replace(/\\/g, '/') : '/upload/' + imageUrl.replace(/\\/g, '/');
+    var _apiBaseIsDomain2 = isLegalDomain(HTTP_BASE) || isLegalDomain(HTTPS_BASE);
+    var _finalUrl = _apiBaseIsDomain2 ? "".concat(HTTPS_BASE).concat(withLeadingSlash) : "".concat(HTTP_BASE).concat(withLeadingSlash);
+    if (!isReal && /^https?:\/\/172\.27\.\d+\.\d+/.test(_finalUrl)) {
+      _finalUrl = _finalUrl.replace(/^https?:\/\/172\.27\.\d+\.\d+(?::\d+)?/, 'http://localhost:8080');
+    }
+    return _finalUrl;
+  }
+
+  // 开发者工具/本机无法访问 172.27 虚拟网卡（如 Clash TUN），导致 ERR_CONNECTION_TIMED_OUT，改为 localhost
+  if ((imageUrl.startsWith('https://') || imageUrl.startsWith('http://')) && /^https?:\/\/172\.27\.\d+\.\d+/.test(imageUrl) && !isReal) {
+    var useHttps = imageUrl.startsWith('https://');
+    var originReplace = useHttps ? 'https://localhost:8443' : 'http://localhost:8080';
+    return imageUrl.replace(/^https?:\/\/172\.27\.\d+\.\d+(?::\d+)?/, originReplace);
+  }
+
+  // 最终兜底：任何仍含 localhost/127.0.0.1 的完整 URL 都改为线上域名，避免社区发现流封面黑块
+  if ((imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) && (imageUrl.includes('localhost') || imageUrl.includes('127.0.0.1'))) {
+    var m = imageUrl.match(/^https?:\/\/[^/]+(\/.*)$/);
+    if (m && m[1]) {
+      imageUrl = PRODUCTION_IMAGE_ORIGIN + m[1].trim();
+    }
+  }
+
+  // 如果是HTTPS协议，直接返回
+  if (imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+
+  // 如果是HTTP协议
+  if (imageUrl.startsWith('http://')) {
+    // 检查是否是开发环境（通过API base URL判断）
+    var currentApiBase = getApiBaseUrl();
+    var isDevelopment = currentApiBase.includes('localhost') || currentApiBase.includes('127.0.0.1') || /^https?:\/\/(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(currentApiBase);
+
+    // 开发环境：将 localhost 替换为内网 IP
+    if (isDevelopment && (imageUrl.includes('localhost') || imageUrl.includes('127.0.0.1'))) {
+      var portMatch = imageUrl.match(/https?:\/\/(localhost|127\.0\.0\.1):(\d+)/);
+      if (portMatch) {
+        var port = portMatch[2];
+        // 获取内网 IP 地址
+        var internalIp = null;
+
+        // 优先从当前 API base 获取
+        if (currentApiBase && !currentApiBase.includes('localhost') && !currentApiBase.includes('127.0.0.1')) {
+          try {
+            var _parsed3 = parseUrl(currentApiBase);
+            if (_parsed3 && _parsed3.hostname) {
+              var ipAddress = _parsed3.hostname;
+              if (/^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(ipAddress)) {
+                internalIp = ipAddress;
+              }
+            }
+          } catch (err) {}
+        }
+
+        // 如果没找到，从存储的内网 IP 获取
+        if (!internalIp) {
+          var storedInternalIp = safeGetFromStorage(INTERNAL_IP_STORAGE_KEY);
+          if (storedInternalIp && storedInternalIp.trim() && /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(storedInternalIp.trim())) {
+            internalIp = storedInternalIp.trim();
+          }
+        }
+
+        // 如果还没找到，从存储的 API base 获取
+        if (!internalIp) {
+          var storedBase = safeGetFromStorage(API_BASE_STORAGE_KEY);
+          if (storedBase && !storedBase.includes('localhost') && !storedBase.includes('127.0.0.1')) {
+            try {
+              var _parsed4 = parseUrl(storedBase);
+              if (_parsed4 && _parsed4.hostname) {
+                var storedIp = _parsed4.hostname;
+                if (/^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(storedIp)) {
+                  safeSetToStorage(INTERNAL_IP_STORAGE_KEY, storedIp);
+                  internalIp = storedIp;
+                }
+              }
+            } catch (err) {}
+          }
+        }
+
+        // 如果找到了内网 IP，替换 localhost
+        // 开发环境：统一使用HTTP（8080端口）
+        // 真机环境下，<image>标签的HTTP图片会被阻止，需要在图片加载失败时使用downloadFile下载
+        if (internalIp) {
+          // 开发环境：使用HTTP（统一使用8080端口）
+          var replacedUrl = imageUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1):\d+/, "http://".concat(internalIp, ":8080"));
+          // 移除日志输出以提升性能
+          return replacedUrl;
+        } else {
+          // 如果没找到内网 IP
+          // 特殊处理：如果端口是8443但协议是HTTP，改为8080端口的HTTP（开发环境）
+          if (port === '8443' && imageUrl.startsWith('http://')) {
+            var httpUrl = imageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):8443/, 'http://localhost:8080');
+            // 移除日志输出以提升性能
+            return httpUrl;
+          }
+
+          // 开发环境：保持HTTP不变（需要配置"不校验合法域名"）
+          // 无论是开发者工具还是真机，开发环境都使用HTTP
+          if (port === '8080') {
+            // console.log('未找到内网 IP，保持原URL (开发环境HTTP):', imageUrl)
+            return imageUrl;
+          } else {
+            // 其他端口，改为8080端口的HTTP（开发环境）
+            var _httpUrl = imageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):\d+/, 'http://localhost:8080');
+            // 移除端口转换日志以提升性能
+            return _httpUrl;
+          }
+        }
+      }
+    }
+
+    // 如果已经是完整URL（http:// 或 https://）
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      // 检查是否是合法域名
+      if (isLegalDomain(imageUrl)) {
+        // 合法域名：如果是HTTP，转换为HTTPS
+        if (imageUrl.startsWith('http://')) {
+          var httpsUrl = imageUrl.replace(/^http:/, 'https:');
+          // 移除HTTPS转换日志以提升性能
+          return httpsUrl;
+        }
+        // 已经是HTTPS，直接返回
+        // 移除HTTPS返回日志以提升性能
+        return imageUrl;
+      }
+
+      // 使用非捕获组来正确匹配IP和端口
+      var internalIpMatch = imageUrl.match(/https?:\/\/((?:10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2[0-9]|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|localhost|127\.0\.0\.1))(?::(\d+))?/);
+      if (internalIpMatch) {
+        var host = internalIpMatch[1]; // 主机名或IP地址
+        var _port = internalIpMatch[2] || '8080'; // 端口号，默认8080
+
+        // 开发环境（内网IP）：保持HTTP不变，需要配置"不校验合法域名"
+        // 生产环境：转换为HTTPS
+        var _isDevEnv = /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(host) || host === 'localhost' || host === '127.0.0.1';
+        if (_isDevEnv) {
+          // 开发者工具中微信基础库不再支持 HTTP 图片，必须用 HTTPS，否则报「不再支持 HTTP 协议」且 ERR_PROXY_CONNECTION_FAILED
+          if (!isReal && _port === '8080' && imageUrl.startsWith('http://')) {
+            var _httpsUrl = imageUrl.replace(/^http:\/\/([^\/]+)/, function (_, hostPort) {
+              return 'https://' + hostPort.replace(':8080', ':8443');
+            });
+            return _httpsUrl;
+          }
+          if (_port === '8443' && imageUrl.startsWith('http://')) {
+            var _httpUrl2 = imageUrl.replace(/http:\/\/[^\/]+/, "http://".concat(host, ":8080"));
+            return _httpUrl2;
+          } else if (_port === '8080' && imageUrl.startsWith('http://')) {
+            return imageUrl;
+          } else if (imageUrl.startsWith('https://')) {
+            var _httpUrl3 = imageUrl.replace(/https:\/\/[^\/]+/, "http://".concat(host, ":8080"));
+            return _httpUrl3;
+          } else {
+            var _httpUrl4 = imageUrl.replace(/http:\/\/[^\/]+/, "http://".concat(host, ":8080"));
+            return _httpUrl4;
+          }
+        } else {
+          // 生产环境：转换为HTTPS
+          var httpsPort = _port === '8080' ? '8443' : _port === '80' ? '443' : _port;
+          var _httpsUrl2 = imageUrl.replace(/http:\/\/[^\/]+/, "https://".concat(host, ":").concat(httpsPort));
+          // 移除HTTP转HTTPS日志以提升性能
+          return _httpsUrl2;
+        }
+      }
+
+      // 对于其他HTTP地址（非内网）
+      // 开发环境：保持HTTP不变（需要配置"不校验合法域名"）
+      // 生产环境：转换为HTTPS
+      var isDevEnv = imageUrl.includes('localhost') || imageUrl.includes('127.0.0.1') || /https?:\/\/(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(imageUrl);
+      if (isDevEnv) {
+        // 开发环境：保持HTTP不变（需要配置"不校验合法域名"）
+        // 无论是开发者工具还是真机，开发环境都使用HTTP
+        // 移除非内网HTTP地址日志以提升性能
+        return imageUrl;
+      } else {
+        // 生产环境：转换为HTTPS
+        var _httpsUrl3 = replaceToHttps(imageUrl);
+        if (_httpsUrl3 !== imageUrl) {
+          // 移除HTTP转HTTPS日志以提升性能
+          return _httpsUrl3;
+        }
+        // 如果无法转换，至少尝试将协议改为HTTPS
+        var fallbackHttps = imageUrl.replace(/^http:/, 'https:');
+        return fallbackHttps;
+      }
+    }
+  }
+
+  // 检查是否是微信小程序的临时文件标识（通常是短字符串，不包含路径分隔符）
+  // 这些标识符通常不包含 /、\、:、. 等路径字符
+  if (imageUrl.length < 50 && !imageUrl.includes('/') && !imageUrl.includes('\\') && !imageUrl.includes(':') && !imageUrl.includes('.')) {
+    return defaultImage;
   }
 
   // 其他情况，使用默认图片
-  return '/static/images/pet-paw.png';
+  return defaultImage;
 }
 
 /**
@@ -12541,13 +15065,30 @@ function formatPrice(price) {
 }
 
 /**
+ * 解析日期字符串为Date对象（iOS兼容）
+ * 将 "2025-10-20 22:53:23" 格式转换为 "2025-10-20T22:53:23"
+ */
+function parseDate(dateString) {
+  if (!dateString) return null;
+  if (dateString instanceof Date) {
+    return dateString;
+  }
+  if (typeof dateString === 'string') {
+    // 将空格替换为T，使其符合ISO 8601格式，兼容iOS
+    var isoDateString = dateString.replace(/ /g, 'T');
+    return new Date(isoDateString);
+  }
+  return null;
+}
+
+/**
  * 格式化日期
  */
 function formatDate(date) {
   var format = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'YYYY-MM-DD';
   if (!date) return '';
   if (typeof date === 'string') {
-    date = new Date(date);
+    date = parseDate(date);
   }
   if (!(date instanceof Date) || isNaN(date)) {
     return '';
@@ -12584,7 +15125,7 @@ function formatNumber(n) {
  */
 function timeAgo(date) {
   if (typeof date === 'string') {
-    date = new Date(date);
+    date = parseDate(date);
   }
   var now = new Date();
   var diff = now.getTime() - date.getTime();
@@ -12606,6 +15147,111 @@ function timeAgo(date) {
   } else {
     return formatDate(date, 'YYYY-MM-DD');
   }
+}
+
+/**
+ * 微信式时间戳格式化
+ * 根据消息发送时间相对于当前时间的跨度，采用不同的显示格式
+ * @param {Date|string|number} timestamp - 消息时间戳
+ * @returns {string} 格式化后的时间字符串
+ */
+function formatWeChatTimestamp(timestamp) {
+  if (!timestamp) return '';
+  var date = null;
+  if (timestamp instanceof Date) {
+    date = timestamp;
+  } else if (typeof timestamp === 'string') {
+    date = parseDate(timestamp);
+  } else if (typeof timestamp === 'number') {
+    date = new Date(timestamp);
+  } else {
+    return '';
+  }
+  if (!date || isNaN(date.getTime())) {
+    return '';
+  }
+  var now = new Date();
+  var diff = now.getTime() - date.getTime();
+  var minute = 60 * 1000;
+  var hour = 60 * minute;
+  var dayMs = 24 * hour;
+  var weekMs = 7 * dayMs;
+
+  // 星期数组
+  var weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+  // 1. 当天消息（0-24小时内）：显示 "时:分"
+  if (diff < dayMs) {
+    var _hours = formatNumber(date.getHours());
+    var _minutes = formatNumber(date.getMinutes());
+    return "".concat(_hours, ":").concat(_minutes);
+  }
+
+  // 2. 超过1天但小于1周（1-7天）：显示 "星期几 时:分"
+  if (diff < weekMs) {
+    var weekday = weekdays[date.getDay()];
+    var _hours2 = formatNumber(date.getHours());
+    var _minutes2 = formatNumber(date.getMinutes());
+    return "".concat(weekday, " ").concat(_hours2, ":").concat(_minutes2);
+  }
+
+  // 3. 超过1周（7天以上）：显示 "年月日 时:分"
+  var year = date.getFullYear();
+  var month = formatNumber(date.getMonth() + 1);
+  var day = formatNumber(date.getDate());
+  var hours = formatNumber(date.getHours());
+  var minutes = formatNumber(date.getMinutes());
+  return "".concat(year, "\u5E74").concat(month, "\u6708").concat(day, "\u65E5 ").concat(hours, ":").concat(minutes);
+}
+
+/**
+ * 判断是否应该显示时间戳（基于5分钟规则）
+ * @param {Date|string|number} currentTimestamp - 当前消息的时间戳
+ * @param {Date|string|number} previousTimestamp - 上一条消息的时间戳（如果有）
+ * @returns {boolean} 是否应该显示时间戳
+ */
+function shouldShowTimestamp(currentTimestamp, previousTimestamp) {
+  if (!currentTimestamp) return false;
+
+  // 如果没有上一条消息，总是显示时间戳
+  if (!previousTimestamp) return true;
+  var currentDate = null;
+  var previousDate = null;
+
+  // 解析当前消息时间
+  if (currentTimestamp instanceof Date) {
+    currentDate = currentTimestamp;
+  } else if (typeof currentTimestamp === 'string') {
+    currentDate = parseDate(currentTimestamp);
+  } else if (typeof currentTimestamp === 'number') {
+    currentDate = new Date(currentTimestamp);
+  } else {
+    return true; // 无法解析，显示时间戳
+  }
+
+  // 解析上一条消息时间
+  if (previousTimestamp instanceof Date) {
+    previousDate = previousTimestamp;
+  } else if (typeof previousTimestamp === 'string') {
+    previousDate = parseDate(previousTimestamp);
+  } else if (typeof previousTimestamp === 'number') {
+    previousDate = new Date(previousTimestamp);
+  } else {
+    return true; // 无法解析上一条，显示时间戳
+  }
+
+  if (!currentDate || isNaN(currentDate.getTime()) || !previousDate || isNaN(previousDate.getTime())) {
+    return true;
+  }
+
+  // 计算时间差（毫秒）
+  var diff = currentDate.getTime() - previousDate.getTime();
+
+  // 5分钟 = 5 * 60 * 1000 毫秒
+  var fiveMinutes = 5 * 60 * 1000;
+
+  // 如果间隔超过5分钟，显示时间戳
+  return diff > fiveMinutes;
 }
 
 /**
@@ -12778,13 +15424,80 @@ function switchTab(url) {
 }
 
 /**
- * 返回上一页
+ * 返回上一页（带页面栈检查，减轻「routeDone with a webviewId is not found」等 DevTools/竞态报错）
  */
 function navigateBack() {
   var delta = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-  uni.navigateBack({
-    delta: delta
-  });
+  try {
+    var pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [];
+    var n = pages && pages.length || 0;
+    if (n <= delta) {
+      if (typeof uni !== 'undefined' && uni.switchTab) {
+        uni.switchTab({
+          url: '/pages/main/index',
+          fail: function fail() {}
+        });
+      }
+      return;
+    }
+    uni.navigateBack({
+      delta: delta,
+      fail: function fail() {
+        try {
+          if (typeof uni !== 'undefined' && uni.switchTab) {
+            uni.switchTab({
+              url: '/pages/main/index',
+              fail: function fail() {}
+            });
+          }
+        } catch (e) {}
+      }
+    });
+  } catch (e) {
+    try {
+      if (typeof uni !== 'undefined' && uni.switchTab) {
+        uni.switchTab({
+          url: '/pages/main/index',
+          fail: function fail() {}
+        });
+      }
+    } catch (e2) {}
+  }
+}
+
+/** 工作人员跳转「我的」时避免与其它 tab 的 onShow 重复 switchTab，减轻 routeDone/webviewId 类报错 */
+var staffSwitchToMineLock = false;
+
+/**
+ * 工作人员账号仅允许使用「我的」：在其它 tab 页的 onShow 首行调用。
+ * 使用异步 switchTab，避免与当前 webview 卸载竞态。
+ * @returns {boolean} true 表示已拦截（调用方应 return），false 表示非工作人员可继续 onShow
+ */
+function redirectStaffToMineIfNeeded() {
+  try {
+    if (typeof uni === 'undefined' || !uni.getStorageSync('staffToken')) return false;
+    if (staffSwitchToMineLock) return true;
+    staffSwitchToMineLock = true;
+    setTimeout(function () {
+      uni.switchTab({
+        url: '/pages/main/index',
+        complete: function complete() {
+          staffSwitchToMineLock = false;
+        },
+        fail: function fail() {
+          staffSwitchToMineLock = false;
+        }
+      });
+      uni.showToast({
+        title: '工作人员只能使用「我的」页面',
+        icon: 'none'
+      });
+    }, 0);
+    return true;
+  } catch (e) {
+    staffSwitchToMineLock = false;
+    return false;
+  }
 }
 
 /**
@@ -12802,11 +15515,11 @@ function previewImage(urls) {
 }
 
 /**
- * 选择图片
+ * 选择图片（默认优先压缩图，减轻上传与加载）
  */
 function chooseImage() {
   var count = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
-  var sizeType = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ['original', 'compressed'];
+  var sizeType = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ['compressed'];
   var sourceType = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : ['album', 'camera'];
   return new Promise(function (resolve, reject) {
     uni.chooseImage({
@@ -12896,43 +15609,80 @@ function clearStorage() {
   });
 }
 
-/**
- * 上传图片
- */
-function uploadImage(filePath) {
-  var token = uni.getStorageSync('token');
-  return new Promise(function (resolve, reject) {
-    uni.uploadFile({
-      url: 'https://localhost:8080/api/upload/image',
-      filePath: filePath,
-      name: 'file',
-      header: {
-        'Authorization': "Bearer ".concat(token)
-      },
+/** 上传前压缩：与主流社交应用相当，质量 78、长边最大 1280，加载更快 */
+var UPLOAD_COMPRESS_QUALITY = 78;
+var UPLOAD_COMPRESS_MAX = 1280;
+function compressImageForUpload(src) {
+  return new Promise(function (resolve) {
+    if (!src || typeof uni.compressImage !== 'function') {
+      resolve(src);
+      return;
+    }
+    uni.compressImage({
+      src: src,
+      quality: UPLOAD_COMPRESS_QUALITY,
+      compressedWidth: UPLOAD_COMPRESS_MAX,
+      compressedHeight: UPLOAD_COMPRESS_MAX,
       success: function success(res) {
-        if (res.statusCode === 200) {
-          var data = JSON.parse(res.data);
-          if (data.code === 0) {
-            resolve(data.data);
-          } else {
-            reject(new Error(data.msg || '上传失败'));
-          }
-        } else {
-          reject(new Error('上传失败'));
-        }
+        resolve(res.tempFilePath || src);
       },
-      fail: function fail(err) {
-        reject(err);
+      fail: function fail() {
+        resolve(src);
       }
     });
   });
 }
+
+/**
+ * 上传图片（先压缩再上传，用户/管理员上传的图会自动变小）
+ */
+function uploadImage(filePath) {
+  var token = uni.getStorageSync('token');
+  var apiBase = getApiBaseUrl();
+  var uploadBase = typeof apiBase === 'string' && apiBase.startsWith('https://') ? getHttpsBase() : getHttpBase();
+  var uploadUrl = "".concat(uploadBase, "/api/upload/image");
+  var doUpload = function doUpload(path) {
+    return new Promise(function (resolve, reject) {
+      uni.uploadFile({
+        url: uploadUrl,
+        filePath: path,
+        name: 'file',
+        header: {
+          'Authorization': "Bearer ".concat(token)
+        },
+        success: function success(res) {
+          if (res.statusCode === 200) {
+            try {
+              var data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+              if (data.code === 0 || data.code === 200) {
+                resolve(data.data);
+              } else {
+                reject(new Error(data.msg || '上传失败'));
+              }
+            } catch (e) {
+              reject(new Error('上传失败'));
+            }
+          } else {
+            reject(new Error('上传失败'));
+          }
+        },
+        fail: function fail(err) {
+          return reject(err);
+        }
+      });
+    });
+  };
+  return compressImageForUpload(filePath).then(doUpload);
+}
 var util = {
   getImageUrl: getImageUrl,
   formatPrice: formatPrice,
+  parseDate: parseDate,
   formatDate: formatDate,
   formatNumber: formatNumber,
   timeAgo: timeAgo,
+  formatWeChatTimestamp: formatWeChatTimestamp,
+  shouldShowTimestamp: shouldShowTimestamp,
   debounce: debounce,
   throttle: throttle,
   deepClone: deepClone,
@@ -12948,6 +15698,7 @@ var util = {
   navigateTo: navigateTo,
   switchTab: switchTab,
   navigateBack: navigateBack,
+  redirectStaffToMineIfNeeded: redirectStaffToMineIfNeeded,
   previewImage: previewImage,
   chooseImage: chooseImage,
   getLocation: getLocation,
@@ -12956,34 +15707,205 @@ var util = {
   getClipboardData: getClipboardData,
   getStorageInfo: getStorageInfo,
   clearStorage: clearStorage,
-  uploadImage: uploadImage
+  uploadImage: uploadImage,
+  compressImageForUpload: compressImageForUpload,
+  getApiBaseUrl: getApiBaseUrl,
+  setApiBaseUrl: setApiBaseUrl
 };
 exports.util = util;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
-/* 46 */,
-/* 47 */,
-/* 48 */,
-/* 49 */,
-/* 50 */,
-/* 51 */,
-/* 52 */,
-/* 53 */,
-/* 54 */,
-/* 55 */,
-/* 56 */,
-/* 57 */,
-/* 58 */,
-/* 59 */,
-/* 60 */,
-/* 61 */,
-/* 62 */,
-/* 63 */,
-/* 64 */,
-/* 65 */,
-/* 66 */,
-/* 67 */
+
+/***/ 5:
+/*!**************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/slicedToArray.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithHoles = __webpack_require__(/*! ./arrayWithHoles.js */ 6);
+var iterableToArrayLimit = __webpack_require__(/*! ./iterableToArrayLimit.js */ 7);
+var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ 8);
+var nonIterableRest = __webpack_require__(/*! ./nonIterableRest.js */ 10);
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
+}
+module.exports = _slicedToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 501:
+/*!*****************************************************************************!*\
+  !*** C:/Users/Yu/Desktop/pet-home/pet-home-uniapp/common/js/api/address.js ***!
+  \*****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(uni) {
+
+var _interopRequireDefault = __webpack_require__(/*! @babel/runtime/helpers/interopRequireDefault */ 4);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
+var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/typeof */ 13));
+var _api = __webpack_require__(/*! ../api.js */ 38);
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+/** 与收藏/预约页一致：优先独立 userId，再从 userInfo 取 id/uid，避免只登录未写 userId 时列表永远失败 */
+function resolveStoredUserId() {
+  try {
+    var raw = uni.getStorageSync('userId');
+    if (raw != null && raw !== '' && String(raw) !== 'undefined') {
+      var n = Number(raw);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    var u = uni.getStorageSync('userInfo');
+    if (u && (0, _typeof2.default)(u) === 'object') {
+      var id = u.id != null ? u.id : u.uid;
+      if (id != null && id !== '' && String(id) !== 'undefined') {
+        var _n = Number(id);
+        if (Number.isFinite(_n) && _n > 0) return _n;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+var addressApi = {
+  // 获取当前用户所有地址（showLoading 为 false 时不显示全局加载中，用于 onShow 静默刷新）
+  getAddressList: function getAddressList() {
+    var showLoading = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+    var token = uni.getStorageSync('token');
+    var uid = resolveStoredUserId();
+    // 有 token 时务必请求后端：由 JWT 解析用户；query userId 仅作兜底（与 AddressController 一致）
+    if (!token && uid == null) {
+      return Promise.resolve({
+        code: 200,
+        data: [],
+        msg: '未登录'
+      });
+    }
+    var data = uid != null ? {
+      userId: uid
+    } : {};
+    return _api.api.request({
+      url: '/api/addresses/list',
+      method: 'GET',
+      data: data,
+      showLoading: showLoading
+    });
+  },
+  // 创建地址
+  createAddress: function createAddress(addressData) {
+    // 后端优先从 token 解析 userId，解析不到时使用 body 中的 userId
+    var validUserId = resolveStoredUserId();
+    var requestData = {
+      name: addressData.name,
+      phone: addressData.phone,
+      province: addressData.province,
+      city: addressData.city,
+      district: addressData.district,
+      detail: addressData.detail,
+      isDefault: addressData.isDefault || false
+    };
+    if (validUserId != null) {
+      requestData.userId = validUserId;
+    }
+
+    // 同时传 query 参数 userId 作为兜底（token 解析失败时后端可回退使用）
+    var url = validUserId != null ? "/api/addresses/create?userId=".concat(validUserId) : '/api/addresses/create';
+    return _api.api.request({
+      url: url,
+      method: 'POST',
+      data: requestData
+    });
+  },
+  // 更新地址
+  updateAddress: function updateAddress(addressData) {
+    var validUserId = resolveStoredUserId();
+    var payload = _objectSpread({}, addressData);
+    if (validUserId != null) {
+      payload.userId = validUserId;
+    }
+    return _api.api.request({
+      url: '/api/addresses/update',
+      method: 'PUT',
+      data: payload
+    });
+  },
+  // 删除地址（页面已自行 showLoading「删除中」，此处关闭全局 loading 避免双 loading / hide 竞态）
+  deleteAddress: function deleteAddress(addressId) {
+    var validUserId = resolveStoredUserId();
+    var url = validUserId != null ? "/api/addresses/".concat(addressId, "?userId=").concat(validUserId) : "/api/addresses/".concat(addressId);
+    return _api.api.request({
+      url: url,
+      method: 'DELETE',
+      showLoading: false
+    });
+  },
+  // 设置默认地址
+  setDefaultAddress: function setDefaultAddress(addressId) {
+    return _api.api.request({
+      url: "/api/addresses/set-default/".concat(addressId),
+      method: 'PUT'
+    });
+  },
+  // 获取默认地址（showLoading 为 false 时不显示全局加载中，用于 onShow 静默刷新）
+  getDefaultAddress: function getDefaultAddress(userId) {
+    var showLoading = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    // 该接口后端会：优先从token解析userId；解析不到时才使用参数 userId
+    // 但前端很多地方会传 null/undefined，导致 userId 参数为空，从而触发“未登录或用户ID无效”
+    var finalUserId = userId;
+    if (finalUserId === undefined || finalUserId === null || finalUserId === '' || finalUserId === 'undefined') {
+      var resolved = resolveStoredUserId();
+      finalUserId = resolved != null ? resolved : null;
+    } else {
+      var n = Number(finalUserId);
+      finalUserId = Number.isFinite(n) && n > 0 ? n : null;
+    }
+
+    // 未登录则直接返回空地址；调用方已有兜底逻辑（不会影响下单）
+    if (!finalUserId) {
+      return Promise.resolve({
+        code: 200,
+        data: null,
+        msg: '未登录，跳过获取默认地址'
+      });
+    }
+    return _api.api.request({
+      url: '/api/addresses/default',
+      method: 'GET',
+      data: {
+        userId: finalUserId
+      },
+      showLoading: showLoading
+    });
+  }
+};
+var _default = addressApi;
+exports.default = _default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
+
+/***/ }),
+
+/***/ 6:
+/*!***************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/arrayWithHoles.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
+}
+module.exports = _arrayWithHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 64:
 /*!************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/@babel/runtime/regenerator/index.js ***!
   \************************************************************************************************/
@@ -12992,11 +15914,12 @@ exports.util = util;
 
 // TODO(Babel 8): Remove this file.
 
-var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 68)();
+var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 65)();
 module.exports = runtime;
 
 /***/ }),
-/* 68 */
+
+/***/ 65:
 /*!*******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/regeneratorRuntime.js ***!
   \*******************************************************************/
@@ -13317,7 +16240,8 @@ function _regeneratorRuntime() {
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 69 */
+
+/***/ 66:
 /*!*****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/asyncToGenerator.js ***!
   \*****************************************************************/
@@ -13356,6 +16280,85 @@ function _asyncToGenerator(fn) {
 }
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
+/***/ }),
+
+/***/ 7:
+/*!*********************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _iterableToArrayLimit(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = !0,
+      o = !1;
+    try {
+      if (i = (t = t.call(r)).next, 0 === l) {
+        if (Object(t) !== t) return;
+        f = !1;
+      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0) {
+        ;
+      }
+    } catch (r) {
+      o = !0, n = r;
+    } finally {
+      try {
+        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
+    }
+    return a;
+  }
+}
+module.exports = _iterableToArrayLimit, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 8:
+/*!***************************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js ***!
+  \***************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
+}
+module.exports = _unsupportedIterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 9:
+/*!*****************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/arrayLikeToArray.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _arrayLikeToArray(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+  for (var i = 0, arr2 = new Array(len); i < len; i++) {
+    arr2[i] = arr[i];
+  }
+  return arr2;
+}
+module.exports = _arrayLikeToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
 /***/ })
-]]);
+
+}]);
 //# sourceMappingURL=../../.sourcemap/mp-weixin/common/vendor.js.map

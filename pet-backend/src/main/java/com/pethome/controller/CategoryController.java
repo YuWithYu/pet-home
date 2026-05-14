@@ -50,21 +50,24 @@ public class CategoryController {
     @PostMapping("/create")
     @ApiOperation("创建分类")
     public Result<Category> createCategory(@RequestBody Category category) {
-        // 这里应该有CategoryService的create方法
-        return Result.success(category);
+        Category created = categoryService.createCategory(category);
+        return Result.success(created);
     }
 
     @PutMapping("/update")
     @ApiOperation("更新分类")
     public Result<Category> updateCategory(@RequestBody Category category) {
-        // 这里应该有CategoryService的update方法
-        return Result.success(category);
+        if (category == null || category.getId() == null) {
+            return Result.error("分类ID不能为空");
+        }
+        Category updated = categoryService.updateCategory(category);
+        return Result.success(updated);
     }
 
     @DeleteMapping("/{id}")
     @ApiOperation("删除分类")
     public Result<Boolean> deleteCategory(@PathVariable Long id) {
-        // 这里应该有CategoryService的delete方法
-        return Result.success(true);
+        boolean ok = categoryService.deleteCategory(id);
+        return Result.success(ok);
     }
 }

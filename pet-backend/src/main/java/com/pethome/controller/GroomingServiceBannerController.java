@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.pethome.common.Result;
 import com.pethome.entity.GroomingServiceBanner;
 import com.pethome.service.GroomingServiceBannerService;
+import com.pethome.util.FileUploadUtil;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -26,6 +27,9 @@ public class GroomingServiceBannerController {
 
     @Autowired
     private GroomingServiceBannerService groomingServiceBannerService;
+    
+    @Autowired
+    private FileUploadUtil fileUploadUtil;
 
     @GetMapping("/position/{position}")
     @ApiOperation("根据位置获取展示图")
@@ -38,36 +42,9 @@ public class GroomingServiceBannerController {
     @ApiOperation("上传洗护服务展示图")
     public Result<String> uploadGroomingServiceBanner(@RequestParam("file") MultipartFile file) {
         try {
-            if (file.isEmpty()) {
-                return Result.error("请选择要上传的图片");
-            }
-            
-            // 检查文件类型
-            String contentType = file.getContentType();
-            if (contentType == null || (!contentType.startsWith("image/"))) {
-                return Result.error("只能上传图片文件");
-            }
-            
-            // 生成文件名
+            // 使用FileUploadUtil上传文件，自动返回HTTPS URL
+            String imageUrl = fileUploadUtil.uploadImage(file, "files");
             String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".") 
-                ? originalFilename.substring(originalFilename.lastIndexOf(".")) 
-                : ".jpg";
-            String filename = "grooming-banner-" + System.currentTimeMillis() + extension;
-            
-            // 上传目录
-            String uploadDir = "C:/Users/Yu/Desktop/pet-home/upload/banner/";
-            java.io.File dir = new java.io.File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            
-            // 保存文件
-            java.io.File targetFile = new java.io.File(dir, filename);
-            file.transferTo(targetFile);
-            
-            // 返回图片URL
-            String imageUrl = "/upload/banner/" + filename;
             
             // 创建或更新展示图记录到数据库
             String position = "grooming-page-top";

@@ -1,4 +1,21 @@
 <template>
+  <view class="custom-pull-refresh">
+    <slot></slot>
+  </view>
+</template>
+
+<script>
+export default {
+  name: 'CustomPullRefresh'
+}
+</script>
+
+<style scoped>
+.custom-pull-refresh {
+  width: 100%;
+}
+</style>
+<template>
   <view class="custom-pull-refresh" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
     <!-- 下拉刷新提示区域 -->
     <view class="refresh-tip" :style="{ height: pullHeight + 'px' }">
@@ -40,16 +57,34 @@ export default {
       
       this.startY = e.touches[0].clientY
       this.isPulling = true
-      console.log('触摸开始', this.startY)
     },
     
     onTouchMove(e) {
       if (this.isRefreshing || !this.isPulling) return
       
+      // 小程序里 e.target 往往不是浏览器 DOM，没有 closest；需 try/catch 避免抛错后吞掉整页触摸
+      try {
+        const target = e.target
+        if (target) {
+          const tag = (target.tagName || target.nodeName || '').toUpperCase()
+          if (tag === 'BUTTON') {
+            this.isPulling = false
+            return
+          }
+          if (typeof target.closest === 'function') {
+            const interactive = target.closest('button, a, navigator, [class*="order-item"], [class*="tap"]')
+            if (interactive) {
+              this.isPulling = false
+              return
+            }
+          }
+        }
+      } catch (err) {
+        /* ignore */
+      }
+      
       const currentY = e.touches[0].clientY
       const deltaY = currentY - this.startY
-      
-      console.log('触摸移动', deltaY, this.pullHeight)
       
       // 只有向下拉时才响应
       if (deltaY > 0) {

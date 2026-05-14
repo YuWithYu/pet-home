@@ -1,216 +1,287 @@
 package com.pethome.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pethome.async.EventModel;
+import com.pethome.async.EventProducer;
+import com.pethome.async.EventType;
+import com.pethome.common.Const;
+import com.pethome.dao.UserMapper;
+import com.pethome.entity.LoginTicket;
+import com.pethome.entity.Message;
 import com.pethome.entity.User;
-import com.pethome.mapper.UserMapper;
-import com.pethome.service.UserService;
+import com.pethome.service.IUserService;
+import com.pethome.util.*;
+import com.pethome.vo.UserVo;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
-import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * @author linyuhong
+ * @date 2019/9/1
+ */
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements IUserService {
 
     @Autowired
     private UserMapper userMapper;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private TemplateEngine templateEngine;
+
+    @Autowired
+    private MailClient mailClient;
+
+    @Autowired
+    private EventProducer eventProducer;
+
+    // 域名
+    @Value("${domain:http://localhost:8080}")
+    private String domain;
+
+    // 项目名
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
 
     @Override
-    public User register(User user) {
-        // 检查用户名是否已存在
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", user.getUsername());
-        User existingUser = userMapper.selectOne(queryWrapper);
-        if (existingUser != null) {
-            throw new RuntimeException("用户名已存在");
+    public Map<String, Object> login(String username, String password) {
+
+        Map<String, Object> map = new HashMap<>();
+
+        // 空值处理
+        if (StringUtils.isBlank(username)) {
+            map.put("usernameMsg", "账号不能为空!");
+            return map;
+        }
+        if (StringUtils.isBlank(password)) {
+            map.put("passwordMsg", "密码不能为空!");
+            return map;
         }
 
-        // 检查手机号是否已存在
-        if (user.getPhone() != null) {
-            queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("phone", user.getPhone());
-            existingUser = userMapper.selectOne(queryWrapper);
-            if (existingUser != null) {
-                throw new RuntimeException("手机号已存在");
+        // 验证账号
+        User user = userMapper.selectByUsername(username);
+        if (user == null) {
+            map.put("usernameMsg", "该账号不存在!");
+            return map;
+        }
+
+        // 验证状态
+        if (user.getStatus() == 0) {
+            map.put("usernameMsg", "该账号未激活!");
+            return map;
+        }
+
+        // 验证密码
+        password = MD5Encoder.md5(password);
+        if (!user.getPassword().equals(password)) {
+            map.put("passwordMsg", "密码不正确!");
+            return map;
+        }
+
+        // 生成登录凭证
+        LoginTicket loginTicket = new LoginTicket();
+        loginTicket.setUserId(user.getId());
+        loginTicket.setTicket(GetGenerateUUID.generateUUID());
+        loginTicket.setStatus(Const.loginStatus.VALID); // ticket 是否有效
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + Const.loginStatus.DEFAULT_EXPIRED_SECONDS * 1000L));
+
+        String redisKey = RedisKeyUtil.getTicketKey(loginTicket.getTicket());
+        redisTemplate.opsForValue().set(redisKey, loginTicket);
+
+        map.put(Const.ticket.TICKET, loginTicket.getTicket());
+        return map;
+
+    }
+
+    @Override
+    public LoginTicket findLoginTicket(String loginTicket) {
+        // ticket = ticket:UUID
+        String ticketKey = RedisKeyUtil.getTicketKey(loginTicket);
+        LoginTicket loginTicket1 = (LoginTicket) redisTemplate.opsForValue().get(ticketKey);
+
+        return loginTicket1;
+    }
+
+    @Override
+    public UserVo findUserById(Long userId) {
+        UserVo userVo = getCache(userId);
+        if (userVo == null) {
+            userVo = initCache(userId);
+        }
+        return userVo;
+    }
+
+    private UserVo assembleUser(User user) {
+        UserVo userVo = new UserVo();
+        // 加密
+        userVo.setId(user.getId().intValue());
+        userVo.setUsername(user.getUsername());
+        userVo.setHeaderUrl(user.getHeaderUrl());
+        userVo.setType(user.getType());
+        userVo.setEmail(user.getEmail());
+        userVo.setCreateTime(user.getCreateTime());
+        return userVo;
+    }
+
+    @Override
+    public void logout(String ticket) {
+        String redisKey = RedisKeyUtil.getTicketKey(ticket);
+        LoginTicket loginTicket = (LoginTicket) redisTemplate.opsForValue().get(redisKey);
+        loginTicket.setStatus(Const.loginStatus.INVALID);  // 不删除，保存用户的登录记录
+        redisTemplate.opsForValue().set(redisKey, loginTicket);
+    }
+
+    @Override
+    public Map<String, Object> register(User user) {
+
+        Map<String, Object> map = new HashMap<>();
+        if (user == null) {
+            throw new IllegalArgumentException("参数不能为空");
+        }
+
+        if (StringUtils.isBlank(user.getUsername())){
+            map.put("usernameMsg", "账号不能为空");
+            return map;
+        }
+
+        if (StringUtils.isBlank(user.getPassword())){
+            map.put("passwordMsg", "密码不能为空");
+            return map;
+        }
+
+        if (StringUtils.isBlank(user.getEmail())) {
+            map.put("emailMsg", "邮箱不能为空");
+            return map;
+        }
+
+        // 验证邮箱格式
+        if (!EmailUtil.isEmail(user.getEmail())){
+            map.put("emailMsg", "邮箱格式不正确");
+            return map;
+        }
+
+        User u = userMapper.selectByUsername(user.getUsername());
+        if (u != null) {
+            map.put("usernameMsg", "该用户名已存在");
+            return map;
+        }
+
+
+        // 验证邮箱
+        u = userMapper.selectByUserEmail(user.getEmail());
+        if (u != null) {
+            map.put("emailMsg", "该邮箱已被注册");
+            return map;
+        }
+
+        // 参数验证通过，插入数据库
+        user.setPassword(MD5Encoder.md5(user.getPassword()));
+        user.setStatus(Const.active.INACTIVE);
+        user.setType(Const.Role.ROLE_USER.getType());
+        user.setActivationCode(GetGenerateUUID.generateUUID());
+        user.setHeaderUrl(HttpUtil.sendGet(Const.avatarUrl.AVATARURL));
+        user.setCreateTime(new Date());
+        userMapper.insertUser(user);
+
+        /**
+         * 触发注册事件
+         */
+        EventModel eventModel = new EventModel(EventType.REGISTER)
+                .setActorId(Const.systemuser.SYSTEM_USER_ID)
+                .setEntityUserId(user.getId().intValue())
+                .setEntityType(Const.entityType.ENTITY_TYPE_USER)
+                .setEntityId(user.getId().intValue())
+                .setData("msg", "欢迎您注册");
+        eventProducer.fireEvent(eventModel);
+
+        return map;
+    }
+
+    @Override
+    public int activation(Long userId, String code) {
+        User user = userMapper.selectByPrimaryKey(userId);
+        if (user == null) {
+            return Const.isExist.NOEXIST;
+        }
+        if (user.getStatus() == 1){  // 避免重复激活
+            return Const.active.ACTIVATION_REPEAT;
+        }else if (user.getActivationCode().equals(code)){
+            userMapper.updateStatus(userId, Const.active.ACTIVE);
+            clearCache(userId);
+
+            return Const.active.ACTIVATION_SUCCESS;
+        }else {
+            return Const.active.ACTIVATION_FAILURE;
+        }
+    }
+
+    @Override
+    public UserVo findUserByName(String username) {
+        User user = userMapper.selectByUsername(username);
+        if (user == null) {
+            return null;
+        }
+       return assembleUser(user);
+    }
+
+    @Override
+    public int updateHeader(Long userId, String headerUrl) {
+        int rows = userMapper.updateHeader(userId, headerUrl);
+        clearCache(userId);
+        return rows;
+    }
+
+
+    // 1.优先从缓存中取值
+    private UserVo getCache(Long userId) {
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        return (UserVo) redisTemplate.opsForValue().get(redisKey);
+    }
+
+    // 2.取不到时初始化缓存数据
+    private UserVo initCache(Long userId) {
+        User user = userMapper.selectByPrimaryKey(userId);
+        UserVo userVo = assembleUser(user);
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        redisTemplate.opsForValue().set(redisKey, userVo, 3600, TimeUnit.SECONDS);
+        return userVo;
+    }
+
+    // 3.数据变更时清除缓存数据
+    private void clearCache(Long userId) {
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        redisTemplate.delete(redisKey);
+    }
+
+
+    // 获取用户权限
+    public Collection<? extends GrantedAuthority> getAuthorities(Long userId) {
+        UserVo user = this.findUserById(userId);
+
+        List<GrantedAuthority> list = new ArrayList<>();
+        list.add(new GrantedAuthority() {
+
+            @Override
+            public String getAuthority() {
+                switch (user.getType()) {
+                    case 1:
+                        return Const.Role.ROLE_ADMIN.getRole();
+                    default:
+                        return Const.Role.ROLE_USER.getRole();
+                }
             }
-        }
-
-        // 密码加密
-        if (user.getPassword() != null) {
-            user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
-        }
-
-        // 设置默认值
-        user.setStatus(1);
-        user.setRole("user");
-        user.setCreateTime(LocalDateTime.now());
-        user.setUpdateTime(LocalDateTime.now());
-
-        userMapper.insert(user);
-        return user;
+        });
+        return list;
     }
 
-    @Override
-    public String register(String phone, String password, String nickname) {
-        // 检查手机号是否已存在
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("phone", phone);
-        User existingUser = userMapper.selectOne(queryWrapper);
-        if (existingUser != null) {
-            return null; // 手机号已存在
-        }
-
-        // 创建新用户
-        User user = new User();
-        user.setPhone(phone);
-        user.setPassword(DigestUtils.md5DigestAsHex(password.getBytes()));
-        user.setNickname(nickname != null ? nickname : phone);
-        user.setUsername(phone); // 使用手机号作为用户名
-        user.setStatus(1);
-        user.setRole("user");
-        user.setCreateTime(LocalDateTime.now());
-        user.setUpdateTime(LocalDateTime.now());
-
-        userMapper.insert(user);
-
-        // 生成token
-        return "token_" + user.getId() + "_" + System.currentTimeMillis();
-    }
-
-    @Override
-    public String login(String username, String password) {
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", username);
-        User user = userMapper.selectOne(queryWrapper);
-
-        if (user == null) {
-            throw new RuntimeException("用户名不存在");
-        }
-
-        if (!user.getStatus().equals(1)) {
-            throw new RuntimeException("账号已被禁用");
-        }
-
-        // 兼容明文密码和加密密码的验证
-        boolean passwordMatch = false;
-        
-        // 首先尝试明文密码匹配（用于测试数据）
-        if (password.equals(user.getPassword())) {
-            passwordMatch = true;
-        }
-        // 如果明文不匹配，尝试MD5验证（用于新注册用户）
-        else if (DigestUtils.md5DigestAsHex(password.getBytes()).equals(user.getPassword())) {
-            passwordMatch = true;
-        }
-        // 如果MD5不匹配，尝试bcrypt验证（用于其他情况）
-        else if (passwordEncoder.matches(password, user.getPassword())) {
-            passwordMatch = true;
-        }
-        
-        if (!passwordMatch) {
-            throw new RuntimeException("密码错误");
-        }
-
-        // 生成JWT token（这里简化返回用户名作为token）
-        return "token_" + user.getId() + "_" + System.currentTimeMillis();
-    }
-
-    @Override
-    public String loginByPhone(String phone, String password) {
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("phone", phone);
-        User user = userMapper.selectOne(queryWrapper);
-
-        if (user == null) {
-            throw new RuntimeException("手机号不存在");
-        }
-
-        if (!user.getStatus().equals(1)) {
-            throw new RuntimeException("账号已被禁用");
-        }
-
-        // 兼容明文密码和加密密码的验证
-        boolean passwordMatch = false;
-        
-        // 首先尝试明文密码匹配（用于测试数据）
-        if (password.equals(user.getPassword())) {
-            passwordMatch = true;
-        }
-        // 如果明文不匹配，尝试MD5验证（用于新注册用户）
-        else if (DigestUtils.md5DigestAsHex(password.getBytes()).equals(user.getPassword())) {
-            passwordMatch = true;
-        }
-        // 如果MD5不匹配，尝试bcrypt验证（用于其他情况）
-        else if (passwordEncoder.matches(password, user.getPassword())) {
-            passwordMatch = true;
-        }
-        
-        if (!passwordMatch) {
-            throw new RuntimeException("密码错误");
-        }
-
-        return "token_" + user.getId() + "_" + System.currentTimeMillis();
-    }
-
-    @Override
-    public User getUserById(Long id) {
-        return userMapper.selectById(id);
-    }
-
-    @Override
-    public User getUserByUsername(String username) {
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", username);
-        return userMapper.selectOne(queryWrapper);
-    }
-
-    @Override
-    public User getUserByPhone(String phone) {
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("phone", phone);
-        return userMapper.selectOne(queryWrapper);
-    }
-
-    @Override
-    public IPage<User> getUserList(Page<User> page) {
-        return userMapper.selectPage(page, null);
-    }
-
-    @Override
-    public boolean updateUser(User user) {
-        user.setUpdateTime(LocalDateTime.now());
-        return userMapper.updateById(user) > 0;
-    }
-
-    @Override
-    public boolean deleteUser(Long id) {
-        return userMapper.deleteById(id) > 0;
-    }
-
-    @Override
-    public boolean changePassword(Long userId, String oldPassword, String newPassword) {
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw new RuntimeException("用户不存在");
-        }
-
-        String encryptedOldPassword = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
-        if (!user.getPassword().equals(encryptedOldPassword)) {
-            throw new RuntimeException("旧密码错误");
-        }
-
-        User updateUser = new User();
-        updateUser.setId(userId);
-        updateUser.setPassword(DigestUtils.md5DigestAsHex(newPassword.getBytes()));
-        updateUser.setUpdateTime(LocalDateTime.now());
-
-        return userMapper.updateById(updateUser) > 0;
-    }
 }

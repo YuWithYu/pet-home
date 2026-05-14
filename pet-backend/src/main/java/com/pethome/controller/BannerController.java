@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.Banner;
 import com.pethome.service.BannerService;
+import com.pethome.util.FileUploadUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,20 +27,28 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping({"/api/banner", "/api/banners"})
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS})
 @Api(tags = "横幅管理")
 public class BannerController {
 
     @Autowired
     private BannerService bannerService;
+
+    @Autowired
+    private FileUploadUtil fileUploadUtil;
     
     @Value("${upload.path:./upload/}")
     private String uploadPath;
     
-    @Value("${server.host:http://localhost}")
+    @Value("${host:http://localhost}")
     private String serverHost;
     
     @Value("${server.port:8080}")
     private String serverPort;
+
+    /** 生产环境公网 base URL（如 https://situationship.icu），设后接口返回的图片地址用此域名，不拼端口 */
+    @Value("${app.public-base-url:}")
+    private String publicBaseUrl;
 
     @GetMapping("/page")
     @ApiOperation("分页查询横幅")
@@ -72,25 +81,54 @@ public class BannerController {
     @GetMapping("/list")
     @ApiOperation("获取横幅列表")
     public Result<java.util.List<Map<String, Object>>> getBannerList() {
-        List<Banner> banners = bannerService.getAllBanners();
+        List<Banner> banners = bannerService.getAllBannersForManagement();
 
-        // 转换为管理员前端期望的格式
-        List<Map<String, Object>> bannerList = banners.stream()
+        return Result.success(buildBannerList(banners));
+    }
+
+    @GetMapping("/active")
+    @ApiOperation("获取启用的横幅列表（小程序端）")
+    public Result<java.util.List<Map<String, Object>>> getActiveBannerList() {
+        List<Banner> allBanners = bannerService.getAllBannersForManagement();
+        List<Banner> activeBanners = allBanners.stream()
+            .filter(b -> "active".equals(b.getStatus()))
+            .collect(Collectors.toList());
+        return Result.success(buildBannerList(activeBanners));
+    }
+
+    private java.util.List<Map<String, Object>> buildBannerList(List<Banner> banners) {
+        return banners.stream()
             .map(banner -> {
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", banner.getId());
-                item.put("title", banner.getTitle());
+                String title = banner.getTitle();
+                if (title == null || title.isEmpty() || title.contains(".jpg") || title.contains(".png") || title.contains("微信图片")) {
+                    title = "宠物之家";
+                }
+                item.put("title", title);
                 item.put("description", banner.getDescription());
                 item.put("filename", banner.getFilename());
                 item.put("originalName", banner.getOriginalName());
 
-                // 将图片路径转换为完整URL（管理员前端访问）
+                // 将图片路径转换为完整URL（生产用公网域名，开发用 host:port）
                 String imageUrl = banner.getFileUrl();
                 if (imageUrl != null && !imageUrl.startsWith("http")) {
                     if (!imageUrl.startsWith("/")) {
                         imageUrl = "/" + imageUrl;
                     }
-                    imageUrl = serverHost + ":" + serverPort + imageUrl;
+                    String base = (publicBaseUrl != null && !publicBaseUrl.trim().isEmpty())
+                        ? publicBaseUrl.trim().replaceAll("/+$", "")
+                        : (serverHost + ":" + serverPort);
+                    imageUrl = base + imageUrl;
+                }
+                // 生产环境：数据库中若存的是 localhost/127.0.0.1，统一替换为公网域名
+                if (imageUrl != null && publicBaseUrl != null && !publicBaseUrl.trim().isEmpty()) {
+                    String base = publicBaseUrl.trim().replaceAll("/+$", "");
+                    if (imageUrl.startsWith("http://localhost") || imageUrl.startsWith("https://localhost") || imageUrl.startsWith("http://127.0.0.1")) {
+                        int schemeEnd = imageUrl.indexOf("://");
+                        int pathStart = schemeEnd >= 0 ? imageUrl.indexOf("/", schemeEnd + 3) : -1;
+                        imageUrl = (pathStart > 0) ? base + imageUrl.substring(pathStart) : base + "/upload/";
+                    }
                 }
                 item.put("url", imageUrl);
                 item.put("fileUrl", imageUrl); // 兼容小程序接口
@@ -106,8 +144,6 @@ public class BannerController {
                 return item;
             })
             .collect(Collectors.toList());
-
-        return Result.success(bannerList);
     }
 
     @GetMapping("/{id}")
@@ -123,39 +159,27 @@ public class BannerController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description) {
         
-        if (file.isEmpty()) {
-            return Result.error("上传文件不能为空");
-        }
-
         try {
-            // 确保上传目录存在
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-
-            // 获取原始文件名和扩展名
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-
-            // 生成唯一文件名
-            String fileName = UUID.randomUUID().toString() + extension;
-            Path filePath = Paths.get(uploadPath, fileName);
-
-            // 保存文件
-            Files.copy(file.getInputStream(), filePath);
-
+            String imageUrl = fileUploadUtil.uploadImage(file, "files");
+            // 压缩后取磁盘上的实际大小，避免列表显示“假的大体积”
+            long fileSize = file.getSize();
+            try {
+                int idx = imageUrl != null ? imageUrl.indexOf("/upload/") : -1;
+                if (idx >= 0 && idx + 8 < imageUrl.length()) {
+                    String rel = imageUrl.substring(idx + 8).replace("\\", "/");
+                    String base = (uploadPath != null && !uploadPath.isEmpty()) ? uploadPath.replaceAll("/+$", "") + "/" : "upload/";
+                    File saved = new File(base + rel);
+                    if (saved.exists()) fileSize = saved.length();
+                }
+            } catch (Exception ignored) { }
             // 创建Banner对象并保存到数据库
             Banner banner = new Banner();
-            banner.setTitle(title != null ? title : originalFilename);
+            banner.setTitle(title != null && !title.isEmpty() ? title : "宠物之家");
             banner.setDescription(description != null ? description : "");
-            banner.setFilename(fileName);  // 只存储文件名
-            banner.setOriginalName(originalFilename);
-            banner.setFileUrl("/upload/" + fileName);  // 存储相对路径
-            banner.setFileSize(file.getSize());
+            banner.setFilename(file.getOriginalFilename());
+            banner.setOriginalName(file.getOriginalFilename());
+            banner.setFileUrl(imageUrl);
+            banner.setFileSize(fileSize);
             banner.setFileType(file.getContentType());
             banner.setStatus("active");
             banner.setSortOrder(0);
@@ -169,5 +193,17 @@ public class BannerController {
             e.printStackTrace();
             return Result.error("文件上传失败: " + e.getMessage());
         }
+    }
+
+    @PutMapping("/{id}/status")
+    @ApiOperation("更新横幅状态")
+    public Result<Banner> updateBannerStatus(@PathVariable Long id, @RequestParam String status) {
+        Banner banner = bannerService.getBannerById(id);
+        if (banner == null) {
+            return Result.error("轮播图不存在");
+        }
+        banner.setStatus(status);
+        banner.setUpdateTime(LocalDateTime.now());
+        return Result.success(bannerService.updateBanner(banner));
     }
 }

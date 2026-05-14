@@ -1,50 +1,180 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/category/index",
-    "pages/goods/list",
-    "pages/goods/detail",
-    "pages/cart/index",
-    "pages/user/index",
-    "pages/user/login",
-    "pages/user/register",
-    "pages/user/profile",
-    "pages/user/my-pets",
-    "pages/user/add-pet-basic",
-    "pages/user/select-pet-type",
-    "pages/user/select-pet-breed",
-    "pages/user/select-breed-list",
-    "pages/user/select-pet-gender",
-    "pages/user/select-sterilization",
-    "pages/user/select-birth-date",
-    "pages/user/select-arrival-date",
-    "pages/user/select-weight",
-    "pages/user/orders",
-    "pages/appointment/medical",
-    "pages/appointment/grooming",
-    "pages/appointment/boarding",
-    "pages/appointment/door-cleaning",
-    "pages/appointment/adoption",
-    "pages/appointment/book-door-cleaning",
-    "pages/appointment/book-hospital",
-    "pages/appointment/book-grooming",
-    "pages/appointment/book-boarding",
-    "pages/appointment/book-adoption",
-    "pages/appointment/online-consultation",
-    "pages/chat/consultation",
-    "pages/service/detail",
-    "pages/service/hospital-detail",
-    "pages/service/adoption",
-    "pages/booking/index",
-    "pages/user/my-appointments",
-    "pages/settings/index",
-    "pages/user/edit-nickname",
-    "pages/user/edit-pet-profile",
-    "pages/booking/success",
-    "pages/admin/verify",
-    "pages/appointment/detail"
+    "pages/goods-category/index",
+    "pages/community/index",
+    "pages/message/index",
+    "pages/main/index"
   ],
-  "subPackages": [],
+  "subPackages": [
+    {
+      "root": "pages-auth",
+      "pages": [
+        "login",
+        "register",
+        "forgot-password"
+      ],
+      "name": "auth"
+    },
+    {
+      "root": "pages-goods",
+      "pages": [
+        "search",
+        "list",
+        "detail",
+        "product-reviews"
+      ],
+      "name": "goods"
+    },
+    {
+      "root": "pages-community",
+      "pages": [
+        "publish",
+        "signin",
+        "follow",
+        "post-detail-image",
+        "post-detail-video",
+        "topic-detail"
+      ],
+      "name": "community"
+    },
+    {
+      "root": "pages-message",
+      "pages": [
+        "likes",
+        "follows",
+        "comments",
+        "notifications"
+      ],
+      "name": "message"
+    },
+    {
+      "root": "user",
+      "pages": [
+        "my-pets",
+        "my-cans",
+        "my-collections",
+        "my-appointments",
+        "profile",
+        "edit-profile",
+        "FollowingTabs",
+        "chat",
+        "add-pet-basic",
+        "select-pet-type",
+        "select-pet-breed",
+        "select-breed-list",
+        "select-pet-gender",
+        "select-sterilization",
+        "select-birth-date",
+        "select-weight",
+        "notice",
+        "announcement",
+        "edit-nickname",
+        "edit-username",
+        "edit-username-verify",
+        "edit-username-new",
+        "phone",
+        "verify-phone",
+        "edit-pet-profile"
+      ],
+      "name": "user"
+    },
+    {
+      "root": "appointment",
+      "pages": [
+        "medical",
+        "grooming",
+        "door-cleaning",
+        "book-door-cleaning",
+        "book-hospital",
+        "book-grooming",
+        "detail",
+        "change-request"
+      ],
+      "name": "appointment"
+    },
+    {
+      "root": "order",
+      "pages": [
+        "list",
+        "confirm",
+        "review",
+        "detail",
+        "logistics",
+        "refund",
+        "refund-detail"
+      ],
+      "name": "order"
+    },
+    {
+      "root": "pages-cart",
+      "pages": [
+        "index"
+      ],
+      "name": "cart"
+    },
+    {
+      "root": "address",
+      "pages": [
+        "list"
+      ],
+      "name": "address"
+    },
+    {
+      "root": "service",
+      "pages": [
+        "detail"
+      ],
+      "name": "service"
+    },
+    {
+      "root": "chat",
+      "pages": [
+        "customer-service"
+      ],
+      "name": "chat"
+    },
+    {
+      "root": "points-mall",
+      "pages": [
+        "index",
+        "detail"
+      ],
+      "name": "points-mall"
+    },
+    {
+      "root": "payment",
+      "pages": [
+        "index"
+      ],
+      "name": "payment"
+    },
+    {
+      "root": "settings",
+      "pages": [
+        "index",
+        "report",
+        "help",
+        "about",
+        "agreement",
+        "privacy",
+        "change-password",
+        "reset-verify-phone",
+        "reset-set-password"
+      ],
+      "name": "settings"
+    },
+    {
+      "root": "admin",
+      "pages": [
+        "verify",
+        "work-orders",
+        "my-schedule",
+        "my-reviews"
+      ],
+      "name": "admin"
+    }
+  ],
   "window": {
     "navigationBarTextStyle": "white",
     "navigationBarTitleText": "宠物之家",
@@ -61,28 +191,45 @@
       {
         "pagePath": "pages/index/index",
         "text": "首页",
-        "iconPath": "static/images/pet-paw.png",
-        "selectedIconPath": "static/images/pet-paw.png"
+        "iconPath": "static/images/宠物之家.png",
+        "selectedIconPath": "static/images/宠物之家.png"
       },
       {
-        "pagePath": "pages/category/index",
+        "pagePath": "pages/goods-category/index",
         "text": "商城",
-        "iconPath": "static/images/shop.png",
-        "selectedIconPath": "static/images/shop.png"
+        "iconPath": "static/images/商城.png",
+        "selectedIconPath": "static/images/商城.png"
       },
       {
-        "pagePath": "pages/cart/index",
+        "pagePath": "pages/community/index",
         "text": "社区",
-        "iconPath": "static/images/community.png",
-        "selectedIconPath": "static/images/community.png"
+        "iconPath": "static/images/社区.png",
+        "selectedIconPath": "static/images/社区.png"
       },
       {
-        "pagePath": "pages/user/index",
+        "pagePath": "pages/message/index",
+        "text": "消息",
+        "iconPath": "static/images/online-consultation.png",
+        "selectedIconPath": "static/images/online-consultation.png"
+      },
+      {
+        "pagePath": "pages/main/index",
         "text": "我的",
         "iconPath": "static/images/profile.png",
         "selectedIconPath": "static/images/profile.png"
       }
     ]
   },
-  "usingComponents": {}
+  "lazyCodeLoading": "requiredComponents",
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "位置信息用于显示评论位置，仅显示省份"
+    }
+  },
+  "usingComponents": {
+    "custom-navbar": "/components/custom-navbar/custom-navbar"
+  }
 }

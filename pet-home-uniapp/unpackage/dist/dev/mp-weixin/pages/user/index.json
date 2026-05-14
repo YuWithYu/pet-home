@@ -1,9 +1,0 @@
-{
-  "navigationBarTitleText": "我的",
-  "navigationStyle": "custom",
-  "enablePullDownRefresh": false,
-  "usingComponents": {
-    "custom-navbar": "/components/custom-navbar/custom-navbar",
-    "custom-pull-refresh": "/components/custom-pull-refresh/custom-pull-refresh"
-  }
-}

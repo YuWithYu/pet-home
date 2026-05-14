@@ -1,1 +1,58 @@
-node_modules
+# Java/Maven
+target/
+*.jar
+*.war
+*.class
+.classpath
+.project
+.settings/
+
+# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# 日志
+*.log
+logs/
+
+# 数据库
+dump.rdb
+*.sql
+*.db
+*.sqlite3
+
+# 环境配置（包含密码等敏感信息）
+application-prod.yml
+.env
+.env.local
+
+# 上传文件（大文件）
+upload/
+uploads/
+
+# 构建产物
+dist/
+build/
+unpackage/
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+
+# Nginx
+start_nginx.bat
+nginx.conf
+
+# Redis
+UTF8/

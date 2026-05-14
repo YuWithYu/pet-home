@@ -1,27 +1,47 @@
 {
   "description": "项目配置文件。",
+  "miniprogramRoot": "./",
+  "packNpmManually": true,
+  "packNpmRelationList": [
+    ["package.json", "node_modules"]
+  ],
   "packOptions": {
-    "ignore": []
+    "ignore": [
+      "static/upload/**/*",
+      "static/upload/**",
+      "**/static/upload/**",
+      "**/upload/**",
+      "unpackage/**",
+      "node_modules/**",
+      "static/assets/**",
+      "**/static/assets/**",
+      "static/tabbar/**",
+      "**/static/tabbar/**",
+      "static/images/定位.png",
+      "**/static/images/定位.png"
+    ]
   },
   "setting": {
     "urlCheck": false,
     "es6": true,
     "postcss": true,
-    "minified": false,
+    "minified": true,
     "newFeature": true,
     "bigPackageSizeSupport": true,
     "checkInvalidKey": true,
     "checkSiteMap": true,
-    "uploadWithSourceMap": true,
+    "uploadWithSourceMap": false,
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
-    }
+    },
+    "uglifyFileName": true,
+    "enhance": true
   },
   "compileType": "miniprogram",
   "libVersion": "",
-  "appid": "wx2d696ea387550f34",
+  "appid": "wxcf8868d6bfdc0d6f",
   "projectname": "宠物之家",
   "condition": {
     "search": {

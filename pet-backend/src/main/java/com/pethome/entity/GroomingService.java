@@ -3,11 +3,13 @@ package com.pethome.entity;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-@TableName("grooming_services")
+@TableName(value = "grooming_services", autoResultMap = true)
 public class GroomingService implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -33,6 +35,12 @@ public class GroomingService implements Serializable {
 
     @TableField("description")
     private String description;
+
+    @TableField(value = "introduction", typeHandler = JacksonTypeHandler.class)
+    private List<String> introduction;
+
+    @TableField(value = "instructions", typeHandler = JacksonTypeHandler.class)
+    private List<String> instructions;
 
     @TableField("category")
     private String category;
@@ -58,8 +66,8 @@ public class GroomingService implements Serializable {
     @TableField("status")
     private String status;
 
-    @TableField("tags")
-    private String tags;
+    @TableField(value = "tags", typeHandler = JacksonTypeHandler.class)
+    private List<String> tags;
 
     @TableField("created_at")
     private LocalDateTime createdAt;
@@ -71,6 +79,7 @@ public class GroomingService implements Serializable {
     private Boolean isDeleted;
     
     // 手动添加setter方法，确保编译通过
+    public String getName() { return name; }
     public void setId(Long id) { this.id = id; }
     public void setName(String name) { this.name = name; }
     public void setDescription(String description) { this.description = description; }
@@ -82,7 +91,9 @@ public class GroomingService implements Serializable {
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public void setIsRecommended(Boolean isRecommended) { this.isRecommended = isRecommended; }
     public void setStatus(String status) { this.status = status; }
-    public void setTags(String tags) { this.tags = tags; }
+    public void setIntroduction(List<String> introduction) { this.introduction = introduction; }
+    public void setInstructions(List<String> instructions) { this.instructions = instructions; }
+    public void setTags(List<String> tags) { this.tags = tags; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
