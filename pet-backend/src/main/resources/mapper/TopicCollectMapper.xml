@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.TopicCollectMapper">
+
+    <select id="checkCollectStatus" resultType="com.pethome.entity.TopicCollect">
+        SELECT * FROM topic_collect
+        WHERE topic_id = #{topicId}
+        AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+</mapper>

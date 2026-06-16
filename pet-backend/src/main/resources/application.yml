@@ -1,0 +1,129 @@
+# 宠物之家 - 本地开发配置
+# 启动命令：mvn spring-boot:run
+
+server:
+  address: 0.0.0.0
+  port: 8080
+  servlet:
+    context-path: /
+  tomcat:
+    uri-encoding: UTF-8
+    connection-timeout: 300000
+    max-connections: 10000
+    threads:
+      max: 200
+      min-spare: 10
+  ssl:
+    enabled: false
+
+spring:
+  application:
+    name: pet-home-backend
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/pet_home?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8&connectionCollation=utf8mb4_unicode_ci&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+    timeout: 6000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+    charset: UTF-8
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 1000MB
+      enabled: true
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    auto-mapping-behavior: full
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+jwt:
+  secret: pet-home-secret-key-for-jwt-token-generation-2024
+  expiration: 7200
+
+wechat:
+  pay:
+    app-id: wx2d696ea387550f34
+    mch-id: 1710939204
+    api-key: your_api_key_here
+    notify-url: http://localhost:8080/api/payment/notify
+    sandbox: false
+    cert-path: ./certs/apiclient_cert.p12
+    cert-password: 1710939204
+  miniapp:
+    app-id: wxcf8868d6bfdc0d6f
+    secret: your_app_secret_here
+
+logging:
+  level:
+    com.pethome: debug
+
+host: http://localhost:8080
+domain: http://localhost:8080
+app:
+  public-base-url: http://localhost:8080
+
+upload:
+  path: ./upload/
+  url: http://localhost:8080/upload/
+  http-url: http://localhost:8080/upload/
+  image:
+    compress: true
+    max-width: 1024
+    max-height: 1024
+    quality: 0.75
+  video:
+    transcode:
+      enabled: false
+
+video:
+  upload-path: ./upload/videos
+  base-url: http://localhost:8080/upload/videos
+
+logistics:
+  kuaidi100:
+    enabled: false
+    customer: your_customer_key
+    key: your_api_key
+
+ai:
+  enabled: false
+
+sms:
+  aliyun:
+    enabled: false
+    access-key-id: ${ALIBABA_CLOUD_ACCESS_KEY_ID:}
+    access-key-secret: ${ALIBABA_CLOUD_ACCESS_KEY_SECRET:}
+    sign-name: 验证码
+    template-code: "SMS_xxxxxx"
+
+springfox:
+  documentation:
+    swagger-ui:
+      enabled: true

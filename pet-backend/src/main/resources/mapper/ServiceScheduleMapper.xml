@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.ServiceScheduleMapper">
+
+    <!-- 查询指定日期和时间段的可预约记录（可选按门店过滤，门店排班相互独立）；时间段用 TRIM 避免前后空格导致匹配不到 -->
+    <select id="selectAvailableSchedules" resultType="com.pethome.entity.ServiceSchedule">
+        SELECT ss.*
+        FROM service_schedule ss
+        INNER JOIN service_member sm ON ss.member_id = sm.id
+        WHERE ss.date = #{date}
+        AND TRIM(IFNULL(ss.time_slot, '')) = TRIM(IFNULL(#{timeSlot}, ''))
+        AND sm.service_type = #{serviceType}
+        AND (ss.reserved_count IS NULL OR ss.reserved_count &lt; IFNULL(ss.max_capacity, 1))
+        AND ss.status = '可预约'
+        AND sm.status = 1
+        <if test="storeId != null">
+        AND (ss.store_id = #{storeId} OR (ss.store_id IS NULL AND sm.store_id = #{storeId}))
+        </if>
+        ORDER BY sm.rating DESC, sm.total_tasks ASC
+    </select>
+
+    <!-- 占用时间段，设置状态并递增已预约数量 -->
+    <update id="occupyTimeSlot">
+        UPDATE service_schedule
+        SET status = '不可预约',
+            task_id = #{taskId},
+            reserved_count = LEAST(IFNULL(reserved_count, 0) + 1, IFNULL(max_capacity, 1)),
+            is_available = 0,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND status = '可预约'
+    </update>
+
+    <!-- 查询服务人员在指定日期的所有时间段 -->
+    <select id="selectByMemberAndDate" resultType="com.pethome.entity.ServiceSchedule">
+        SELECT * FROM service_schedule
+        WHERE member_id = #{memberId}
+        AND date = #{date}
+        ORDER BY time_slot ASC
+    </select>
+    
+    <!-- 根据服务类型和日期查询所有可用时间段 -->
+    <select id="selectByServiceTypeAndDate" resultType="com.pethome.entity.ServiceSchedule">
+        SELECT * FROM service_schedule
+        WHERE service_type = #{serviceType}
+        AND date = #{date}
+        AND (is_available IS NULL OR is_available = 1)
+        AND status = '可预约'
+        AND (reserved_count IS NULL OR reserved_count &lt; max_capacity)
+        ORDER BY time_slot ASC
+    </select>
+
+    <!-- 根据服务类型、日期、门店查询排班（优先按排班自身 store_id 过滤，无则回退到成员 store_id，避免团队保存时覆盖成员导致另一门店排班消失） -->
+    <select id="selectByServiceTypeAndDateAndStore" resultType="com.pethome.entity.ServiceSchedule">
+        SELECT ss.* FROM service_schedule ss
+        INNER JOIN service_member sm ON ss.member_id = sm.id
+        WHERE ss.service_type = #{serviceType}
+        AND ss.date = #{date}
+        AND (ss.store_id = #{storeId} OR (ss.store_id IS NULL AND sm.store_id = #{storeId}))
+        ORDER BY ss.time_slot ASC
+    </select>
+
+    <!-- 根据服务类型、日期范围、门店查询排班（用于日历统计，优先按排班 store_id 过滤） -->
+    <select id="selectByServiceTypeAndDateRangeAndStore" resultType="com.pethome.entity.ServiceSchedule">
+        SELECT ss.* FROM service_schedule ss
+        INNER JOIN service_member sm ON ss.member_id = sm.id
+        WHERE ss.service_type = #{serviceType}
+        AND ss.date &gt;= #{startDate}
+        AND ss.date &lt;= #{endDate}
+        AND (ss.store_id = #{storeId} OR (ss.store_id IS NULL AND sm.store_id = #{storeId}))
+        ORDER BY ss.date ASC, ss.time_slot ASC
+    </select>
+
+    <!-- 查询指定日期、时间段和状态的所有记录 -->
+    <select id="selectByDateAndTimeSlotAndStatus" resultType="com.pethome.entity.ServiceSchedule">
+        SELECT * FROM service_schedule
+        WHERE date = #{date}
+        AND time_slot = #{timeSlot}
+        AND status = #{status}
+    </select>
+
+    <!-- 更新时间段状态和关联任务ID -->
+    <update id="updateScheduleStatus">
+        UPDATE service_schedule
+        SET status = #{status},
+            task_id = #{taskId},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.pethome.mapper.MessageMapper">
+    
+    <resultMap id="BaseResultMap" type="com.pethome.entity.Message">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="from_id" property="fromId" jdbcType="BIGINT"/>
+        <result column="to_id" property="toId" jdbcType="BIGINT"/>
+        <result column="conversation_id" property="conversationId" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, from_id, to_id, conversation_id, status, create_time, content
+    </sql>
+    
+    <!-- 查询当前用户的会话数量 -->
+    <select id="selectConversationCount" resultType="int">
+        SELECT COUNT(DISTINCT m.conversation_id)
+        FROM message m
+        WHERE (m.from_id = #{userId} OR m.to_id = #{userId})
+        AND NOT EXISTS (
+            SELECT 1 FROM user_hidden_conversation h
+            WHERE h.user_id = #{userId} AND h.conversation_id = m.conversation_id
+        )
+    </select>
+    
+    <!-- 查询当前用户的会话列表,针对每个会话只返回一条最新的私信 -->
+    <select id="selectConversations" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE id IN (
+            SELECT MAX(id)
+            FROM message m2
+            WHERE (m2.from_id = #{userId} OR m2.to_id = #{userId})
+            AND NOT EXISTS (
+                SELECT 1 FROM user_hidden_conversation h
+                WHERE h.user_id = #{userId} AND h.conversation_id = m2.conversation_id
+            )
+            GROUP BY m2.conversation_id
+        )
+        ORDER BY create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectHiddenConversationIds" resultType="java.lang.String">
+        SELECT conversation_id
+        FROM user_hidden_conversation
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insertHiddenConversation">
+        INSERT IGNORE INTO user_hidden_conversation (user_id, conversation_id, create_time)
+        VALUES (#{userId}, #{conversationId}, NOW())
+    </insert>
+    
+    <!-- 查询某个会话所包含的私信数量 -->
+    <select id="selectLetterCount" resultType="int">
+        SELECT COUNT(*)
+        FROM message
+        WHERE conversation_id = #{conversationId}
+    </select>
+    
+    <!-- 查询未读私信的数量 -->
+    <select id="selectLetterUnreadCount" resultType="int">
+        SELECT COUNT(*)
+        FROM message
+        WHERE to_id = #{userId}
+        AND status = 0
+        <if test="conversationId != null and conversationId != ''">
+            AND conversation_id = #{conversationId}
+        </if>
+    </select>
+    
+    <!-- 查询某个会话所包含的私信列表 -->
+    <select id="selectLetters" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE conversation_id = #{conversationId}
+        ORDER BY create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    
+    <!-- 更新消息状态 -->
+    <update id="updateStatus">
+        UPDATE message
+        SET status = #{status}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+    <!-- 新增消息 -->
+    <insert id="insertMessage" parameterType="com.pethome.entity.Message" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO message (from_id, to_id, conversation_id, status, create_time, content)
+        VALUES (#{fromId}, #{toId}, #{conversationId}, #{status}, #{createTime}, #{content})
+    </insert>
+    
+    <!-- 查询某个主题下的最新通知 -->
+    <select id="selectLatestNotice" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE to_id = #{userId}
+        AND conversation_id = #{topic}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+    
+    <!-- 查询某个主题所包含的通知数量 -->
+    <select id="selectNoticeCount" resultType="int">
+        SELECT COUNT(*)
+        FROM message
+        WHERE to_id = #{userId}
+        AND conversation_id = #{topic}
+    </select>
+    
+    <!-- 查询未读的通知的数量 -->
+    <select id="selectNoticeUnreadCount" resultType="int">
+        SELECT COUNT(*)
+        FROM message
+        WHERE to_id = #{userId}
+        AND conversation_id = #{topic}
+        AND status = 0
+    </select>
+    
+    <!-- 查询某个主题所包含的通知列表 -->
+    <select id="selectNotices" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE to_id = #{userId}
+        AND conversation_id = #{topic}
+        ORDER BY create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    
+    <!-- 查询所有客服会话（conversation_id以service_开头） -->
+    <select id="selectAllServiceConversations" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE conversation_id LIKE 'service_%'
+        AND id IN (
+            SELECT MAX(id)
+            FROM message
+            WHERE conversation_id LIKE 'service_%'
+            GROUP BY conversation_id
+        )
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- 根据店铺ID查询客服会话 -->
+    <select id="selectServiceConversationsByStoreId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE conversation_id LIKE CONCAT('service_', #{storeId}, '_%')
+        AND id IN (
+            SELECT MAX(id)
+            FROM message
+            WHERE conversation_id LIKE CONCAT('service_', #{storeId}, '_%')
+            GROUP BY conversation_id
+        )
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询所有门店客服会话（outlet_开头） -->
+    <select id="selectAllOutletConversations" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE conversation_id LIKE 'outlet_%'
+        AND id IN (
+            SELECT MAX(id)
+            FROM message
+            WHERE conversation_id LIKE 'outlet_%'
+            GROUP BY conversation_id
+        )
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据服务门店ID查询门店客服会话 -->
+    <select id="selectOutletConversationsByServiceStoreId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE conversation_id LIKE CONCAT('outlet_', #{serviceStoreId}, '_%')
+        AND id IN (
+            SELECT MAX(id)
+            FROM message
+            WHERE conversation_id LIKE CONCAT('outlet_', #{serviceStoreId}, '_%')
+            GROUP BY conversation_id
+        )
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询所有平台客服会话 -->
+    <select id="selectAllPlatformConversations" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM message
+        WHERE conversation_id LIKE 'platform_%'
+        AND id IN (
+            SELECT MAX(id)
+            FROM message
+            WHERE conversation_id LIKE 'platform_%'
+            GROUP BY conversation_id
+        )
+        ORDER BY create_time DESC
+    </select>
+</mapper>

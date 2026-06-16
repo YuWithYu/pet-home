@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.AppointmentMapper">
+
+    <!-- 根据服务人员ID查询预约列表 -->
+    <select id="selectByMemberId" resultType="com.pethome.entity.Appointment">
+        SELECT a.*,
+               u.nickname as userName,
+               am.member_name as memberName
+        FROM appointment a
+        LEFT JOIN user u ON a.user_id = u.id
+        LEFT JOIN service_member am ON a.member_id = am.id
+        WHERE a.member_id = #{memberId}
+        ORDER BY a.appointment_date DESC
+    </select>
+
+    <!-- 根据管理员ID查询预约列表 -->
+    <select id="selectByAdminId" resultType="com.pethome.entity.Appointment">
+        SELECT a.*,
+               u.nickname as userName,
+               am.member_name as memberName
+        FROM appointment a
+        LEFT JOIN user u ON a.user_id = u.id
+        LEFT JOIN service_member am ON a.member_id = am.id
+        WHERE a.admin_id = #{adminId}
+        ORDER BY a.appointment_date DESC
+    </select>
+
+    <!-- 根据服务类型和日期查询预约列表 -->
+    <select id="selectByServiceTypeAndDate" resultType="com.pethome.entity.Appointment">
+        SELECT a.*,
+               u.nickname as userName,
+               am.member_name as memberName
+        FROM appointment a
+        LEFT JOIN user u ON a.user_id = u.id
+        LEFT JOIN service_member am ON a.member_id = am.id
+        WHERE a.service_type = #{serviceType}
+          AND a.date = #{date}
+          AND a.status != 'cancelled'
+        ORDER BY a.time_slot
+    </select>
+
+    <!-- 检查时间段是否可用（防止冲突） -->
+    <select id="countByServiceTypeAndDateTime" resultType="int">
+        SELECT COUNT(*)
+        FROM appointment
+        WHERE service_type = #{serviceType}
+          AND date = #{date}
+          AND time_slot = #{timeSlot}
+          AND status NOT IN ('cancelled', 'completed')
+        <if test="memberId != null">
+          AND member_id = #{memberId}
+        </if>
+    </select>
+
+    <!-- 根据日期范围查询预约 -->
+    <select id="selectByDateRange" resultType="com.pethome.entity.Appointment">
+        SELECT a.*,
+               u.nickname as userName,
+               am.member_name as memberName
+        FROM appointment a
+        LEFT JOIN user u ON a.user_id = u.id
+        LEFT JOIN service_member am ON a.member_id = am.id
+        WHERE a.date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY a.date, a.time_slot
+    </select>
+
+    <!-- 根据状态查询预约列表 -->
+    <select id="selectByStatus" resultType="com.pethome.entity.Appointment">
+        SELECT a.*,
+               u.nickname as userName,
+               am.member_name as memberName
+        FROM appointment a
+        LEFT JOIN user u ON a.user_id = u.id
+        LEFT JOIN service_member am ON a.member_id = am.id
+        WHERE a.status = #{status}
+        ORDER BY a.appointment_date DESC
+    </select>
+
+</mapper>

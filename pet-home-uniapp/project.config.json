@@ -1,0 +1,71 @@
+{
+  "description": "项目配置文件。",
+  "miniprogramRoot": "./",
+  "packNpmManually": true,
+  "packNpmRelationList": [
+    ["package.json", "node_modules"]
+  ],
+  "packOptions": {
+    "ignore": [
+      "static/upload/**/*",
+      "static/upload/**",
+      "**/static/upload/**",
+      "**/upload/**",
+      "unpackage/**",
+      "node_modules/**",
+      "static/assets/**",
+      "**/static/assets/**",
+      "static/tabbar/**",
+      "**/static/tabbar/**",
+      "static/images/定位.png",
+      "**/static/images/定位.png"
+    ]
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "bigPackageSizeSupport": true,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "uglifyFileName": true,
+    "enhance": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "",
+  "appid": "wxcf8868d6bfdc0d6f",
+  "projectname": "宠物之家",
+  "condition": {
+    "search": {
+      "current": -1,
+      "list": []
+    },
+    "conversation": {
+      "current": -1,
+      "list": []
+    },
+    "game": {
+      "current": -1,
+      "list": []
+    },
+    "miniprogram": {
+      "current": 0,
+      "list": [
+        {
+          "name": "首页",
+          "query": "",
+          "id": 0,
+          "pathName": "pages/index/index"
+        }
+      ]
+    }
+  }
+}
