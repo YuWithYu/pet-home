@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.PostCollectMapper">
+
+    <select id="checkCollectStatus" resultType="com.pethome.entity.PostCollect">
+        SELECT * FROM post_collect 
+        WHERE post_id = #{postId} 
+        AND user_id = #{userId}
+        LIMIT 1
+    </select>
+    
+    <select id="getTodayCollectCount" resultType="int">
+        SELECT COUNT(*) FROM post_collect 
+        WHERE user_id = #{userId} 
+        AND DATE(create_time) = CURDATE()
+    </select>
+
+</mapper>

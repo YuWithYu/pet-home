@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width,initial-scale=1.0" name="viewport" />
+    <meta name="author" content="Pet Home Admin" />
+    
+    <!-- 预加载 dayjs 和相关插件 -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/customParseFormat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/advancedFormat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/weekOfYear.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/weekYear.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/dayOfYear.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isSameOrAfter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isSameOrBefore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isBetween.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/quarterOfYear.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isoWeek.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isoWeeksInYear.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isLeapYear.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/minMax.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/utc.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/timezone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/duration.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/relativeTime.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/updateLocale.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/localeData.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/weekday.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isToday.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isTomorrow.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isYesterday.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/isMoment.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/objectSupport.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/arraySupport.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/localizedFormat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/calendar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/toArray.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/toObject.js"></script>
+  </head>
+  <body>
+
+    <div id="vue-admin-better"></div>
+    <script>
+
+      window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('ResizeObserver')) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return false;
+        }
+      });
+      
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && e.reason.message && e.reason.message.includes('ResizeObserver')) {
+          e.preventDefault();
+          return false;
+        }
+      });
+      
+      // 设置 dayjs 中文语言环境并确保插件正确加载
+      window.addEventListener('DOMContentLoaded', function() {
+        if (window.dayjs) {
+          // 设置中文语言环境
+          if (window.dayjs.locale) {
+            window.dayjs.locale('zh-cn');
+            console.log('dayjs locale set to zh-cn');
+          }
+          
+          // 确保 add 方法可用
+          if (!window.dayjs.prototype.add) {
+            console.warn('dayjs add method not available, loading duration plugin');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/dayjs@1.11.18/plugin/duration.js';
+            script.onload = function() {
+              console.log('dayjs duration plugin loaded');
+              // 重新设置语言环境
+              if (window.dayjs.locale) {
+                window.dayjs.locale('zh-cn');
+              }
+            };
+            document.head.appendChild(script);
+          }
+        }
+      });
+      
+    </script>
+  </body>
+</html>

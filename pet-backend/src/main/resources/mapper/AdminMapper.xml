@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.AdminMapper">
+
+    <!-- 根据用户名查询管理员 -->
+    <select id="selectByUsername" resultType="com.pethome.entity.Admin">
+        SELECT * FROM admin
+        WHERE username = #{username}
+        LIMIT 1
+    </select>
+
+    <!-- 根据部门查询员工列表 -->
+    <select id="selectStaffByDepartment" resultType="com.pethome.entity.Admin">
+        SELECT * FROM admin
+        WHERE role = 'staff'
+        AND status = 1
+        <if test="department != null and department != ''">
+            AND department = #{department}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询所有员工（不包括超级管理员） -->
+    <select id="selectAllStaff" resultType="com.pethome.entity.Admin">
+        SELECT * FROM admin
+        WHERE role != 'super_admin'
+        AND status = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询所有账号（不包括超级管理员，包含禁用） -->
+    <select id="selectAllStaffWithDisabled" resultType="com.pethome.entity.Admin">
+        SELECT * FROM admin
+        WHERE role != 'super_admin'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据角色查询管理员列表 -->
+    <select id="selectByRole" resultType="com.pethome.entity.Admin">
+        SELECT * FROM admin
+        WHERE role = #{role}
+        AND status = 1
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

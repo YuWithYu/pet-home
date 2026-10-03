@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.pethome.mapper.PostMapper">
+
+    <!-- 根据热度分数获取热门帖子 -->
+    <!-- 热度 = like_count*0.5 + comment_count*0.3 + view_count*0.2 + exposure_score -->
+    <select id="selectHotPostsByScore" resultType="com.pethome.entity.Post">
+        SELECT 
+            id, user_id, title, content, category, images,
+            likes_count, comments_count, views_count, shares_count,
+            image_count, cover_image, status, is_top, is_hot,
+            exposure_score, create_time, update_time
+        FROM post
+        WHERE status = 1 AND is_top = 0
+        ORDER BY 
+            (COALESCE(likes_count, 0) * 0.5 + 
+             COALESCE(comments_count, 0) * 0.3 + 
+             COALESCE(views_count, 0) * 0.2 + 
+             COALESCE(exposure_score, 0)) DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

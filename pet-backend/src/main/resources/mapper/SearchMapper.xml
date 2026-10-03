@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.SearchMapper">
+
+    <!-- 搜索商品：列表卡片只需基础字段；description/detail_images/features/params/services/specs
+         等 TEXT 详情字段不回传（description 仍参与 WHERE 匹配），避免 IO 放大 -->
+    <select id="searchProducts" resultType="com.pethome.entity.Product">
+        SELECT id, name, price, stock, category, brand, store_id, image, status,
+               is_hot, create_time, update_time
+        FROM product
+        WHERE status = 1
+        AND (
+            name LIKE CONCAT('%', #{keyword}, '%')
+            OR description LIKE CONCAT('%', #{keyword}, '%')
+        )
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 搜索帖子：列表卡片只需标题+媒体+计数；content 大文本不回传（仍参与 WHERE 匹配） -->
+    <select id="searchPosts" resultType="com.pethome.entity.Post">
+        SELECT id, user_id, title, category, tags, images, videos, likes_count, comments_count,
+               status, create_time, update_time, is_top, is_hot, exposure_score, views_count,
+               shares_count, image_count, cover_image
+        FROM post
+        WHERE status = 1
+        AND (
+            title LIKE CONCAT('%', #{keyword}, '%')
+            OR content LIKE CONCAT('%', #{keyword}, '%')
+        )
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 搜索服务门店 -->
+    <select id="searchServices" resultType="com.pethome.entity.ServiceStore">
+        SELECT * FROM service_stores
+        WHERE 1 = 1
+        AND (
+            store_name LIKE CONCAT('%', #{keyword}, '%')
+            OR description LIKE CONCAT('%', #{keyword}, '%')
+        )
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

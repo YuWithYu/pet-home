@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.AdminPermissionMapper">
+
+    <!-- 根据管理员ID查询所有权限 -->
+    <select id="selectByAdminId" resultType="com.pethome.entity.AdminPermission">
+        SELECT * FROM admin_permissions
+        WHERE admin_id = #{adminId}
+        AND status = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据管理员ID和权限代码查询权限 -->
+    <select id="selectByAdminIdAndCode" resultType="com.pethome.entity.AdminPermission">
+        SELECT * FROM admin_permissions
+        WHERE admin_id = #{adminId}
+        AND permission_code = #{permissionCode}
+        AND status = 1
+        LIMIT 1
+    </select>
+
+    <!-- 删除管理员的所有权限 -->
+    <delete id="deleteByAdminId">
+        DELETE FROM admin_permissions
+        WHERE admin_id = #{adminId}
+    </delete>
+
+    <!-- 批量插入权限 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO admin_permissions (admin_id, permission_code, permission_name, status, create_time, update_time)
+        VALUES
+        <foreach collection="permissions" item="item" separator=",">
+            (#{item.adminId}, #{item.permissionCode}, #{item.permissionName}, #{item.status}, NOW(), NOW())
+        </foreach>
+    </insert>
+
+</mapper>

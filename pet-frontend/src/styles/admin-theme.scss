@@ -1,0 +1,180 @@
+/**
+ * 管理后台统一设计系统
+ * 通过 Element Plus CSS 变量 + 组件级样式覆盖，全站统一视觉风格
+ * 页面内不再需要重复写死颜色/圆角/阴影
+ */
+
+/* ========== 1. 设计令牌（Element Plus CSS 变量覆盖） ========== */
+:root {
+  // 主色：宠物家品牌蓝（略深于默认，对比度更好）
+  --el-color-primary: #3a6df0;
+  --el-color-primary-light-3: #6b8ef5;
+  --el-color-primary-light-5: #9ab2f8;
+  --el-color-primary-light-7: #c5d3fb;
+  --el-color-primary-light-8: #dae3fd;
+  --el-color-primary-light-9: #edf2fe;
+  --el-color-primary-dark-2: #2e57c0;
+
+  // 功能色微调（更柔和的现代色板）
+  --el-color-success: #34b77c;
+  --el-color-warning: #e6a23c;
+  --el-color-danger: #f0564f;
+  --el-color-error: #f0564f;
+  --el-color-info: #8a94a6;
+
+  // 文字/边框/背景统一灰阶
+  --el-text-color-primary: #262f3b;
+  --el-text-color-regular: #4e5969;
+  --el-text-color-secondary: #86909c;
+  --el-border-color: #e5e8ef;
+  --el-border-color-light: #eceef3;
+  --el-border-color-lighter: #f2f3f7;
+  --el-fill-color-light: #f7f8fa;
+
+  // 圆角与阴影
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+  --el-border-radius-round: 20px;
+  --el-box-shadow-light: 0 2px 12px rgba(31, 45, 80, 0.06);
+
+  // 字重层级
+  --el-font-weight-primary: 500;
+}
+
+/* ========== 2. 卡片：浅阴影 + 统一圆角 + 悬浮微升 ========== */
+.el-card {
+  border-radius: 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: 0 1px 3px rgba(31, 45, 80, 0.04) !important;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+
+  &.is-hover-shadow:hover,
+  &.is-always-shadow {
+    box-shadow: 0 4px 16px rgba(31, 45, 80, 0.08) !important;
+  }
+
+  .el-card__header {
+    padding: 14px 20px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  .el-card__body {
+    padding: 18px 20px;
+  }
+}
+
+/* ========== 3. 表格：表头底色 + 行悬浮 + 圆角裁切 ========== */
+.el-table {
+  --el-table-header-bg-color: #f7f8fa;
+  --el-table-header-text-color: #4e5969;
+  --el-table-row-hover-bg-color: #f0f4ff;
+  --el-table-border-color: var(--el-border-color-lighter);
+  border-radius: 8px;
+  overflow: hidden;
+
+  .el-table__header th {
+    font-weight: 600;
+    height: 48px;
+  }
+
+  .el-table__row {
+    transition: background-color 0.2s ease;
+  }
+
+  // 斑马纹弱化，保持干净
+  &.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+    background: #fafbfd;
+  }
+
+  // 空状态图标尺寸
+  .el-table__empty-block .el-table__empty-text {
+    color: var(--el-text-color-secondary);
+  }
+}
+
+/* ========== 4. 弹窗：统一圆角 + 头部底色 ========== */
+.el-dialog {
+  border-radius: 12px;
+
+  .el-dialog__header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    margin-right: 0;
+
+    .el-dialog__title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+  }
+
+  .el-dialog__body {
+    padding: 20px 24px;
+  }
+
+  .el-dialog__footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+}
+
+/* ========== 5. 分页：右对齐 + 统一间距 ========== */
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+
+  .el-pagination {
+    --el-pagination-button-bg-color: transparent;
+  }
+}
+
+/* ========== 6. 页头工具条：筛选/搜索/按钮统一间距 ========== */
+.card-header,
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  .el-input,
+  .el-select {
+    margin-right: 0 !important; // 由 gap 接管间距
+  }
+}
+
+/* ========== 7. 标签：统一圆角 ========== */
+.el-tag {
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+/* ========== 8. 消息与提示 ========== */
+.el-message {
+  border-radius: 8px;
+}
+
+.el-alert {
+  border-radius: 8px;
+}
+
+/* ========== 9. 滚动条：细窄现代风 ========== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+
+  &-thumb {
+    background: #c9cfd9;
+    border-radius: 3px;
+
+    &:hover {
+      background: #aab3c2;
+    }
+  }
+
+  &-track {
+    background: transparent;
+  }
+}

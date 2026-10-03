@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.CommentMapper">
+
+    <resultMap id="CommentWithUser" type="com.pethome.entity.Comment">
+        <id property="id" column="id"/>
+        <result property="postId" column="post_id"/>
+        <result property="topicId" column="topic_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="content" column="content"/>
+        <result property="likesCount" column="likes_count"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="userName" column="user_name"/>
+        <result property="userAvatar" column="user_avatar"/>
+        <result property="location" column="location"/>
+        <result property="replyCount" column="reply_count"/>
+    </resultMap>
+
+    <!-- 回复数：该条评论下所有回复（含回复的回复）的递归总数，需 MySQL 8.0+ -->
+    <select id="getCommentsByPostId" resultMap="CommentWithUser">
+        WITH RECURSIVE tree AS (
+            SELECT id, id AS root_id FROM comment
+            WHERE post_id = #{postId} AND status = 1 AND (parent_id IS NULL OR parent_id = 0)
+            UNION ALL
+            SELECT c.id, t.root_id FROM comment c
+            INNER JOIN tree t ON c.parent_id = t.id AND c.status = 1
+        ),
+        reply_counts AS (
+            SELECT root_id, COUNT(*) - 1 AS reply_count FROM tree GROUP BY root_id
+        )
+        SELECT
+            c.id,
+            c.post_id,
+            c.topic_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.likes_count,
+            c.status,
+            c.create_time,
+            c.update_time,
+            COALESCE(NULLIF(u.nickname, ''), CONCAT('用户', u.id)) AS user_name,
+            u.avatar AS user_avatar,
+            COALESCE(c.location, '') AS location,
+            COALESCE(rc.reply_count, 0) AS reply_count
+        FROM comment c
+        LEFT JOIN user u ON c.user_id = u.id
+        LEFT JOIN reply_counts rc ON c.id = rc.root_id
+        WHERE c.post_id = #{postId}
+          AND c.status = 1
+          AND (c.parent_id IS NULL OR c.parent_id = 0)
+        ORDER BY c.create_time DESC
+    </select>
+
+    <select id="getRepliesByCommentId" resultMap="CommentWithUser">
+        SELECT 
+            c.id,
+            c.post_id,
+            c.topic_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.likes_count,
+            c.status,
+            c.create_time,
+            c.update_time,
+            COALESCE(NULLIF(u.nickname, ''), CONCAT('用户', u.id)) as user_name,
+            u.avatar as user_avatar,
+            COALESCE(c.location, '') as location
+        FROM comment c
+        LEFT JOIN user u ON c.user_id = u.id
+        WHERE c.parent_id = #{commentId} 
+        AND c.status = 1
+        ORDER BY c.create_time ASC
+    </select>
+
+    <!-- 专题评论：按 topic_id 查询顶级评论 -->
+    <select id="getCommentsByTopicId" resultMap="CommentWithUser">
+        WITH RECURSIVE tree AS (
+            SELECT id, id AS root_id FROM comment
+            WHERE topic_id = #{topicId} AND status = 1 AND (parent_id IS NULL OR parent_id = 0)
+            UNION ALL
+            SELECT c.id, t.root_id FROM comment c
+            INNER JOIN tree t ON c.parent_id = t.id AND c.status = 1
+        ),
+        reply_counts AS (
+            SELECT root_id, COUNT(*) - 1 AS reply_count FROM tree GROUP BY root_id
+        )
+        SELECT
+            c.id,
+            c.post_id,
+            c.topic_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.likes_count,
+            c.status,
+            c.create_time,
+            c.update_time,
+            COALESCE(NULLIF(u.nickname, ''), CONCAT('用户', u.id)) AS user_name,
+            u.avatar AS user_avatar,
+            COALESCE(c.location, '') AS location,
+            COALESCE(rc.reply_count, 0) AS reply_count
+        FROM comment c
+        LEFT JOIN user u ON c.user_id = u.id
+        LEFT JOIN reply_counts rc ON c.id = rc.root_id
+        WHERE c.topic_id = #{topicId}
+          AND c.status = 1
+          AND (c.parent_id IS NULL OR c.parent_id = 0)
+        ORDER BY c.create_time DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethome.mapper.ServiceMemberMapper">
+
+    <!-- 根据服务类型查询启用的服务人员 -->
+    <select id="selectByServiceType" resultType="com.pethome.entity.ServiceMember">
+        SELECT * FROM service_member
+        WHERE service_type = #{serviceType}
+        AND status = 1
+        ORDER BY rating DESC, total_tasks ASC
+    </select>
+
+    <!-- 根据服务类型和门店查询启用的服务人员：storeId 为 null 时返回该类型所有人；否则仅返回明确分配在该门店的成员（不含平台级），新店无配人则不显示时间段 -->
+    <select id="selectByServiceTypeAndStore" resultType="com.pethome.entity.ServiceMember">
+        SELECT * FROM service_member
+        WHERE service_type = #{serviceType}
+        AND status = 1
+        <if test="storeId != null">
+        AND store_id = #{storeId}
+        </if>
+        ORDER BY rating DESC, total_tasks ASC
+    </select>
+
+    <!-- 查询服务人员在指定日期的任务数（今日待完成：pending+confirmed，汇总上门铲屎+洗护+医院） -->
+    <select id="countTasksByMemberAndDate" resultType="java.lang.Integer">
+        SELECT (
+            (SELECT COUNT(*) FROM door_cleaning_appointment
+             WHERE member_id = #{memberId} AND DATE(COALESCE(appointment_date, date)) = #{date}
+             AND status IN ('pending', 'confirmed'))
+            +
+            (SELECT COUNT(*) FROM grooming_appointments
+             WHERE member_id = #{memberId} AND date = #{date}
+             AND status IN ('pending', 'confirmed'))
+            +
+            (SELECT COUNT(*) FROM hospital_appointments
+             WHERE member_id = #{memberId} AND date = #{date}
+             AND status IN ('pending', 'confirmed'))
+        ) AS cnt
+    </select>
+
+    <!-- 查询服务人员总任务数（所有非取消的预约，汇总上门铲屎+洗护+医院） -->
+    <select id="countTotalTasksByMember" resultType="java.lang.Integer">
+        SELECT (
+            (SELECT COUNT(*) FROM door_cleaning_appointment
+             WHERE member_id = #{memberId} AND status != 'cancelled')
+            +
+            (SELECT COUNT(*) FROM grooming_appointments
+             WHERE member_id = #{memberId} AND status != 'cancelled')
+            +
+            (SELECT COUNT(*) FROM hospital_appointments
+             WHERE member_id = #{memberId} AND status != 'cancelled')
+        ) AS total
+    </select>
+
+    <!-- 查询所有服务人员（不区分状态和服务类型） -->
+    <select id="selectAllMembers" resultType="com.pethome.entity.ServiceMember">
+        SELECT * FROM service_member
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByUserId" resultType="com.pethome.entity.ServiceMember">
+        SELECT * FROM service_member
+        WHERE user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="countDoorCleaningTasksByMemberAndDate" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM door_cleaning_appointment
+        WHERE member_id = #{memberId} AND DATE(COALESCE(appointment_date, date)) = #{date}
+        AND status IN ('pending', 'confirmed')
+    </select>
+    <select id="countGroomingTasksByMemberAndDate" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM grooming_appointments
+        WHERE member_id = #{memberId} AND date = #{date}
+        AND status IN ('pending', 'confirmed')
+    </select>
+    <select id="countHospitalTasksByMemberAndDate" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM hospital_appointments
+        WHERE member_id = #{memberId} AND date = #{date}
+        AND status IN ('pending', 'confirmed')
+    </select>
+    <select id="countDoorCleaningTotalByMember" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM door_cleaning_appointment
+        WHERE member_id = #{memberId} AND status != 'cancelled'
+    </select>
+    <select id="countGroomingTotalByMember" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM grooming_appointments
+        WHERE member_id = #{memberId} AND status != 'cancelled'
+    </select>
+    <select id="countHospitalTotalByMember" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM hospital_appointments
+        WHERE member_id = #{memberId} AND status != 'cancelled'
+    </select>
+
+</mapper>
