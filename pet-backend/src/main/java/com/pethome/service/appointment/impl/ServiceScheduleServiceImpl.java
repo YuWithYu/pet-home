@@ -1,6 +1,9 @@
 package com.pethome.service.appointment.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.pethome.common.BusinessException;
+import com.pethome.common.ServiceTypeCatalog;
+import com.pethome.entity.Admin;
 import com.pethome.entity.DoorCleaningAppointment;
 import com.pethome.entity.MemberCalendarDayMark;
 import com.pethome.entity.ServiceMember;
@@ -9,6 +12,7 @@ import com.pethome.entity.TimeSlot;
 import com.pethome.mapper.MemberCalendarDayMarkMapper;
 import com.pethome.mapper.ServiceMemberMapper;
 import com.pethome.mapper.ServiceScheduleMapper;
+import com.pethome.service.admin.AdminService;
 import com.pethome.service.common.RedisCacheService;
 import com.pethome.service.appointment.ServiceMemberService;
 import com.pethome.service.appointment.ServiceScheduleService;
@@ -62,6 +66,9 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
 
     @Autowired
     private MemberCalendarDayMarkMapper memberCalendarDayMarkMapper;
+
+    @Autowired
+    private AdminService adminService;
 
     @Override
     public List<Map<String, Object>> getAvailableTimeSlots(String serviceType, LocalDate date, Long storeId) {
@@ -372,7 +379,7 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
     @Override
     public Map<String, Object> getMemberCalendarView(Long memberId, LocalDate startDate, LocalDate endDate) {
         if (memberId == null || startDate == null || endDate == null) {
-            throw new IllegalArgumentException("memberId、startDate、endDate 不能为空");
+            throw new BusinessException("memberId、startDate、endDate 不能为空");
         }
         Map<String, Object> out = new HashMap<>();
         QueryWrapper<ServiceSchedule> w = new QueryWrapper<>();
@@ -405,7 +412,7 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
     @Transactional(rollbackFor = Exception.class)
     public boolean setMemberDayAttendance(Long memberId, LocalDate date, String attendance) {
         if (memberId == null || date == null || attendance == null || attendance.isEmpty()) {
-            throw new IllegalArgumentException("memberId、date、attendance 不能为空");
+            throw new BusinessException("memberId、date、attendance 不能为空");
         }
         String mode = attendance.trim().toLowerCase();
         if ("leave".equals(mode) || "请假".equals(attendance.trim())) {
@@ -447,7 +454,7 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
             }
             return batchCreateSchedules(memberId, date, date, Collections.singletonList(STORE_ADMIN_DAY_SLOT));
         }
-        throw new IllegalArgumentException("attendance 须为 work（上班）或 leave（请假）");
+        throw new BusinessException("attendance 须为 work（上班）或 leave（请假）");
     }
     
     @Override
@@ -593,7 +600,7 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
     @Transactional(rollbackFor = Exception.class)
     public boolean updateSchedule(ServiceSchedule schedule) {
         if (schedule == null || schedule.getId() == null) {
-            throw new IllegalArgumentException("排班ID不能为空");
+            throw new BusinessException("排班ID不能为空");
         }
         ServiceSchedule existing = scheduleMapper.selectById(schedule.getId());
         if (existing == null) {
@@ -654,7 +661,7 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
             wrapper.notIn("status", Arrays.asList("cancelled", "已取消", "completed", "已完成"));
             DoorCleaningAppointment appointment = doorCleaningAppointmentMapper.selectOne(wrapper);
             if (appointment != null) {
-                throw new IllegalArgumentException("该排班已有预约，无法修改服务人员/日期/时间段");
+                throw new BusinessException("该排班已有预约，无法修改服务人员/日期/时间段");
             }
         }
 
@@ -665,6 +672,21 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
             return true;
         }
         return false;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateSchedule(ServiceSchedule schedule, Long adminId) {
+        if (schedule != null && schedule.getServiceType() == null && adminId != null) {
+            Admin admin = adminService.getById(adminId);
+            if (admin != null) {
+                String serviceType = ServiceTypeCatalog.serviceTypeByDepartment(admin.getDepartment());
+                if (serviceType != null) {
+                    schedule.setServiceType(serviceType);
+                }
+            }
+        }
+        return updateSchedule(schedule);
     }
 
     /** 删除当日排班后写入请假标记；表未创建时忽略，不影响排班删除提交 */

@@ -1,6 +1,7 @@
 package com.pethome.controller.appointment;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -69,7 +70,7 @@ public class ServiceStoreController {
         if (store != null) {
             return Result.success(store);
         }
-        return Result.error("门店不存在");
+        throw new BusinessException("门店不存在");
     }
 
     @GetMapping("/default")
@@ -79,7 +80,7 @@ public class ServiceStoreController {
         if (store != null) {
             return Result.success(store);
         }
-        return Result.error("未设置默认门店");
+        throw new BusinessException("未设置默认门店");
     }
 
     @PostMapping("/create")
@@ -87,9 +88,9 @@ public class ServiceStoreController {
     public Result<ServiceStore> createStore(@RequestBody ServiceStore store, HttpServletRequest request) {
         // 安全修复：门店属平台级主数据，仅平台管理员可创建（此前任意登录用户可建店）
         if (!RequestIdentity.isPlatformAdmin(request)) {
-            return Result.error(403, "无权创建门店");
+            throw new BusinessException(403, "无权创建门店");
         }
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             ServiceStore created = serviceStoreService.createStore(store);
             return Result.success(created);
         }, "创建门店失败，请稍后重试", log);
@@ -99,13 +100,12 @@ public class ServiceStoreController {
     private String normalizeImageUrlToRelative(String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) return imageUrl;
         if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) return imageUrl;
-        try {
-            int pathStart = imageUrl.indexOf("/", imageUrl.indexOf("://") + 3);
-            if (pathStart > 0) {
-                String path = imageUrl.substring(pathStart);
-                return path.startsWith("/") ? path : "/" + path;
-            }
-        } catch (Exception ignored) {}
+        int schemeEnd = imageUrl.indexOf("://");
+        int pathStart = schemeEnd < 0 ? -1 : imageUrl.indexOf("/", schemeEnd + 3);
+        if (pathStart > 0) {
+            String path = imageUrl.substring(pathStart);
+            return path.startsWith("/") ? path : "/" + path;
+        }
         return imageUrl;
     }
 
@@ -114,9 +114,9 @@ public class ServiceStoreController {
     public Result<ServiceStore> updateStore(@RequestBody ServiceStore store, HttpServletRequest request) {
         // 安全修复：门店属平台级主数据，仅平台管理员可修改（此前任意登录用户可改任意门店）
         if (!RequestIdentity.isPlatformAdmin(request)) {
-            return Result.error(403, "无权修改门店");
+            throw new BusinessException(403, "无权修改门店");
         }
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
                 store.setImageUrl(normalizeImageUrlToRelative(store.getImageUrl()));
             }
@@ -130,9 +130,9 @@ public class ServiceStoreController {
     public Result<Boolean> deleteStore(@PathVariable Long id, HttpServletRequest request) {
         // 安全修复：删除门店属平台级操作，仅平台管理员可执行
         if (!RequestIdentity.isPlatformAdmin(request)) {
-            return Result.error(403, "无权删除门店");
+            throw new BusinessException(403, "无权删除门店");
         }
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             boolean success = serviceStoreService.deleteStore(id);
             return Result.success(success);
         }, "删除门店失败，请稍后重试", log);
@@ -143,12 +143,11 @@ public class ServiceStoreController {
     public Result<String> uploadStoreImage(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         // 安全修复：门店图片写入平台级主数据，仅平台管理员可上传
         if (!RequestIdentity.isPlatformAdmin(request)) {
-            return Result.error(403, "无权上传门店图片");
+            throw new BusinessException(403, "无权上传门店图片");
         }
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         }, "图片上传失败，请稍后重试", log);
     }
 }
-

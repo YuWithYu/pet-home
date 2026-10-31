@@ -84,6 +84,11 @@ public interface ServiceScheduleService {
     boolean updateSchedule(ServiceSchedule schedule);
 
     /**
+     * 更新排班：未指定服务类型时，按操作人所属部门回填（部门取值见 ServiceTypeCatalog）
+     */
+    boolean updateSchedule(ServiceSchedule schedule, Long adminId);
+
+    /**
      * 根据主键查询排班（用于门店归属校验）
      */
     ServiceSchedule getScheduleById(Long scheduleId);

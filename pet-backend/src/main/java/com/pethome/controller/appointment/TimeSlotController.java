@@ -1,6 +1,8 @@
 package com.pethome.controller.appointment;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.pethome.common.BusinessException;
+import com.pethome.common.Result;
+import com.pethome.common.SafeCall;
 import com.pethome.entity.TimeSlot;
 import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.TimeSlotService;
@@ -12,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/time-slots")
@@ -27,224 +27,86 @@ public class TimeSlotController {
     private TimeSlotService timeSlotService;
 
     /** 时间段属门店运营配置，仅 staff/admin 可维护（只读接口仍按公开白名单放行） */
-    private boolean denyIfNotAdminOrStaff(HttpServletRequest request, Map<String, Object> result) {
-        if (RequestIdentity.isAdminOrStaff(request)) {
-            return false;
+    private void requireAdminOrStaff(HttpServletRequest request) {
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            throw new BusinessException(403, "无权操作时间段配置");
         }
-        result.put("code", 403);
-        result.put("msg", "无权操作时间段配置");
-        return true;
     }
 
     /** 门店归属：平台管理员不限门店；店长/店员只能维护本门店（无门店归属视为越权） */
-    private boolean denyIfCrossStore(HttpServletRequest request, Long storeId, Map<String, Object> result) {
+    private void requireSameStore(HttpServletRequest request, Long storeId) {
         if (RequestIdentity.isPlatformAdmin(request)) {
-            return false;
+            return;
         }
         Long scope = RequestIdentity.serviceStoreId(request);
         if (scope != null && storeId != null && scope.equals(storeId)) {
-            return false;
+            return;
         }
-        result.put("code", 403);
-        result.put("msg", "无权操作其他门店的时间段配置");
-        return true;
+        throw new BusinessException(403, "无权操作其他门店的时间段配置");
     }
 
     @GetMapping("/list")
     @Operation(summary = "获取时间段列表")
-    public Map<String, Object> getTimeSlotList(@RequestParam String serviceType,
-                                               @RequestParam(required = false) Long storeId) {
-        Map<String, Object> result = new HashMap<>();
-        
-        try {
-            QueryWrapper<TimeSlot> wrapper = new QueryWrapper<>();
-            wrapper.eq("service_type", serviceType);
-            if (storeId != null) {
-                wrapper.eq("store_id", storeId);
-            } else {
-                wrapper.isNull("store_id");
-            }
-            wrapper.orderByAsc("time_slot");
-            
-            List<TimeSlot> timeSlots = timeSlotService.list(wrapper);
-            
-            result.put("code", 0);
-            result.put("msg", "success");
-            result.put("data", timeSlots);
-        } catch (Exception e) {
-            log.error("查询失败", e);
-            result.put("code", -1);
-            result.put("msg", "查询失败，请稍后重试");
-        }
-        
-        return result;
+    public Result<List<TimeSlot>> getTimeSlotList(@RequestParam String serviceType,
+                                                  @RequestParam(required = false) Long storeId) {
+        return SafeCall.of(() -> Result.success(timeSlotService.listTimeSlots(serviceType, storeId)),
+                "查询失败，请稍后重试", log);
     }
 
     @PostMapping("/create")
     @Operation(summary = "创建时间段")
-    public Map<String, Object> createTimeSlot(@RequestBody TimeSlot timeSlot,
-                                              HttpServletRequest request) {
-        Map<String, Object> result = new HashMap<>();
-        if (denyIfNotAdminOrStaff(request, result)) {
-            return result;
-        }
-        if (denyIfCrossStore(request, timeSlot.getStoreId(), result)) {
-            return result;
-        }
-        
-        try {
-            // 检查是否已存在
-            QueryWrapper<TimeSlot> wrapper = new QueryWrapper<>();
-            wrapper.eq("service_type", timeSlot.getServiceType());
-            wrapper.eq("time_slot", timeSlot.getTimeSlot());
-            if (timeSlot.getStoreId() != null) {
-                wrapper.eq("store_id", timeSlot.getStoreId());
-            } else {
-                wrapper.isNull("store_id");
-            }
-            
-            if (timeSlotService.count(wrapper) > 0) {
-                result.put("code", -1);
-                result.put("msg", "该时间段已存在");
-                return result;
-            }
-            
-            boolean success = timeSlotService.save(timeSlot);
-            
-            if (success) {
-                result.put("code", 0);
-                result.put("msg", "添加成功");
-                result.put("data", timeSlot);
-            } else {
-                result.put("code", -1);
-                result.put("msg", "添加失败");
-            }
-        } catch (Exception e) {
-            result.put("code", -1);
-            result.put("msg", "添加失败，请稍后重试");
-            log.error("添加时间段失败", e);
-        }
-        
-        return result;
+    public Result<TimeSlot> createTimeSlot(@RequestBody TimeSlot timeSlot,
+                                           HttpServletRequest request) {
+        requireAdminOrStaff(request);
+        requireSameStore(request, timeSlot.getStoreId());
+        return SafeCall.of(() -> Result.success(timeSlotService.createTimeSlot(timeSlot)),
+                "添加失败，请稍后重试", log);
     }
 
     @PostMapping("/update")
     @Operation(summary = "更新时间段")
-    public Map<String, Object> updateTimeSlot(@RequestBody TimeSlot timeSlot,
-                                             HttpServletRequest request) {
-        Map<String, Object> result = new HashMap<>();
-        if (denyIfNotAdminOrStaff(request, result)) {
-            return result;
+    public Result<TimeSlot> updateTimeSlot(@RequestBody TimeSlot timeSlot,
+                                           HttpServletRequest request) {
+        requireAdminOrStaff(request);
+        TimeSlot existing = timeSlotService.getById(timeSlot.getId());
+        if (existing == null) {
+            throw new BusinessException("时间段不存在");
         }
-        
-        try {
-            TimeSlot existing = timeSlotService.getById(timeSlot.getId());
-            if (existing == null) {
-                result.put("code", -1);
-                result.put("msg", "时间段不存在");
-                return result;
-            }
-            // 安全修复：店长/店员不得修改其他门店（含把本店记录改到他店）的时间段
-            if (denyIfCrossStore(request, existing.getStoreId(), result)
-                    || denyIfCrossStore(request, timeSlot.getStoreId(), result)) {
-                return result;
-            }
-            boolean success = timeSlotService.updateById(timeSlot);
-            
-            if (success) {
-                result.put("code", 0);
-                result.put("msg", "更新成功");
-                result.put("data", timeSlot);
-            } else {
-                result.put("code", -1);
-                result.put("msg", "更新失败");
-            }
-        } catch (Exception e) {
-            log.error("更新失败", e);
-            result.put("code", -1);
-            result.put("msg", "更新失败，请稍后重试");
-        }
-        
-        return result;
+        // 安全修复：店长/店员不得修改其他门店（含把本店记录改到他店）的时间段
+        requireSameStore(request, existing.getStoreId());
+        requireSameStore(request, timeSlot.getStoreId());
+        return SafeCall.of(() -> Result.success(timeSlotService.updateTimeSlot(timeSlot)),
+                "更新失败，请稍后重试", log);
     }
 
     @PutMapping("/{id}/status")
     @Operation(summary = "更新时间段状态")
-    public Map<String, Object> updateTimeSlotStatus(
+    public Result<Boolean> updateTimeSlotStatus(
             @PathVariable Long id,
             @RequestParam Boolean isActive,
             HttpServletRequest request) {
-        Map<String, Object> result = new HashMap<>();
-        if (denyIfNotAdminOrStaff(request, result)) {
-            return result;
+        requireAdminOrStaff(request);
+        TimeSlot timeSlot = timeSlotService.getById(id);
+        if (timeSlot == null) {
+            throw new BusinessException("时间段不存在");
         }
-        
-        try {
-            TimeSlot timeSlot = timeSlotService.getById(id);
-            if (timeSlot == null) {
-                result.put("code", -1);
-                result.put("msg", "时间段不存在");
-                return result;
-            }
-            // 安全修复：店长/店员不得修改其他门店时间段的状态
-            if (denyIfCrossStore(request, timeSlot.getStoreId(), result)) {
-                return result;
-            }
-            
-            timeSlot.setIsActive(isActive);
-            boolean success = timeSlotService.updateById(timeSlot);
-            
-            if (success) {
-                result.put("code", 0);
-                result.put("msg", "更新成功");
-            } else {
-                result.put("code", -1);
-                result.put("msg", "更新失败");
-            }
-        } catch (Exception e) {
-            log.error("更新失败", e);
-            result.put("code", -1);
-            result.put("msg", "更新失败，请稍后重试");
-        }
-        
-        return result;
+        // 安全修复：店长/店员不得修改其他门店时间段的状态
+        requireSameStore(request, timeSlot.getStoreId());
+        return SafeCall.of(() -> Result.success(timeSlotService.updateTimeSlotStatus(timeSlot, isActive)),
+                "更新失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除时间段")
-    public Map<String, Object> deleteTimeSlot(@PathVariable Long id, HttpServletRequest request) {
-        Map<String, Object> result = new HashMap<>();
-        if (denyIfNotAdminOrStaff(request, result)) {
-            return result;
+    public Result<Boolean> deleteTimeSlot(@PathVariable Long id, HttpServletRequest request) {
+        requireAdminOrStaff(request);
+        TimeSlot existing = timeSlotService.getById(id);
+        if (existing == null) {
+            throw new BusinessException("时间段不存在");
         }
-        
-        try {
-            TimeSlot existing = timeSlotService.getById(id);
-            if (existing == null) {
-                result.put("code", -1);
-                result.put("msg", "时间段不存在");
-                return result;
-            }
-            // 安全修复：店长/店员不得删除其他门店的时间段
-            if (denyIfCrossStore(request, existing.getStoreId(), result)) {
-                return result;
-            }
-            boolean success = timeSlotService.removeById(id);
-            
-            if (success) {
-                result.put("code", 0);
-                result.put("msg", "删除成功");
-            } else {
-                result.put("code", -1);
-                result.put("msg", "删除失败");
-            }
-        } catch (Exception e) {
-            log.error("删除失败", e);
-            result.put("code", -1);
-            result.put("msg", "删除失败，请稍后重试");
-        }
-        
-        return result;
+        // 安全修复：店长/店员不得删除其他门店的时间段
+        requireSameStore(request, existing.getStoreId());
+        return SafeCall.of(() -> Result.success(timeSlotService.deleteTimeSlot(id)),
+                "删除失败，请稍后重试", log);
     }
 }
-

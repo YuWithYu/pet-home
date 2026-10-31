@@ -1,11 +1,10 @@
 package com.pethome.controller.appointment;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
-import com.pethome.entity.Admin;
 import com.pethome.entity.ServiceSchedule;
-import com.pethome.service.admin.AdminService;
 import com.pethome.service.appointment.ServiceScheduleService;
 import com.pethome.security.AdminContext;
 import com.pethome.security.RequestIdentity;
@@ -36,9 +35,6 @@ public class ServiceScheduleController {
     private ServiceScheduleService scheduleService;
 
     @Autowired
-    private AdminService adminService;
-
-    @Autowired
     private com.pethome.service.appointment.ServiceMemberService serviceMemberService;
     
     @Autowired(required = false)
@@ -51,7 +47,7 @@ public class ServiceScheduleController {
             @RequestParam String date,
             @RequestParam(required = false) Long storeId,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
                 currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
@@ -71,12 +67,12 @@ public class ServiceScheduleController {
             HttpServletRequest request) {
         // 安全修复：排班属门店运营数据，且含员工维度信息，仅 admin/staff 且限本门店
         if (!RequestIdentity.isAdminOrStaff(request)) {
-            return Result.error(403, "无权查看服务人员日程");
+            throw new BusinessException(403, "无权查看服务人员日程");
         }
         if (!canManageMember(request, memberId)) {
-            return Result.error(403, "无权查看其他门店的服务人员日程");
+            throw new BusinessException(403, "无权查看其他门店的服务人员日程");
         }
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
             List<ServiceSchedule> schedules = scheduleService.getMemberSchedule(memberId, localDate);
             return Result.success(schedules);
@@ -93,16 +89,18 @@ public class ServiceScheduleController {
             HttpServletRequest request) {
         // 安全修复：此前任意登录用户即可为任意服务人员批量创建排班
         if (!RequestIdentity.isAdminOrStaff(request)) {
-            return Result.error(403, "无权管理排班");
+            throw new BusinessException(403, "无权管理排班");
         }
         if (!canManageMember(request, memberId)) {
-            return Result.error(403, "无权管理其他门店服务人员的排班");
+            throw new BusinessException(403, "无权管理其他门店服务人员的排班");
         }
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             LocalDate start = LocalDate.parse(startDate, DateTimeFormatter.ISO_DATE);
             LocalDate end = LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE);
-            boolean success = scheduleService.batchCreateSchedules(memberId, start, end, timeSlots);
-            return success ? Result.success(true) : Result.error("批量创建时间段失败");
+            if (!scheduleService.batchCreateSchedules(memberId, start, end, timeSlots)) {
+                throw new BusinessException("批量创建时间段失败");
+            }
+            return Result.success(true);
         }, "批量创建时间段失败，请稍后重试", log);
     }
     
@@ -115,7 +113,7 @@ public class ServiceScheduleController {
             @RequestParam(required = false) Long storeId,
             @RequestParam(required = false) Long memberId,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
                 currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
@@ -136,7 +134,7 @@ public class ServiceScheduleController {
             @RequestParam(required = false) Long storeId,
             @RequestParam(required = false) Long memberId,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
                 currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
@@ -157,23 +155,17 @@ public class ServiceScheduleController {
             HttpServletRequest request) {
         // 安全修复：员工月历属门店运营数据，仅 admin/staff 且限本门店
         if (!RequestIdentity.isAdminOrStaff(request)) {
-            return Result.error(403, "无权查看服务人员月历");
+            throw new BusinessException(403, "无权查看服务人员月历");
         }
         if (!canManageMember(request, memberId)) {
-            return Result.error(403, "无权查看其他门店的服务人员月历");
+            throw new BusinessException(403, "无权查看其他门店的服务人员月历");
         }
-        try {
+        return SafeCall.of(() -> {
             LocalDate start = LocalDate.parse(startDate, DateTimeFormatter.ISO_DATE);
             LocalDate end = LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE);
             Map<String, Object> data = scheduleService.getMemberCalendarView(memberId, start, end);
             return Result.success(data);
-        } catch (IllegalArgumentException e) {
-            log.error("操作失败", e);
-            return Result.error(e.getMessage());
-        } catch (Exception e) {
-            log.error("获取人员月历失败", e);
-            return Result.error("获取人员月历失败，请稍后重试");
-        }
+        }, "获取人员月历失败，请稍后重试", log);
     }
 
     @PostMapping("/member-day-attendance")
@@ -182,28 +174,24 @@ public class ServiceScheduleController {
                                                 HttpServletRequest request) {
         // 安全修复：此前任意登录用户即可为他人生成/删除排班
         if (!RequestIdentity.isAdminOrStaff(request)) {
-            return Result.error(403, "无权管理排班");
+            throw new BusinessException(403, "无权管理排班");
         }
-        try {
-            if (body == null || body.get("memberId") == null || body.get("date") == null || body.get("mode") == null) {
-                return Result.error("memberId、date、mode 不能为空");
-            }
-            Long memberId = Long.valueOf(body.get("memberId").toString());
-            // 安全修复：店长/店员仅能维护本门店服务人员的出勤
-            if (!canManageMember(request, memberId)) {
-                return Result.error(403, "无权管理其他门店服务人员的出勤");
-            }
+        if (body == null || body.get("memberId") == null || body.get("date") == null || body.get("mode") == null) {
+            throw new BusinessException("memberId、date、mode 不能为空");
+        }
+        Long memberId = Long.valueOf(body.get("memberId").toString());
+        // 安全修复：店长/店员仅能维护本门店服务人员的出勤
+        if (!canManageMember(request, memberId)) {
+            throw new BusinessException(403, "无权管理其他门店服务人员的出勤");
+        }
+        return SafeCall.of(() -> {
             LocalDate localDate = LocalDate.parse(body.get("date").toString(), DateTimeFormatter.ISO_DATE);
             String mode = body.get("mode").toString();
-            boolean ok = scheduleService.setMemberDayAttendance(memberId, localDate, mode);
-            return ok ? Result.success(true) : Result.error("设置失败");
-        } catch (IllegalArgumentException e) {
-            log.error("操作失败", e);
-            return Result.error(e.getMessage());
-        } catch (Exception e) {
-            log.error("设置出勤失败", e);
-            return Result.error("设置出勤失败，请稍后重试");
-        }
+            if (!scheduleService.setMemberDayAttendance(memberId, localDate, mode)) {
+                throw new BusinessException("设置失败");
+            }
+            return Result.success(true);
+        }, "设置出勤失败，请稍后重试", log);
     }
     
     @PutMapping("/{id}")
@@ -211,38 +199,24 @@ public class ServiceScheduleController {
     public Result<Boolean> updateSchedule(@PathVariable Long id, @RequestBody ServiceSchedule schedule, HttpServletRequest request) {
         // 安全修复：此前任意登录用户即可修改任意排班
         if (!RequestIdentity.isAdminOrStaff(request)) {
-            return Result.error(403, "无权管理排班");
+            throw new BusinessException(403, "无权管理排班");
         }
         ServiceSchedule existing = scheduleService.getScheduleById(id);
         if (existing == null) {
-            return Result.error("排班不存在");
+            throw new BusinessException("排班不存在");
         }
         // 安全修复：店长/店员仅能修改本门店服务人员的排班
         if (!canManageMember(request, existing.getMemberId())) {
-            return Result.error(403, "无权修改其他门店的排班");
+            throw new BusinessException(403, "无权修改其他门店的排班");
         }
-        try {
+        return SafeCall.of(() -> {
             schedule.setId(id);
-            Long adminId = (Long) request.getAttribute("adminId");
-            if (adminId != null && schedule.getServiceType() == null) {
-                Admin admin = adminService.getById(adminId);
-                if (admin != null) {
-                    String department = admin.getDepartment();
-                    String serviceType = convertDepartmentToServiceType(department);
-                    if (serviceType != null) {
-                        schedule.setServiceType(serviceType);
-                    }
-                }
+            // 未指定服务类型时由 Service 按操作人所属部门回填
+            if (!scheduleService.updateSchedule(schedule, RequestIdentity.adminId(request))) {
+                throw new BusinessException("更新失败");
             }
-            boolean success = scheduleService.updateSchedule(schedule);
-            return success ? Result.success(true) : Result.error("更新失败");
-        } catch (IllegalArgumentException e) {
-            log.error("操作失败", e);
-            return Result.error(e.getMessage());
-        } catch (Exception e) {
-            log.error("更新排班失败", e);
-            return Result.error("更新排班失败，请稍后重试");
-        }
+            return Result.success(true);
+        }, "更新排班失败，请稍后重试", log);
     }
     
     @DeleteMapping("/{id}")
@@ -250,19 +224,21 @@ public class ServiceScheduleController {
     public Result<Boolean> deleteSchedule(@PathVariable Long id, HttpServletRequest request) {
         // 安全修复：此前任意登录用户即可删除任意排班
         if (!RequestIdentity.isAdminOrStaff(request)) {
-            return Result.error(403, "无权管理排班");
+            throw new BusinessException(403, "无权管理排班");
         }
         ServiceSchedule existing = scheduleService.getScheduleById(id);
         if (existing == null) {
-            return Result.error("排班不存在");
+            throw new BusinessException("排班不存在");
         }
         // 安全修复：店长/店员仅能删除本门店服务人员的排班
         if (!canManageMember(request, existing.getMemberId())) {
-            return Result.error(403, "无权删除其他门店的排班");
+            throw new BusinessException(403, "无权删除其他门店的排班");
         }
-        return com.pethome.common.SafeCall.of(() -> {
-            boolean success = scheduleService.deleteSchedule(id);
-            return success ? Result.success(true) : Result.error("删除失败");
+        return SafeCall.of(() -> {
+            if (!scheduleService.deleteSchedule(id)) {
+                throw new BusinessException("删除失败");
+            }
+            return Result.success(true);
         }, "删除排班失败，请稍后重试", log);
     }
 
@@ -300,25 +276,4 @@ public class ServiceScheduleController {
         com.pethome.entity.ServiceMember member = serviceMemberService.getMemberById(memberId);
         return member != null && scope.equals(member.getStoreId());
     }
-
-    private String convertDepartmentToServiceType(String department) {
-        if (department == null || department.trim().isEmpty()) {
-            return null;
-        }
-        switch (department.trim()) {
-            case "上门铲屎":
-            case "上门铲屎部门":
-                return "door-cleaning";
-            case "宠物洗护":
-            case "宠物洗护部门":
-                return "grooming";
-            case "宠物医院":
-            case "宠物医院部门":
-                return "hospital";
-            default:
-                return null;
-        }
-    }
 }
-
-

@@ -879,6 +879,20 @@ public class UserServiceImpl implements UserService {
         qw.eq("openid", openid).last("limit 1");
         return mpUserMapper.selectOne(qw);
     }
+
+    @Override
+    public String getNicknameSafely(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        try {
+            User user = getUserById(userId);
+            return user != null ? user.getNickname() : null;
+        } catch (Exception e) {
+            logger.warn("查询用户昵称失败，降级为脱敏占位，userId: {}, 错误: {}", userId, e.getMessage());
+            return null;
+        }
+    }
 }
 
 

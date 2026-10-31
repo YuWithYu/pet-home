@@ -3,6 +3,7 @@ package com.pethome.controller.appointment;
 
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
+import com.pethome.common.BusinessException;
 import com.pethome.entity.Admin;
 import com.pethome.entity.Appointment;
 import com.pethome.service.appointment.AppointmentService;
@@ -120,18 +121,18 @@ public class AppointmentController {
             Object attr = request.getAttribute("userId");
             Long currentUserId = attr instanceof Number ? ((Number) attr).longValue() : null;
             if (currentUserId == null) {
-                return Result.error(401, "未登录或登录已过期");
+                throw new BusinessException(401, "未登录或登录已过期");
             }
             appointment.setUserId(currentUserId);
             // 验证必填字段
             if (appointment.getServiceType() == null || appointment.getServiceType().trim().isEmpty()) {
-                return Result.error("服务类型不能为空");
+                throw new BusinessException("服务类型不能为空");
             }
             if (appointment.getDate() == null) {
-                return Result.error("预约日期不能为空");
+                throw new BusinessException("预约日期不能为空");
             }
             if (appointment.getTimeSlot() == null || appointment.getTimeSlot().trim().isEmpty()) {
-                return Result.error("时间段不能为空");
+                throw new BusinessException("时间段不能为空");
             }
             
             // 检查时间段是否可用
@@ -143,7 +144,7 @@ public class AppointmentController {
             );
             
             if (!available) {
-                return Result.error("该时间段已被占用，请选择其他时间");
+                throw new BusinessException("该时间段已被占用，请选择其他时间");
             }
             
             // 创建预约
@@ -226,7 +227,7 @@ public class AppointmentController {
                 }
             } else {
                 // 未登录或 token 无效，返回空列表
-                return Result.error("未登录或登录已过期");
+                throw new BusinessException("未登录或登录已过期");
             }
             
             // 根据状态过滤
@@ -250,11 +251,11 @@ public class AppointmentController {
         return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
-                return Result.error("未登录或登录已过期");
+                throw new BusinessException("未登录或登录已过期");
             }
             
             if (!"staff".equals(currentAdmin.getRole())) {
-                return Result.error("该接口仅限服务人员访问");
+                throw new BusinessException("该接口仅限服务人员访问");
             }
             
             // 获取服务人员的预约列表（adminId 需映射到服务人员 ID）
@@ -278,11 +279,11 @@ public class AppointmentController {
         return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
-                return Result.error("未登录或登录已过期");
+                throw new BusinessException("未登录或登录已过期");
             }
             
             if (!"admin".equalsIgnoreCase(currentAdmin.getRole())) {
-                return Result.error("只有管理员可以分配工单");
+                throw new BusinessException("只有管理员可以分配工单");
             }
             
             Appointment appointment = appointmentService.assignAppointment(appointmentId, memberId);
@@ -307,17 +308,17 @@ public class AppointmentController {
         return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
-                return Result.error("未登录或登录已过期");
+                throw new BusinessException("未登录或登录已过期");
             }
             
             Appointment existing = appointmentService.getAppointmentById(id);
             if (existing == null) {
-                return Result.error("预约不存在");
+                throw new BusinessException("预约不存在");
             }
             
             // 安全修复：staff 仅限本人工单，店长仅限本门店工单（原实现用 adminId 与 memberId 直接比较）
             if (!canAccessAppointment(currentAdmin, existing)) {
-                return Result.error(403, "无权操作此预约");
+                throw new BusinessException(403, "无权操作此预约");
             }
             
             // 设置ID并更新
@@ -338,17 +339,17 @@ public class AppointmentController {
         return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
-                return Result.error("未登录或登录已过期");
+                throw new BusinessException("未登录或登录已过期");
             }
             
             Appointment appointment = appointmentService.getAppointmentById(id);
             if (appointment == null) {
-                return Result.error("预约不存在");
+                throw new BusinessException("预约不存在");
             }
             
             // 安全修复：staff 仅限本人工单，店长仅限本门店工单
             if (!canAccessAppointment(currentAdmin, appointment)) {
-                return Result.error(403, "无权操作此预约");
+                throw new BusinessException(403, "无权操作此预约");
             }
             
             Appointment updated = appointmentService.updateAppointmentStatus(id, status);
@@ -366,17 +367,17 @@ public class AppointmentController {
         return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
-                return Result.error("未登录或登录已过期");
+                throw new BusinessException("未登录或登录已过期");
             }
             
             Appointment appointment = appointmentService.getAppointmentById(id);
             if (appointment == null) {
-                return Result.error("预约不存在");
+                throw new BusinessException("预约不存在");
             }
             
             // 安全修复：staff 仅限本人工单，店长仅限本门店工单
             if (!canAccessAppointment(currentAdmin, appointment)) {
-                return Result.error(403, "无权查看此预约");
+                throw new BusinessException(403, "无权查看此预约");
             }
             
             return Result.success(appointment);
@@ -387,21 +388,7 @@ public class AppointmentController {
      * 从 token 获取当前管理员信息
      */
     private Admin getCurrentAdminFromToken(String token) {
-        if (token == null || !token.startsWith("Bearer ")) {
-            return null;
-        }
-        
-        try {
-            token = token.substring(7);
-            String username = jwtUtil.getUsernameFromToken(token);
-            if (username == null) {
-                return null;
-            }
-            return adminService.getByUsername(username);
-        } catch (Exception e) {
-            log.warn("解析 token 失败", e);
-            return null;
-        }
+        return adminContext != null ? adminContext.getCurrentAdmin(token) : null;
     }
 }
 

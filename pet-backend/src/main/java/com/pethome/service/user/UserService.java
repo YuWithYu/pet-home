@@ -133,4 +133,13 @@ public interface UserService {
      * @return 成功返回 null，失败返回错误文案
      */
     String changeUsername(Long userId, String newUsername);
+
+    /**
+     * 展示用昵称（不含 username，避免手机号等账号标识外泄）。
+     * 查询失败时返回 null，由调用方降级为脱敏占位文案。
+     *
+     * @param userId 用户ID
+     * @return 昵称；用户不存在或查询异常返回 null
+     */
+    String getNicknameSafely(Long userId);
 }

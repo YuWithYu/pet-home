@@ -52,4 +52,24 @@ public final class ServiceTypeCatalog {
     public static boolean isKnown(String serviceType) {
         return DOOR_CLEANING.equals(serviceType) || GROOMING.equals(serviceType) || HOSPITAL.equals(serviceType);
     }
+
+    /** 部门名（可带「部门」后缀）→ 服务类型，未知部门返回 null */
+    public static String serviceTypeByDepartment(String department) {
+        if (department == null || department.trim().isEmpty()) {
+            return null;
+        }
+        switch (department.trim()) {
+            case "上门铲屎":
+            case "上门铲屎部门":
+                return DOOR_CLEANING;
+            case "宠物洗护":
+            case "宠物洗护部门":
+                return GROOMING;
+            case "宠物医院":
+            case "宠物医院部门":
+                return HOSPITAL;
+            default:
+                return null;
+        }
+    }
 }

@@ -1,19 +1,13 @@
 package com.pethome.controller.appointment;
 
-
-import com.pethome.common.SafeCall;
+import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
+import com.pethome.common.SafeCall;
 import com.pethome.entity.ServiceAppointmentRating;
-import com.pethome.entity.ServiceMember;
-import com.pethome.entity.User;
-import com.pethome.service.order.*;
-import com.pethome.service.appointment.*;
-import com.pethome.service.community.*;
-import com.pethome.service.user.*;
-import com.pethome.service.admin.*;
-import com.pethome.service.common.*;
-import com.pethome.security.JwtUtil;
-import io.jsonwebtoken.Claims;
+import com.pethome.service.appointment.ServiceAppointmentRatingService;
+import com.pethome.service.user.UserService;
+import com.pethome.security.RequestIdentity;
+import com.pethome.security.UserTokenResolver;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -21,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,119 +31,35 @@ public class ServiceAppointmentRatingController {
 
     @Autowired
     private ServiceAppointmentRatingService ratingService;
-    @Autowired
-    private ServiceMemberService serviceMemberService;
+
     @Autowired
     private UserService userService;
-    @Autowired
-    private JwtUtil jwtUtil;
+
     @Autowired(required = false)
-    private DoorCleaningAppointmentService doorCleaningAppointmentService;
-    @Autowired(required = false)
-    private GroomingAppointmentService groomingAppointmentService;
-    @Autowired(required = false)
-    private HospitalAppointmentService hospitalAppointmentService;
+    private UserTokenResolver userTokenResolver;
 
     @PostMapping("/rating")
     @Operation(summary = "提交服务评价")
     public Result<ServiceAppointmentRating> submitRating(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, Object> body) {
-        try {
-            Long userId = getUserIdFromToken(authHeader);
+        return SafeCall.of(() -> {
+            Long userId = resolveUserId(authHeader);
             if (userId == null) {
-                return Result.error(401, "请先登录");
+                throw new BusinessException(401, "请先登录");
             }
             String appointmentType = (String) body.get("appointmentType");
-            Object aidObj = body.get("appointmentId");
-            Object ratingObj = body.get("rating");
-            String comment = body.get("comment") != null ? body.get("comment").toString().trim() : null;
-
             if (appointmentType == null || appointmentType.isEmpty()) {
-                return Result.error("预约类型不能为空");
+                throw new BusinessException("预约类型不能为空");
             }
-            if (aidObj == null) {
-                return Result.error("预约ID不能为空");
-            }
-            Long appointmentId = Long.valueOf(aidObj.toString());
-            if (ratingObj == null) {
-                return Result.error("评分不能为空");
-            }
-            int rating = Integer.parseInt(ratingObj.toString());
+            Long appointmentId = requireLong(body.get("appointmentId"), "预约ID不能为空");
+            int rating = requireInt(body.get("rating"), "评分不能为空");
             if (rating < 1 || rating > 5) {
-                return Result.error("评分必须在1-5之间");
+                throw new BusinessException("评分必须在1-5之间");
             }
-
-            Long memberId = null;
-            Long aptUserId = null;
-
-            switch (appointmentType) {
-                case "door-cleaning":
-                    if (doorCleaningAppointmentService != null) {
-                        var apt = doorCleaningAppointmentService.getAppointmentById(appointmentId);
-                        if (apt == null) return Result.error("预约不存在");
-                        if (!"completed".equals(apt.getStatus())) return Result.error("只能对已完成的订单评价");
-                        memberId = apt.getMemberId();
-                        aptUserId = apt.getUserId();
-                    }
-                    break;
-                case "grooming":
-                    if (groomingAppointmentService != null) {
-                        var apt = groomingAppointmentService.getAppointmentById(appointmentId);
-                        if (apt == null) return Result.error("预约不存在");
-                        if (!"completed".equals(apt.getStatus())) return Result.error("只能对已完成的订单评价");
-                        memberId = apt.getMemberId();
-                        aptUserId = apt.getUserId();
-                    }
-                    break;
-                case "hospital":
-                    if (hospitalAppointmentService != null) {
-                        var apt = hospitalAppointmentService.getAppointmentById(appointmentId);
-                        if (apt == null) return Result.error("预约不存在");
-                        if (!"completed".equals(apt.getStatus())) return Result.error("只能对已完成的订单评价");
-                        memberId = apt.getMemberId();
-                        aptUserId = apt.getUserId();
-                    }
-                    break;
-                default:
-                    return Result.error("不支持的预约类型");
-            }
-
-            if (memberId == null) {
-                return Result.error("该预约未分配服务人员，无法评价");
-            }
-            if (!userId.equals(aptUserId)) {
-                return Result.error("只能评价自己的订单");
-            }
-
-            ServiceAppointmentRating existing = ratingService.findByAppointmentAndUser(appointmentType, appointmentId, userId);
-            if (existing != null) {
-                return Result.error("您已评价过该订单");
-            }
-
-            ServiceAppointmentRating entity = new ServiceAppointmentRating();
-            entity.setAppointmentType(appointmentType);
-            entity.setAppointmentId(appointmentId);
-            entity.setMemberId(memberId);
-            entity.setUserId(userId);
-            entity.setRating(rating);
-            entity.setComment(comment != null && !comment.isEmpty() ? comment : null);
-            ratingService.save(entity);
-
-            BigDecimal avgRating = ratingService.avgRatingByMemberId(memberId);
-            ServiceMember sm = serviceMemberService.getMemberById(memberId);
-            if (sm != null && avgRating != null) {
-                sm.setRating(avgRating);
-                serviceMemberService.updateMember(sm);
-            }
-
-            return Result.success(entity);
-        } catch (NumberFormatException e) {
-            return Result.error("参数格式错误");
-        } catch (Exception e) {
-            log.error("提交服务评价失败", e);
-            return Result.error("评价失败，请稍后重试");
-        }
+            String comment = body.get("comment") != null ? body.get("comment").toString().trim() : null;
+            return Result.success(ratingService.submitRating(userId, appointmentType, appointmentId, rating, comment));
+        }, "评价失败，请稍后重试", log);
     }
 
     @GetMapping("/rating/member/{memberId}")
@@ -158,8 +67,8 @@ public class ServiceAppointmentRatingController {
     public Result<List<Map<String, Object>>> getMemberRatings(@PathVariable Long memberId,
                                                               javax.servlet.http.HttpServletRequest request) {
         // 安全修复：评价列表对外仅展示昵称/内容，不返回评价人 userId（避免账号标识被枚举）
-        boolean showUserId = com.pethome.security.RequestIdentity.isAdminOrStaff(request);
-        return com.pethome.common.SafeCall.of(() -> {
+        boolean showUserId = RequestIdentity.isAdminOrStaff(request);
+        return SafeCall.of(() -> {
             List<ServiceAppointmentRating> list = ratingService.listByMemberId(memberId);
             List<Map<String, Object>> result = new ArrayList<>();
             for (ServiceAppointmentRating r : list) {
@@ -179,14 +88,10 @@ public class ServiceAppointmentRatingController {
                     : "hospital".equals(r.getAppointmentType()) ? "宠物医院" : r.getAppointmentType();
                 m.put("appointmentTypeName", typeName);
                 if (r.getUserId() != null && userService != null) {
-                    try {
-                        User u = userService.getUserById(r.getUserId());
-                        // 安全修复：昵称为空时不得回退到 username（历史用户 username 即手机号，会造成 PII 泄露）
-                        m.put("userName", u != null && u.getNickname() != null && !u.getNickname().isEmpty()
-                                ? u.getNickname() : "用户" + r.getUserId());
-                    } catch (Exception ignored) {
-                        m.put("userName", "用户" + r.getUserId());
-                    }
+                    // 安全修复：昵称为空时不得回退到 username（历史用户 username 即手机号，会造成 PII 泄露）；
+                    // 昵称查询异常由 Service 内部降级为 null，这里统一落脱敏占位
+                    String nickname = userService.getNicknameSafely(r.getUserId());
+                    m.put("userName", nickname != null && !nickname.isEmpty() ? nickname : "用户" + r.getUserId());
                 } else {
                     m.put("userName", "匿名用户");
                 }
@@ -202,36 +107,40 @@ public class ServiceAppointmentRatingController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam String appointmentType,
             @RequestParam Long appointmentId) {
-        try {
-            Long userId = getUserIdFromToken(authHeader);
+        return SafeCall.of(() -> {
+            Long userId = resolveUserId(authHeader);
             if (userId == null) {
-                return Result.success(Map.of("rated", false));
+                return Result.success(Map.<String, Object>of("rated", false));
             }
-            ServiceAppointmentRating r = ratingService.findByAppointmentAndUser(appointmentType, appointmentId, userId);
-            return Result.success(Map.of("rated", r != null, "rating", r != null ? r.getRating() : 0));
-        } catch (Exception e) {
-            return Result.success(Map.of("rated", false));
-        }
+            return Result.success(ratingService.checkRatedQuietly(appointmentType, appointmentId, userId));
+        }, "检查评价状态失败，请稍后重试", log);
     }
 
-    private Long getUserIdFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
-        String token = authHeader.substring(7);
-        try {
-            User cachedUser = userService.getUserByToken(token);
-            if (cachedUser != null) return cachedUser.getId();
-        } catch (Exception ignored) {}
-        try {
-            Claims claims = jwtUtil.parseToken(token);
-            if (claims != null) {
-                String subject = claims.getSubject();
-                if (subject != null) {
-                    User user = userService.getUserByUsername(subject);
-                    if (user == null) user = userService.getUserByPhone(subject);
-                    if (user != null) return user.getId();
-                }
-            }
-        } catch (Exception ignored) {}
-        return null;
+    /** 当前登录用户 ID（统一走 UserTokenResolver，解析失败返回 null） */
+    private Long resolveUserId(String authHeader) {
+        return userTokenResolver != null ? userTokenResolver.getUserIdFromBearer(authHeader) : null;
+    }
+
+    /** 解析数字参数；非数字统一返回“参数格式错误”（与历史解析失败文案一致） */
+    private static Long requireLong(Object value, String missingMessage) {
+        if (value == null) {
+            throw new BusinessException(missingMessage);
+        }
+        String text = value.toString().trim();
+        if (!text.matches("-?\\d{1,18}")) {
+            throw new BusinessException("参数格式错误");
+        }
+        return Long.valueOf(text);
+    }
+
+    private static int requireInt(Object value, String missingMessage) {
+        if (value == null) {
+            throw new BusinessException(missingMessage);
+        }
+        String text = value.toString().trim();
+        if (!text.matches("-?\\d{1,9}")) {
+            throw new BusinessException("参数格式错误");
+        }
+        return Integer.parseInt(text);
     }
 }

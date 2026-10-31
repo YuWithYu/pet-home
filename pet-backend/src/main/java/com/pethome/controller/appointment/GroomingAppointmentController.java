@@ -2,6 +2,7 @@ package com.pethome.controller.appointment;
 
 
 import com.pethome.common.SafeCall;
+import com.pethome.common.BusinessException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -116,25 +117,19 @@ public class GroomingAppointmentController {
     @Operation(summary = "创建宠物洗护预约")
     public Result<GroomingAppointment> createGroomingAppointment(@RequestBody GroomingAppointment appointment,
                                                                  HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：归属强制以登录态为准（拦截器解析 token 后写入的 userId attribute），
             // body 中的 userId 一律覆盖，杜绝伪造他人归属创建预约
-            Object attr = request.getAttribute("userId");
-            Long currentUserId = attr instanceof Number ? ((Number) attr).longValue() : null;
+            Long currentUserId = com.pethome.security.RequestIdentity.userId(request);
             if (currentUserId == null) {
-                return Result.error(401, "未登录或登录已过期");
+                throw new BusinessException(401, "未登录或登录已过期");
             }
             appointment.setUserId(currentUserId);
-            boolean success = groomingAppointmentService.createGroomingAppointment(appointment);
-            if (success) {
-                return Result.success(appointment);
-            } else {
-                return Result.error("预约创建失败");
+            if (!groomingAppointmentService.createGroomingAppointment(appointment)) {
+                throw new BusinessException("预约创建失败");
             }
-        } catch (Exception e) {
-            log.error("预约创建失败", e);
-            return Result.error("预约创建失败，请稍后重试");
-        }
+            return Result.success(appointment);
+        }, "预约创建失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}")
@@ -168,25 +163,20 @@ public class GroomingAppointmentController {
             @RequestParam(required = false) String rejectReason,
             @RequestParam(required = false, defaultValue = "false") boolean forceCancelAfterServiceStart,
             HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：状态接口越权防护——
             // 普通用户仅允许取消自己的预约（status=cancelled 且归属本人）；
             // confirmed/rejected/completed 等运营态变更仅限 staff/admin，防止用户绕过审核自审自发
             String denial = checkStatusPermission(id, status, request);
             if (denial != null) {
-                return Result.error(403, denial);
+                throw new BusinessException(403, denial);
             }
             String reason = (rejectReason != null && !rejectReason.trim().isEmpty()) ? rejectReason.trim() : null;
-            boolean success = groomingAppointmentService.updateAppointmentStatus(id, status, reason, forceCancelAfterServiceStart);
-            if (success) {
-                return Result.success("状态更新成功");
-            } else {
-                return Result.error("状态更新失败");
+            if (!groomingAppointmentService.updateAppointmentStatus(id, status, reason, forceCancelAfterServiceStart)) {
+                throw new BusinessException("状态更新失败");
             }
-        } catch (Exception e) {
-            log.error("状态更新失败", e);
-            return Result.error("状态更新失败，请稍后重试");
-        }
+            return Result.success("状态更新成功");
+        }, "状态更新失败，请稍后重试", log);
     }
 
     /** staff/admin 判定：RoleInterceptor 在管理端登录后写入 adminId attribute */
@@ -263,36 +253,31 @@ public class GroomingAppointmentController {
     @Operation(summary = "更新宠物洗护预约")
     public Result<GroomingAppointment> updateGroomingAppointment(@PathVariable Long id, @RequestBody GroomingAppointment appointment,
                                                                    HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：全字段更新仅限 staff/admin（普通用户可借此改价格/归属等敏感字段）
             if (!isStaffOrAdmin(request)) {
-                return Result.error(403, "无权修改此预约");
+                throw new BusinessException(403, "无权修改此预约");
             }
             GroomingAppointment existing = groomingAppointmentService.getAppointmentById(id);
             if (existing == null) {
-                return Result.error(404, "预约不存在");
+                throw new BusinessException(404, "预约不存在");
             }
             // 安全修复：分店账号不得跨门店修改
             if (!canAccessStore(request, existing.getStoreId())) {
-                return Result.error(403, "无权修改此预约");
+                throw new BusinessException(403, "无权修改此预约");
             }
             Long scope = scopedStoreId(request);
             if (scope != null && appointment.getStoreId() != null && !scope.equals(appointment.getStoreId())) {
-                return Result.error(403, "无权将预约转移到其他门店");
+                throw new BusinessException(403, "无权将预约转移到其他门店");
             }
             appointment.setId(id);
             // 安全修复：归属用户以库中记录为准，禁止通过更新接口改派/伪造客户归属
             appointment.setUserId(null);
-            boolean success = groomingAppointmentService.updateById(appointment);
-            if (success) {
-                return Result.success("预约更新成功", appointment);
-            } else {
-                return Result.error("预约更新失败");
+            if (!groomingAppointmentService.updateById(appointment)) {
+                throw new BusinessException("预约更新失败");
             }
-        } catch (Exception e) {
-            log.error("预约更新失败", e);
-            return Result.error("预约更新失败，请稍后重试");
-        }
+            return Result.success("预约更新成功", appointment);
+        }, "预约更新失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
@@ -301,22 +286,20 @@ public class GroomingAppointmentController {
         return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：物理删除仅限 staff/admin
             if (!isStaffOrAdmin(request)) {
-                return Result.error(403, "无权删除此预约");
+                throw new BusinessException(403, "无权删除此预约");
             }
             GroomingAppointment existing = groomingAppointmentService.getAppointmentById(id);
             if (existing == null) {
-                return Result.error(404, "预约不存在");
+                throw new BusinessException(404, "预约不存在");
             }
             // 安全修复：分店账号不得跨门店删除
             if (!canAccessStore(request, existing.getStoreId())) {
-                return Result.error(403, "无权删除此预约");
+                throw new BusinessException(403, "无权删除此预约");
             }
-            boolean success = groomingAppointmentService.removeById(id);
-            if (success) {
-                return Result.success("预约删除成功", true);
-            } else {
-                return Result.error("预约删除失败");
+            if (!groomingAppointmentService.removeById(id)) {
+                throw new BusinessException("预约删除失败");
             }
+            return Result.success("预约删除成功", true);
         }, "预约删除失败，请稍后重试", log);
     }
 }

@@ -1,6 +1,8 @@
 package com.pethome.controller.appointment;
 
 import com.pethome.common.Result;
+import com.pethome.common.SafeCall;
+import com.pethome.common.BusinessException;
 import com.pethome.entity.HospitalAppointment;
 import com.pethome.service.appointment.HospitalAppointmentService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -117,35 +119,29 @@ public class HospitalAppointmentController {
     @Operation(summary = "创建宠物医院预约")
     public Result<HospitalAppointment> createHospitalAppointment(@RequestBody HospitalAppointment appointment,
                                                                  javax.servlet.http.HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：归属强制以登录态为准（拦截器解析 token 后写入的 userId attribute），
             // body 中的 userId 一律覆盖，杜绝伪造他人归属创建预约
-            Object attr = request.getAttribute("userId");
-            Long currentUserId = attr instanceof Number ? ((Number) attr).longValue() : null;
+            Long currentUserId = com.pethome.security.RequestIdentity.userId(request);
             if (currentUserId == null) {
-                return Result.error(401, "未登录或登录已过期");
+                throw new BusinessException(401, "未登录或登录已过期");
             }
             appointment.setUserId(currentUserId);
             if (appointment.getDate() == null) {
-                return Result.error("预约日期不能为空");
+                throw new BusinessException("预约日期不能为空");
             }
             if (appointment.getTimeSlot() == null || appointment.getTimeSlot().trim().isEmpty()) {
-                return Result.error("预约时间段不能为空");
+                throw new BusinessException("预约时间段不能为空");
             }
 
             if (appointment.getServiceType() == null || appointment.getServiceType().isEmpty()) {
                 appointment.setServiceType("hospital");
             }
-            boolean success = hospitalAppointmentService.createHospitalAppointment(appointment);
-            if (success) {
-                return Result.success(appointment);
-            } else {
-                return Result.error("预约创建失败");
+            if (!hospitalAppointmentService.createHospitalAppointment(appointment)) {
+                throw new BusinessException("预约创建失败");
             }
-        } catch (Exception e) {
-            log.error("预约创建失败", e);
-            return Result.error("预约创建失败，请稍后重试");
-        }
+            return Result.success(appointment);
+        }, "预约创建失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}")
@@ -244,45 +240,40 @@ public class HospitalAppointmentController {
             @PathVariable Long id,
             @RequestParam Long memberId,
             HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：分配服务人员属运营操作，仅限 staff/admin，防止用户端擅自改派
             if (!isStaffOrAdmin(request)) {
-                return Result.error(403, "无权分配服务人员");
+                throw new BusinessException(403, "无权分配服务人员");
             }
             // 安全修复：分店账号不得跨门店分配（预约与本门店、服务人员门店双重校验）
             HospitalAppointment target = hospitalAppointmentService.getAppointmentById(id);
             if (target == null) {
-                return Result.error(404, "预约不存在");
+                throw new BusinessException(404, "预约不存在");
             }
             if (!canAccessStore(request, target.getStoreId())) {
-                return Result.error(403, "无权操作此预约");
+                throw new BusinessException(403, "无权操作此预约");
             }
             Long scope = scopedStoreId(request);
             if (scope != null) {
                 com.pethome.entity.ServiceMember member = serviceMemberService.getMemberById(memberId);
                 if (member == null) {
-                    return Result.error(404, "服务人员不存在");
+                    throw new BusinessException(404, "服务人员不存在");
                 }
                 if (!scope.equals(member.getStoreId())) {
                     log.warn("[HospitalAppointment] assign 跨门店拒绝: scope={}, memberStore={}", scope, member.getStoreId());
-                    return Result.error(403, "无权分配其他门店的服务人员");
+                    throw new BusinessException(403, "无权分配其他门店的服务人员");
                 }
             }
-            boolean success = hospitalAppointmentService.assignMember(id, memberId);
-            if (success) {
-                HospitalAppointment apt = hospitalAppointmentService.getById(id);
-                if (apt != null) {
-                    java.time.LocalDateTime aptTime = apt.getDate() != null ? apt.getDate().atStartOfDay() : null;
-                    appointmentDelayService.registerReminderKeys("hospital", id, apt.getUserId(), aptTime, "医院预约");
-                }
-                return Result.success("分配成功");
-            } else {
-                return Result.error("分配失败，请确认服务人员存在且类型为医院");
+            if (!hospitalAppointmentService.assignMember(id, memberId)) {
+                throw new BusinessException("分配失败，请确认服务人员存在且类型为医院");
             }
-        } catch (Exception e) {
-            log.error("分配失败", e);
-            return Result.error("分配失败，请稍后重试");
-        }
+            HospitalAppointment apt = hospitalAppointmentService.getById(id);
+            if (apt != null) {
+                java.time.LocalDateTime aptTime = apt.getDate() != null ? apt.getDate().atStartOfDay() : null;
+                appointmentDelayService.registerReminderKeys("hospital", id, apt.getUserId(), aptTime, "医院预约");
+            }
+            return Result.success("分配成功");
+        }, "分配失败，请稍后重试", log);
     }
 
     @PutMapping("/{id}/status")
@@ -293,27 +284,22 @@ public class HospitalAppointmentController {
             @RequestParam(required = false) String rejectReason,
             @RequestParam(required = false, defaultValue = "false") boolean forceCancelAfterServiceStart,
             HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：状态接口越权防护——
             // 普通用户仅允许取消自己的预约（status=cancelled 且归属本人）；
             // confirmed/rejected/completed 等运营态变更仅限 staff/admin，防止用户绕过审核自审自发
             String denial = checkStatusPermission(id, request);
             if (denial != null) {
-                return Result.error(403, denial);
+                throw new BusinessException(403, denial);
             }
             if (!isStaffOrAdmin(request) && !"cancelled".equals(status)) {
-                return Result.error(403, "无权变更预约状态");
+                throw new BusinessException(403, "无权变更预约状态");
             }
             String reason = (rejectReason != null && !rejectReason.trim().isEmpty()) ? rejectReason.trim() : null;
-            boolean success = hospitalAppointmentService.updateAppointmentStatus(id, status, reason, forceCancelAfterServiceStart);
-            if (success) {
-                return Result.success("状态更新成功");
-            } else {
-                return Result.error("状态更新失败");
+            if (!hospitalAppointmentService.updateAppointmentStatus(id, status, reason, forceCancelAfterServiceStart)) {
+                throw new BusinessException("状态更新失败");
             }
-        } catch (Exception e) {
-            log.error("状态更新失败", e);
-            return Result.error("状态更新失败，请稍后重试");
-        }
+            return Result.success("状态更新成功");
+        }, "状态更新失败，请稍后重试", log);
     }
 }

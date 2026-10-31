@@ -74,112 +74,59 @@ public class ServiceBannerController {
         return serverHost + ":" + serverPort + "/upload/" + imagePath;
     }
 
+    /** 展示图对外字段（字段名沿用旧接口契约） */
+    private Map<String, Object> bannerData(Long id, String title, String description,
+                                           String imageUrl, String position, String status) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", id);
+        data.put("title", title);
+        data.put("description", description);
+        data.put("imageUrl", convertToFullUrl(imageUrl));
+        data.put("position", position);
+        data.put("status", status);
+        return data;
+    }
+
     @GetMapping("/grooming-banner")
     @Operation(summary = "获取洗护服务展示图")
-    public Map<String, Object> getGroomingServiceBanner() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("code", 0);
-        result.put("msg", "success");
-
-        try {
+    public Result<Map<String, Object>> getGroomingServiceBanner() {
+        return SafeCall.of(() -> {
             // 获取洗护服务页面顶部的展示图
             GroomingServiceBanner banner = groomingServiceBannerService.getBannerByPosition("grooming-page-top");
-            
-            if (banner != null) {
-                Map<String, Object> bannerData = new HashMap<>();
-                bannerData.put("id", banner.getId());
-                bannerData.put("title", banner.getTitle());
-                bannerData.put("description", banner.getDescription());
-                bannerData.put("imageUrl", convertToFullUrl(banner.getImageUrl()));
-                bannerData.put("position", banner.getPosition());
-                bannerData.put("status", banner.getStatus());
-                
-                result.put("data", bannerData);
-            } else {
-                result.put("data", null);
-            }
-        } catch (Exception e) {
-            log.error("获取洗护服务展示图失败", e);
-            result.put("code", 500);
-            result.put("msg", "获取洗护服务展示图失败，请稍后重试");
-            result.put("data", null);
-        }
-
-        return result;
+            Map<String, Object> data = banner == null ? null : bannerData(banner.getId(), banner.getTitle(),
+                    banner.getDescription(), banner.getImageUrl(), banner.getPosition(), banner.getStatus());
+            return Result.success(data);
+        }, "获取洗护服务展示图失败，请稍后重试", log);
     }
 
     @GetMapping("/medical-banner")
     @Operation(summary = "获取宠物医院展示图")
-    public Map<String, Object> getMedicalServiceBanner() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("code", 0);
-        result.put("msg", "success");
-
-        try {
+    public Result<Map<String, Object>> getMedicalServiceBanner() {
+        return SafeCall.of(() -> {
             // 获取宠物医院页面顶部的展示图
             MedicalServiceBanner banner = medicalServiceBannerService.getBannerByPosition("medical-page-top");
-            
-            if (banner != null) {
-                Map<String, Object> bannerData = new HashMap<>();
-                bannerData.put("id", banner.getId());
-                bannerData.put("title", banner.getTitle());
-                bannerData.put("description", banner.getDescription());
-                bannerData.put("imageUrl", convertToFullUrl(banner.getImageUrl()));
-                bannerData.put("position", banner.getPosition());
-                bannerData.put("status", banner.getStatus());
-                
-                result.put("data", bannerData);
-            } else {
-                result.put("data", null);
-            }
-        } catch (Exception e) {
-            log.error("获取宠物医院展示图失败", e);
-            result.put("code", 500);
-            result.put("msg", "获取宠物医院展示图失败，请稍后重试");
-            result.put("data", null);
-        }
-
-        return result;
+            Map<String, Object> data = banner == null ? null : bannerData(banner.getId(), banner.getTitle(),
+                    banner.getDescription(), banner.getImageUrl(), banner.getPosition(), banner.getStatus());
+            return Result.success(data);
+        }, "获取宠物医院展示图失败，请稍后重试", log);
     }
 
     @GetMapping("/litter-banner")
     @Operation(summary = "获取铲屎服务展示图")
-    public Map<String, Object> getLitterServiceBanner() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("code", 0);
-        result.put("msg", "success");
-
-        try {
+    public Result<Map<String, Object>> getLitterServiceBanner() {
+        return SafeCall.of(() -> {
             // 获取铲屎服务页面顶部的展示图
             LitterServiceBanner banner = litterServiceBannerService.getBannerByPosition("litter-page-top");
-            
-            if (banner != null) {
-                Map<String, Object> bannerData = new HashMap<>();
-                bannerData.put("id", banner.getId());
-                bannerData.put("title", banner.getTitle());
-                bannerData.put("description", banner.getDescription());
-                bannerData.put("imageUrl", convertToFullUrl(banner.getImageUrl()));
-                bannerData.put("position", banner.getPosition());
-                bannerData.put("status", banner.getStatus());
-                
-                result.put("data", bannerData);
-            } else {
-                result.put("data", null);
-            }
-        } catch (Exception e) {
-            log.error("获取铲屎服务展示图失败", e);
-            result.put("code", 500);
-            result.put("msg", "获取铲屎服务展示图失败，请稍后重试");
-            result.put("data", null);
-        }
-
-        return result;
+            Map<String, Object> data = banner == null ? null : bannerData(banner.getId(), banner.getTitle(),
+                    banner.getDescription(), banner.getImageUrl(), banner.getPosition(), banner.getStatus());
+            return Result.success(data);
+        }, "获取铲屎服务展示图失败，请稍后重试", log);
     }
 
     @GetMapping("/service-banners/service-selection")
     @Operation(summary = "获取选择服务下方的展示图")
     public Result<MedicalServiceBanner> getServiceSelectionBanner() {
-        return com.pethome.common.SafeCall.of(() -> {
+        return SafeCall.of(() -> {
             // 获取医疗服务展示图作为选择服务下方的展示图
             MedicalServiceBanner banner = medicalServiceBannerService.getBannerByPosition("medical-page-top");
             return Result.success(banner);
