@@ -53,6 +53,22 @@ spring:
         max-idle: 8
         min-idle: 0
 
+  # RabbitMQ：订单超时延迟队列（队列级 TTL + 死信路由）。
+  # 开关默认开启：本地 broker 由 scripts/start-infra.ps1 一键启动。
+  # 未启动 broker 时可用 APP_MQ_ENABLED=false 关闭，系统自动降级为 @Scheduled 扫表 + Redis，功能不受影响。
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        auto-startup: ${APP_MQ_ENABLED:true}
+
+  # Kafka：行为埋点管道（消费端手动提交偏移）
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
@@ -118,6 +134,16 @@ app:
   # 现收敛为单一配置点，默认仅放行本地开发地址，生产环境通过 APP_CORS_ALLOWED_ORIGINS 注入真实域名。
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*}
+  # 消息中间件开关
+  # mq（RabbitMQ）：默认开启，本地 broker 由 scripts/start-infra.ps1 一键启动（Erlang + RabbitMQ 已在 infra/ 内置）
+  # kafka：本地已内置 KRaft broker（scripts/start-infra.ps1 一键启动），默认开启
+  mq:
+    enabled: ${APP_MQ_ENABLED:true}
+    outbox-max-retry: 6
+  kafka:
+    enabled: ${APP_KAFKA_ENABLED:true}
+    topic:
+      post-view: ${APP_KAFKA_POST_VIEW_TOPIC:pethome.behavior.post-view}
 
 upload:
   path: ./upload/
@@ -162,6 +188,11 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    # 项目仅在实体上使用 ES 注解，未实现检索仓库；本地/演示环境也不部署 Elasticsearch。
+    # 不禁用该指标会让 /actuator/health 恒为 DOWN(503)，Nginx/K8s 探活失效。
+    elasticsearch:
+      enabled: false
 
 # API 文档：springfox 已停止维护且与 Boot 2.7 存在兼容性问题，迁移至 springdoc-openapi
 # 安全：生产环境必须关闭（暴露全部接口结构），通过环境变量控制

@@ -22,6 +22,7 @@ import com.pethome.mapper.PostTagMapper;
 import com.pethome.mapper.UserFollowMapper;
 import com.pethome.mapper.UserMapper;
 import com.pethome.mapper.UserPostInteractionMapper;
+import com.pethome.mq.BehaviorEventPublisher;
 import com.pethome.service.PostService;
 import com.pethome.service.RedisCacheService;
 import org.slf4j.Logger;
@@ -62,6 +63,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     
     @Autowired
     private RedisCacheService redisCacheService;
+
+    @Autowired
+    private BehaviorEventPublisher behaviorEventPublisher;
 
     @Autowired
     private CommentMapper commentMapper;
@@ -198,6 +202,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Override
     public void incrementViews(Long postId) {
         Long viewCount = redisCacheService.incrementPostView(postId);
+
+        // 旁路埋点：Kafka 未启用时为空操作，不影响浏览量主链路
+        behaviorEventPublisher.publishPostView(postId, null);
 
         if (viewCount == null || viewCount == 1) {
             Post post = postMapper.selectById(postId);

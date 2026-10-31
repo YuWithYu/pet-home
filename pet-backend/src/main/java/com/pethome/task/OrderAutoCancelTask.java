@@ -1,6 +1,7 @@
 package com.pethome.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.pethome.common.lock.RedisDistributedLock;
 import com.pethome.entity.Order;
 import com.pethome.mapper.OrderMapper;
 import com.pethome.service.OrderService;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,9 +34,14 @@ public class OrderAutoCancelTask {
     private static final int AUTO_CANCEL_MINUTES = 30;
     /** 单次处理上限，避免订单积压时单任务处理量过大 */
     private static final int BATCH_LIMIT = 500;
+    /** 定时任务的分布式锁 key */
+    private static final String TASK_LOCK_KEY = "task:lock:order-auto-cancel";
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private RedisDistributedLock distributedLock;
 
     @Autowired(required = false)
     private OrderService orderService;
@@ -45,6 +52,11 @@ public class OrderAutoCancelTask {
      */
     @Scheduled(cron = "0 0 * * * ?")
     public void autoCancelUnpaidOrders() {
+        // 多实例部署：分布式锁保证同一时刻仅一个实例执行（ttl 覆盖单批处理耗时）
+        distributedLock.tryRun(TASK_LOCK_KEY, Duration.ofMinutes(10), this::cancelUnpaidOrdersBatch);
+    }
+
+    private void cancelUnpaidOrdersBatch() {
         try {
             if (orderService == null) {
                 logger.warn("OrderService 未注入，跳过本次订单超时取消");

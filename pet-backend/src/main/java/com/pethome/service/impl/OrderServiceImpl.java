@@ -13,11 +13,13 @@ import com.pethome.entity.Product;
 import com.pethome.mapper.AddressMapper;
 import com.pethome.mapper.OrderMapper;
 import com.pethome.mapper.ProductMapper;
+import com.pethome.mq.MqOutboxService;
 import com.pethome.service.NotificationService;
 import com.pethome.service.OrderService;
 import com.pethome.service.OrderItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +56,10 @@ public class OrderServiceImpl implements OrderService {
     private OrderItemService orderItemService;
     @Autowired(required = false)
     private com.pethome.service.UserCouponService userCouponService;
+
+    /** MQ 未启用时该 Provider 取不到 Bean，下单链路自动降级为定时任务兜底 */
+    @Autowired
+    private ObjectProvider<MqOutboxService> mqOutboxProvider;
 
     @Override
     public IPage<Order> getOrderList(Page<Order> page) {
@@ -233,6 +239,13 @@ public class OrderServiceImpl implements OrderService {
             order.setReceiverDetailAddress(address.getDetail());
         }
         orderMapper.insert(order);
+
+        // 5.1 本地消息表入队（与订单落库同一事务）：MQ 投递失败由补偿任务重试，
+        //     MQ 未启用时降级为 OrderAutoCancelTask / Redis 时间驱动兜底
+        MqOutboxService outbox = mqOutboxProvider.getIfAvailable();
+        if (outbox != null) {
+            outbox.enqueueOrderTimeout(order);
+        }
 
         // 6. 批量写订单项（单条 foreach INSERT 替代循环单条 insert）
         if (orderItemService != null) {
