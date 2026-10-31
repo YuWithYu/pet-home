@@ -130,7 +130,18 @@ public class PetController {
         boolean admin = isAdminOrStaff(request);
         Long effectiveUserId = userId;
 
-        if (userId == null) {
+        if (userId != null) {
+            // 安全修复：原实现直接信任查询参数 userId，任意登录用户可枚举他人宠物档案。
+            // 非管理端角色必须以 token 身份为准，请求参数与 token 不一致时拒绝。
+            if (!admin) {
+                Long ownerId = resolveOwnerId(request, authHeader);
+                if (ownerId == null || !ownerId.equals(userId)) {
+                    logger.warn("宠物列表越权尝试：请求 userId={}, 当前登录 userId={}", userId, ownerId);
+                    return Result.error(403, "无权查看他人宠物");
+                }
+                effectiveUserId = ownerId;
+            }
+        } else {
             if (admin) {
                 effectiveUserId = null;
             } else {

@@ -40,6 +40,61 @@ public class RoleInterceptor implements HandlerInterceptor {
         if ("super_admin".equals(r)) return "admin";
         return r;
     }
+
+    /**
+     * 公开只读接口清单（仅 GET 放行，调用方已按 method 预筛）。
+     *
+     * 约定：这里只允许"只读数据"接口。需要登录的接口（/api/pets/page、/api/orders/list、
+     * /api/time-slots 与 /api/notice 的写操作、/api/schedule-config/** 等）不在清单内，
+     * 由下方 token 校验链路统一拦截，避免新增写接口被旧前缀顺带放行。
+     */
+    private boolean isPublicReadApi(String path) {
+        return path.equals("/api/banner/list")
+                || path.equals("/api/banner/active")            // 首页轮播图（未登录首页使用）
+                || path.equals("/api/service-config/all")       // 服务配置（首页服务入口）
+                || path.equals("/api/product/hot")
+                || path.startsWith("/api/product/list")
+                || path.matches("^/api/product/\\d+$")
+                || path.equals("/api/product/recommend")
+                || path.startsWith("/api/notice/")              // 公告仅公开只读
+                || path.startsWith("/api/categories/all")
+                || path.startsWith("/api/categories/page")
+                || path.startsWith("/api/user/current")         // Controller 内部按 token 脱敏
+                || path.startsWith("/api/user/stats")           // 仅返回关注/粉丝等计数
+                || path.startsWith("/api/user/detail")          // Controller 内部要求登录并脱敏
+                // 仅允许 GET /api/pets/{数字id} 查询详情；创建/更新/删除需登录
+                || path.matches("^/api/pets/\\d+$")
+                // 洗护：仅放行 GET 数字 id 详情；管理端 /page 等需 Token 解析 adminId
+                || path.matches("^/api/grooming-appointments/\\d+$")
+                // 上门铲屎：仅放行「数字 id」详情 GET
+                || path.matches("^/api/door-cleaning/\\d+$")
+                || path.startsWith("/api/community/posts")      // 社区帖子只读；发帖/点赞需登录
+                || path.startsWith("/api/community/users/")
+                || path.startsWith("/api/daily-topics")         // 每日专题只读；点赞/收藏需登录
+                || path.startsWith("/api/tag/hot")
+                || path.startsWith("/api/search/")
+                || path.startsWith("/api/regions/")
+                || path.startsWith("/api/stores/page")
+                || path.startsWith("/api/stores/all")
+                || path.startsWith("/api/stores/by-service/")
+                // 安全修复：/api/grooming-banner 前缀会同时匹配 /api/grooming-banners/create|update，
+                // 因此横幅类前缀只放行 GET；写操作需登录（/api/grooming-banners 等）
+                || path.startsWith("/api/grooming-banner")
+                || path.startsWith("/api/hospital-banners/position/")
+                || path.startsWith("/api/medical-banner")
+                || path.startsWith("/api/litter-banner")
+                || path.startsWith("/api/time-slots/")          // 时间段只读；增删改需登录
+                || path.startsWith("/api/schedule/available")
+                || path.startsWith("/api/schedule/day")
+                || path.startsWith("/api/schedule/calendar")
+                || path.startsWith("/api/department/list")
+                || path.startsWith("/api/service-member/list")
+                || path.startsWith("/api/signin/")             // 未登录返回默认数据
+                || path.startsWith("/api/tasks/")              // 进度查询，未登录返回空
+                || path.equals("/api/points/products")
+                // 洗护/医院/铲屎服务：仅放行只读查询（page/list/{数字id}），新增写接口默认需要登录
+                || path.matches("^/api/(grooming|hospital|litter)-services/(page|list|\\d+)$");
+    }
     
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -47,12 +102,9 @@ public class RoleInterceptor implements HandlerInterceptor {
         String method = request.getMethod();
         
         // 允许OPTIONS预检请求（CORS）
+        // 安全修复：原实现在此硬编码 Access-Control-Allow-Origin: *，绕过 SecurityConfig 中的来源白名单。
+        // 预检响应统一由 Spring Security 的 CorsFilter（CorsConfigurationSource）生成，此处仅放行。
         if ("OPTIONS".equals(method)) {
-            response.setHeader("Access-Control-Allow-Origin", "*");
-            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-            response.setHeader("Access-Control-Allow-Headers", "*");
-            response.setHeader("Access-Control-Max-Age", "3600");
-            response.setStatus(HttpServletResponse.SC_OK);
             return true;
         }
         
@@ -74,74 +126,16 @@ public class RoleInterceptor implements HandlerInterceptor {
             return true;
         }
         
-        // 小程序端公开接口（不需要token）- 只读接口
+        // 小程序端公开接口（不需要token）——安全基线：公开白名单一律「只读 GET」。
+        // 安全修复：原白名单对 /api/notice/、/api/time-slots/、/api/schedule-config/generate-batch、
+        // /api/grooming-banner(s)、/api/litter-banner(s) 等前缀不限 HTTP 方法放行，导致匿名用户可以：
+        //   - 新增/修改/删除公告、时间段、服务横幅（数据篡改）
+        //   - 批量生成任意门店/人员/日期的排班（数据污染与资源消耗）
+        // 现在所有公开前缀统一要求 GET；任何新增写接口默认需要登录，避免"新增接口被旧前缀顺带放行"。
         // 移除查询参数，只比较路径部分
         String path = uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri;
-        
-        if (path.equals("/api/banner/list") ||
-            // 首页轮播图（只读公开数据，小程序未登录首页使用）
-            ("GET".equalsIgnoreCase(method) && path.equals("/api/banner/active")) ||
-            // 服务配置列表（只读公开数据，小程序首页服务入口使用）
-            ("GET".equalsIgnoreCase(method) && path.equals("/api/service-config/all")) ||
-            path.equals("/api/product/hot") ||
-            path.startsWith("/api/product/list") ||
-            ("GET".equalsIgnoreCase(method) && path.matches("^/api/product/\\d+$")) ||
-            path.equals("/api/product/recommend") ||
-            path.equals("/api/notice/last-one") ||
-            path.startsWith("/api/notice/") ||  // 允许所有公告查询接口
-            path.startsWith("/api/categories/all") ||  // 分类列表
-            path.startsWith("/api/categories/page") ||  // 分类分页
-            path.startsWith("/api/user/current") ||  // 获取当前用户信息（小程序端）
-            path.startsWith("/api/user/stats") ||  // 用户统计信息（小程序端）
-            path.startsWith("/api/user/detail") ||  // 用户详情（小程序端）
-            path.startsWith("/api/pets/page") ||  // 宠物列表（小程序端）
-            // 仅允许 GET /api/pets/{数字id} 查询详情；创建/更新/删除需登录，不可放行整段 /api/pets/
-            ("GET".equalsIgnoreCase(method) && path.matches("^/api/pets/\\d+$")) ||
-            // 安全修复：移除 /api/grooming-appointments/user/list/、/api/hospital-appointments/user/list/、
-            // /api/door-cleaning/user/list/、/api/user-appointments/list/ 的免登录放行——
-            // 这些接口按 userId 返回他人预约（含手机号、地址），匿名/越权可枚举他人数据，
-            // 必须登录后由 Controller 校验归属（userId 以 token 为准）。
-            // 安全修复：移除 /api/{grooming-appointments|hospital-appointments|door-cleaning}/create 的免登录放行——
-            // 创建预约曾信任 body 中的 userId，可伪造任意归属（他人名下堆积预约/骗取支付）。
-            // 现强制登录，拦截器解析 token 后写入 userId attribute，Controller 以其覆盖 body 值。
-            // 洗护：仅放行 GET 数字 id 详情；管理端 /page 等需 Token 解析 adminId
-            ("GET".equalsIgnoreCase(method) && path.matches("^/api/grooming-appointments/\\d+$")) ||
-            // 上门铲屎：仅放行「数字 id」详情 GET；管理端 /page、/member/list 等需走 Token 以解析 adminId
-            ("GET".equalsIgnoreCase(method) && path.matches("^/api/door-cleaning/\\d+$")) ||
-            path.startsWith("/api/community/posts") ||
-            path.startsWith("/api/community/users/") ||  // 社区用户相关接口（关注、推荐等）
-            path.startsWith("/api/daily-topics") ||  // 每日专题（小程序端）
-            path.startsWith("/api/tag/hot") ||
-            path.startsWith("/api/search/") ||
-            path.startsWith("/api/regions/") ||
-            path.startsWith("/api/stores/page") ||
-            path.startsWith("/api/stores/all") ||
-            path.startsWith("/api/grooming-banner") ||
-            path.startsWith("/api/hospital-banners/position/") ||
-            path.startsWith("/api/stores/by-service/") ||
-            path.startsWith("/api/medical-banner") ||
-            path.startsWith("/api/litter-banner") ||
-            path.startsWith("/api/time-slots/") ||  // 时间段管理接口（小程序和管理后台都需要）
-            path.startsWith("/api/schedule/available") ||  // 小程序查询可预约时间段
-            path.startsWith("/api/schedule/day") ||  // 日程详情
-            path.startsWith("/api/schedule/calendar") ||  // 日程月历
-            path.startsWith("/api/schedule-config/generate-batch") ||  // 批量生成排班
-            path.startsWith("/api/department/list") ||  // 部门列表
-            path.startsWith("/api/service-member/list") ||  // 小程序查询服务人员列表
-            // 安全修复：移除 /api/admin/staff/list 的免登录放行——该接口返回 Admin 实体列表（含账号信息），
-            // 属管理端接口；小程序端查询服务人员请使用 /api/service-member/list。
-            // 安全修复：原 path.startsWith("/api/orders/") 放行过宽，导致任意人可查询/操作他人订单。
-            // 现仅放行只读的"我的订单列表"接口；具体订单详情/状态变更必须登录并校验归属。
-            path.equals("/api/orders/list") ||
-            path.startsWith("/api/signin/") ||  // 签到相关接口（小程序端）
-            path.startsWith("/api/tasks/") ||  // 任务相关接口（小程序端）
-            // 积分商城：商品列表公开；兑换记录涉及个人数据，必须登录后由 Controller 校验归属
-            // （安全修复：移除 /api/points/exchange/history 免登录放行，避免越权查询他人兑换记录）
-            path.equals("/api/points/products") ||
-            // 洗护/医院/铲屎服务：仅放行只读查询（GET page/list/{数字id}）。
-            // 安全修复：原否定式匹配（排除 create/update/delete/upload/image 等词）会意外放行
-            // 新增的写接口（如 PUT /{id}/status）且不限 HTTP 方法，改为肯定式白名单，新接口默认需要登录。
-            ("GET".equalsIgnoreCase(method) && path.matches("^/api/(grooming|hospital|litter)-services/(page|list|\\d+)$"))) {
+
+        if ("GET".equalsIgnoreCase(method) && isPublicReadApi(path)) {
             return true;
         }
         
