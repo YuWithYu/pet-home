@@ -1,5 +1,8 @@
 package com.pethome.config;
 
+import com.pethome.security.AdminContext;
+import com.pethome.security.BearerAuthenticationFilter;
+import com.pethome.security.UserTokenResolver;
 import com.pethome.util.JSONUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,8 +28,9 @@ import java.util.List;
 /**
  * Spring Security 配置
  *
- * 架构说明：认证与授权统一由 RoleInterceptor（JWT/Redis token）实现，
- * Spring Security 仅负责 CORS 与 401/403 的 JSON 出口，避免两套权限规则不一致。
+ * 架构说明：细粒度授权（公开只读白名单、staff 路径清单、资源归属）仍由 RoleInterceptor 实现，
+ * Spring Security 负责 CORS、401/403 的 JSON 出口，并通过 BearerAuthenticationFilter + 
+ * 粗粒度规则提供纵深防御：即使拦截器被误改或未来被移除，管理端接口也不会对普通用户开放。
  * （安全修复：原 WebSecurityConfigurerAdapter 写法已废弃，且旧路径规则
  * /user/setting、/discuss/** 等与实际 /api/** 路由不匹配，属于死配置，一并移除。）
  */
@@ -42,12 +47,24 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // 认证授权由 RoleInterceptor 统一处理，Security 层放行所有请求
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                          BearerAuthenticationFilter bearerAuthenticationFilter) throws Exception {
+        // 粗粒度授权规则（纵深防御的第二道闸门；细粒度规则仍在 RoleInterceptor）
         http.authorizeRequests()
+                // CORS 预检不携带凭证，必须放行
+                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // 管理端登录本身是匿名接口
+                .antMatchers("/api/admin/login").permitAll()
+                // staff 查询自身信息（与 RoleInterceptor 的 staff 白名单对齐）
+                .antMatchers("/api/admin/self/**").hasAnyRole("ADMIN", "STAFF")
+                // 其余管理端接口仅平台/超管可用
+                .antMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().permitAll()
                 .and().cors().configurationSource(corsConfigurationSource())
                 .and().csrf().disable();
+
+        // 先解析 Bearer 写入 SecurityContext，再交给授权规则判定
+        http.addFilterBefore(bearerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // 统一 JSON 格式的 401/403 出口（前后端分离架构，不再重定向到 /login 等页面）
         http.exceptionHandling()
@@ -58,6 +75,15 @@ public class SecurityConfig {
         http.logout().logoutUrl("/securitylogout");
 
         return http.build();
+    }
+
+    /**
+     * 以 @Bean 而非 @Component 注册，避免被 Servlet 容器重复注册到全局过滤链（会执行两次）
+     */
+    @Bean
+    public BearerAuthenticationFilter bearerAuthenticationFilter(AdminContext adminContext,
+                                                               UserTokenResolver userTokenResolver) {
+        return new BearerAuthenticationFilter(adminContext, userTokenResolver);
     }
 
     /**
