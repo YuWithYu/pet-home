@@ -1,5 +1,7 @@
 # Java/Maven
 target/
+# mvn dependency:tree 生成物，仅供本地排查依赖冲突
+deps.txt
 *.jar
 *.war
 *.class
@@ -43,6 +45,9 @@ uploads/
 dist/
 build/
 unpackage/
+
+# 本地中间件运行时（RabbitMQ/Kafka 二进制、日志与数据，勿入库）
+infra/
 
 # 临时文件
 *.tmp
