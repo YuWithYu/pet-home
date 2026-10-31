@@ -84,6 +84,11 @@ public interface ServiceScheduleService {
     boolean updateSchedule(ServiceSchedule schedule);
 
     /**
+     * 根据主键查询排班（用于门店归属校验）
+     */
+    ServiceSchedule getScheduleById(Long scheduleId);
+
+    /**
      * 删除排班
      */
     boolean deleteSchedule(Long scheduleId);

@@ -15,6 +15,12 @@ public interface PetService {
      * @return 宠物列表
      */
     List<Pet> getPetsByUserId(Long userId);
+
+    /**
+     * 分页查询宠物：指定 userId 时优先走缓存列表再手动分页，缓存失败降级数据库分页。
+     * 兜底降级逻辑收敛在服务层，Controller 不再手写异常捕获。
+     */
+    IPage<Pet> getPetPageForOwner(Long userId, int pageNo, int pageSize);
     
     Pet createPet(Pet pet);
     Pet updatePet(Pet pet);

@@ -36,6 +36,20 @@ public class TimeSlotController {
         return true;
     }
 
+    /** 门店归属：平台管理员不限门店；店长/店员只能维护本门店（无门店归属视为越权） */
+    private boolean denyIfCrossStore(HttpServletRequest request, Long storeId, Map<String, Object> result) {
+        if (RequestIdentity.isPlatformAdmin(request)) {
+            return false;
+        }
+        Long scope = RequestIdentity.serviceStoreId(request);
+        if (scope != null && storeId != null && scope.equals(storeId)) {
+            return false;
+        }
+        result.put("code", 403);
+        result.put("msg", "无权操作其他门店的时间段配置");
+        return true;
+    }
+
     @GetMapping("/list")
     @Operation(summary = "获取时间段列表")
     public Map<String, Object> getTimeSlotList(@RequestParam String serviceType,
@@ -72,6 +86,9 @@ public class TimeSlotController {
                                               HttpServletRequest request) {
         Map<String, Object> result = new HashMap<>();
         if (denyIfNotAdminOrStaff(request, result)) {
+            return result;
+        }
+        if (denyIfCrossStore(request, timeSlot.getStoreId(), result)) {
             return result;
         }
         
@@ -121,6 +138,17 @@ public class TimeSlotController {
         }
         
         try {
+            TimeSlot existing = timeSlotService.getById(timeSlot.getId());
+            if (existing == null) {
+                result.put("code", -1);
+                result.put("msg", "时间段不存在");
+                return result;
+            }
+            // 安全修复：店长/店员不得修改其他门店（含把本店记录改到他店）的时间段
+            if (denyIfCrossStore(request, existing.getStoreId(), result)
+                    || denyIfCrossStore(request, timeSlot.getStoreId(), result)) {
+                return result;
+            }
             boolean success = timeSlotService.updateById(timeSlot);
             
             if (success) {
@@ -158,6 +186,10 @@ public class TimeSlotController {
                 result.put("msg", "时间段不存在");
                 return result;
             }
+            // 安全修复：店长/店员不得修改其他门店时间段的状态
+            if (denyIfCrossStore(request, timeSlot.getStoreId(), result)) {
+                return result;
+            }
             
             timeSlot.setIsActive(isActive);
             boolean success = timeSlotService.updateById(timeSlot);
@@ -187,6 +219,16 @@ public class TimeSlotController {
         }
         
         try {
+            TimeSlot existing = timeSlotService.getById(id);
+            if (existing == null) {
+                result.put("code", -1);
+                result.put("msg", "时间段不存在");
+                return result;
+            }
+            // 安全修复：店长/店员不得删除其他门店的时间段
+            if (denyIfCrossStore(request, existing.getStoreId(), result)) {
+                return result;
+            }
             boolean success = timeSlotService.removeById(id);
             
             if (success) {

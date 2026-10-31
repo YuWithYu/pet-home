@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.GroomingService;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.GroomingServiceService;
 import com.pethome.util.FileUploadUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +94,12 @@ public class GroomingServiceController {
 
     @PostMapping("/create")
     @Operation(summary = "创建洗护服务")
-    public Result<GroomingService> createGroomingService(@RequestBody GroomingService service) {
+    public Result<GroomingService> createGroomingService(@RequestBody GroomingService service,
+                                                         HttpServletRequest request) {
+        // 安全修复：服务项目与价格为平台级主数据，仅平台管理员可维护
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建洗护服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             GroomingService created = groomingServiceService.createGroomingService(service);
             return Result.success(created);
@@ -101,7 +108,11 @@ public class GroomingServiceController {
 
     @PutMapping("/update")
     @Operation(summary = "更新洗护服务")
-    public Result<GroomingService> updateGroomingService(@RequestBody GroomingService service) {
+    public Result<GroomingService> updateGroomingService(@RequestBody GroomingService service,
+                                                         HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改洗护服务");
+        }
         if (service.getId() == null) {
             return Result.error("服务ID不能为空");
         }
@@ -113,7 +124,10 @@ public class GroomingServiceController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除洗护服务")
-    public Result<Boolean> deleteGroomingService(@PathVariable Long id) {
+    public Result<Boolean> deleteGroomingService(@PathVariable Long id, HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除洗护服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = groomingServiceService.deleteGroomingService(id);
             if (success) {
@@ -125,7 +139,11 @@ public class GroomingServiceController {
 
     @PutMapping("/{id}/status")
     @Operation(summary = "更新洗护服务状态")
-    public Result<String> updateServiceStatus(@PathVariable Long id, @RequestParam String status) {
+    public Result<String> updateServiceStatus(@PathVariable Long id, @RequestParam String status,
+                                              HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改洗护服务状态");
+        }
         GroomingService service = groomingServiceService.getGroomingServiceById(id);
         if (service == null) {
             return Result.error("服务不存在");
@@ -138,7 +156,11 @@ public class GroomingServiceController {
     @PostMapping("/upload")
     @Operation(summary = "上传洗护服务图片")
     public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file,
-                                             @RequestParam(value = "id", required = false) Long id) {
+                                             @RequestParam(value = "id", required = false) Long id,
+                                             HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权上传洗护服务图片");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             if (id != null) {
@@ -154,7 +176,11 @@ public class GroomingServiceController {
 
     @PostMapping("/{id}/image")
     @Operation(summary = "更新洗护服务图片")
-    public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file,
+                                             HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改洗护服务图片");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             GroomingService service = groomingServiceService.getGroomingServiceById(id);

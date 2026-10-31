@@ -33,6 +33,11 @@ public final class RequestIdentity {
         return isAdmin(request) || isStaff(request);
     }
 
+    /** 平台管理员（跨门店，role=admin；store_admin 不属于此类） */
+    public static boolean isPlatformAdmin(HttpServletRequest request) {
+        return "admin".equals(role(request));
+    }
+
     /** 普通 C 端用户：已通过拦截器校验但不属于任何管理端角色 */
     public static boolean isEndUser(HttpServletRequest request) {
         return "user".equals(role(request));

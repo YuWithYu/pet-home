@@ -151,7 +151,12 @@ public class TagController {
 
     @PostMapping("/admin/create")
     @Operation(summary = "管理员新增标签")
-    public Result<Tag> createTag(@RequestBody Map<String, String> request) {
+    public Result<Tag> createTag(@RequestBody Map<String, String> request,
+                                 javax.servlet.http.HttpServletRequest httpRequest) {
+        // 安全修复：标签维护属管理端操作，此前任意登录用户即可新增/删除标签
+        if (!com.pethome.security.RequestIdentity.isAdminOrStaff(httpRequest)) {
+            return Result.error(403, "无权新增标签");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             String name = request != null ? request.get("name") : null;
             Tag tag = tagService.createTag(name);
@@ -164,7 +169,12 @@ public class TagController {
 
     @DeleteMapping("/admin/{name}")
     @Operation(summary = "管理员删除标签（推荐标签不可删除）")
-    public Result<Boolean> deleteTag(@PathVariable String name) {
+    public Result<Boolean> deleteTag(@PathVariable String name,
+                                     javax.servlet.http.HttpServletRequest httpRequest) {
+        // 安全修复：标签维护属管理端操作
+        if (!com.pethome.security.RequestIdentity.isAdminOrStaff(httpRequest)) {
+            return Result.error(403, "无权删除标签");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean ok = tagService.deleteTagByName(name);
             if (!ok) {

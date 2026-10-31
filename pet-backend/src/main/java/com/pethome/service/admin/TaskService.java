@@ -37,5 +37,12 @@ public interface TaskService {
      * @param progress 进度值
      */
     void updateTaskProgress(Long userId, String taskType, int progress);
+
+    /**
+     * 管理员审核/下架帖子后同步「发布内容」任务进度。
+     * 同步失败不影响主流程（仅记录告警日志）。
+     * @param userId 用户ID
+     */
+    void syncPostContentProgress(Long userId);
 }
 

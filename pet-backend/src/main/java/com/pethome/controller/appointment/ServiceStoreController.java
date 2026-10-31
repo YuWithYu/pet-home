@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.ServiceStore;
 import com.pethome.service.appointment.ServiceStoreService;
+import com.pethome.security.RequestIdentity;
 import com.pethome.util.FileUploadUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +84,11 @@ public class ServiceStoreController {
 
     @PostMapping("/create")
     @Operation(summary = "创建门店")
-    public Result<ServiceStore> createStore(@RequestBody ServiceStore store) {
+    public Result<ServiceStore> createStore(@RequestBody ServiceStore store, HttpServletRequest request) {
+        // 安全修复：门店属平台级主数据，仅平台管理员可创建（此前任意登录用户可建店）
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建门店");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             ServiceStore created = serviceStoreService.createStore(store);
             return Result.success(created);
@@ -105,7 +111,11 @@ public class ServiceStoreController {
 
     @PutMapping("/update")
     @Operation(summary = "更新门店")
-    public Result<ServiceStore> updateStore(@RequestBody ServiceStore store) {
+    public Result<ServiceStore> updateStore(@RequestBody ServiceStore store, HttpServletRequest request) {
+        // 安全修复：门店属平台级主数据，仅平台管理员可修改（此前任意登录用户可改任意门店）
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改门店");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
                 store.setImageUrl(normalizeImageUrlToRelative(store.getImageUrl()));
@@ -117,7 +127,11 @@ public class ServiceStoreController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除门店")
-    public Result<Boolean> deleteStore(@PathVariable Long id) {
+    public Result<Boolean> deleteStore(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：删除门店属平台级操作，仅平台管理员可执行
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除门店");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = serviceStoreService.deleteStore(id);
             return Result.success(success);
@@ -126,7 +140,11 @@ public class ServiceStoreController {
 
     @PostMapping("/upload")
     @Operation(summary = "上传门店图片")
-    public Result<String> uploadStoreImage(@RequestParam("file") MultipartFile file) {
+    public Result<String> uploadStoreImage(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        // 安全修复：门店图片写入平台级主数据，仅平台管理员可上传
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权上传门店图片");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);

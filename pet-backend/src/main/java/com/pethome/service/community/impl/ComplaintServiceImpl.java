@@ -61,6 +61,23 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     @Override
+    public String serializeImages(Object images) {
+        if (images instanceof String) {
+            return (String) images;
+        }
+        if (!(images instanceof java.util.List)) {
+            return null;
+        }
+        try {
+            return com.pethome.util.JSONUtil.toJSONString(images);
+        } catch (Exception e) {
+            // 图片序列化失败时降级为不带图片，不阻塞投诉提交
+            log.warn("投诉图片序列化失败，已忽略图片", e);
+            return null;
+        }
+    }
+
+    @Override
     public IPage<Complaint> page(Page<Complaint> page, String status, String type) {
         LambdaQueryWrapper<Complaint> q = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(status)) {

@@ -2,6 +2,7 @@ package com.pethome.controller.appointment;
 
 import com.pethome.common.Result;
 import com.pethome.entity.AppointmentCancellationRequest;
+import com.pethome.security.AppointmentStoreGuard;
 import com.pethome.service.appointment.AppointmentCancellationRequestService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +27,9 @@ public class AppointmentCancellationRequestController {
 
     @Autowired
     private AppointmentCancellationRequestService cancellationRequestService;
+
+    @Autowired
+    private AppointmentStoreGuard appointmentStoreGuard;
 
     /** 从登录态解析当前用户 ID（RoleInterceptor 注入）。写操作一律以登录态为准，禁止信任前端传入的 userId */
     private Long currentUserId(HttpServletRequest request) {
@@ -75,6 +79,11 @@ public class AppointmentCancellationRequestController {
             return Result.error(403, "无权查看取消申请列表");
         }
         List<AppointmentCancellationRequest> list = cancellationRequestService.listPending();
+        // 安全修复：店长/店员只能看到本门店预约的取消申请（审批队列含用户联系方式）
+        Long scope = appointmentStoreGuard.scopedStoreId(request);
+        if (scope != null) {
+            list.removeIf(r -> !appointmentStoreGuard.canAccess(scope, r.getAppointmentType(), r.getAppointmentId()));
+        }
         return Result.success(list);
     }
 
@@ -87,6 +96,10 @@ public class AppointmentCancellationRequestController {
         // 安全修复：审批操作仅限 staff/admin，防止用户自行批准取消（绕过违约金规则）
         if (!isStaffOrAdmin(request)) {
             return Result.error(403, "无权审批取消申请");
+        }
+        // 安全修复：店长/店员只能审批本门店预约的取消申请
+        if (!canHandlePending(request, id)) {
+            return Result.error(403, "无权审批其他门店的取消申请");
         }
         boolean ok = cancellationRequestService.approve(id);
         return ok ? Result.success(null) : Result.error("操作失败或该申请已处理");
@@ -102,6 +115,10 @@ public class AppointmentCancellationRequestController {
         // 安全修复：审批操作仅限 staff/admin
         if (!isStaffOrAdmin(request)) {
             return Result.error(403, "无权审批取消申请");
+        }
+        // 安全修复：店长/店员只能审批本门店预约的取消申请
+        if (!canHandlePending(request, id)) {
+            return Result.error(403, "无权审批其他门店的取消申请");
         }
         String rejectReason = body != null && body.get("rejectReason") != null
                 ? body.get("rejectReason").toString().trim()
@@ -132,6 +149,24 @@ public class AppointmentCancellationRequestController {
             }
         }
         return Result.success(req);
+    }
+
+    /** 待处理申请是否属于当前账号门店（平台管理员一律放行） */
+    private boolean canHandlePending(HttpServletRequest request, Long requestId) {
+        Long scope = appointmentStoreGuard.scopedStoreId(request);
+        if (scope == null) {
+            return true;
+        }
+        if (requestId == null) {
+            return false;
+        }
+        List<AppointmentCancellationRequest> pending = cancellationRequestService.listPending();
+        for (AppointmentCancellationRequest r : pending) {
+            if (requestId.equals(r.getId())) {
+                return appointmentStoreGuard.canAccess(scope, r.getAppointmentType(), r.getAppointmentId());
+            }
+        }
+        return false;
     }
 
     private static Long getLong(Map<String, Object> map, String key) {

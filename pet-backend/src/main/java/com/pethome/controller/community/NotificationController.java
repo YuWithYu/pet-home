@@ -2,17 +2,15 @@ package com.pethome.controller.community;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
 import com.pethome.entity.Notification;
 import com.pethome.entity.Notice;
-import com.pethome.entity.User;
 import com.pethome.service.community.NotificationService;
 import com.pethome.service.community.NoticeService;
 import com.pethome.service.community.UserNoticeReadService;
-import com.pethome.service.user.UserService;
-import com.pethome.security.JwtUtil;
+import com.pethome.service.user.UserTokenService;
 import com.pethome.security.RequestIdentity;
-import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +34,8 @@ public class NotificationController {
     private NoticeService noticeService;
     @Autowired(required = false)
     private UserNoticeReadService userNoticeReadService;
-    @Autowired(required = false)
-    private UserService userService;
-    @Autowired(required = false)
-    private JwtUtil jwtUtil;
+    @Autowired
+    private UserTokenService userTokenService;
 
     /** C 端：我的通知列表（分页） */
     @GetMapping("/my")
@@ -48,9 +44,9 @@ public class NotificationController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "1") Integer pageNo,
             @RequestParam(defaultValue = "20") Integer pageSize) {
-        Long userId = getUserIdFromToken(authHeader);
+        Long userId = userTokenService.resolveUserId(authHeader);
         if (userId == null) {
-            return Result.error(401, "请先登录");
+            throw new BusinessException(401, "请先登录");
         }
         IPage<Notification> page = notificationService.listByUserId(userId, pageNo, pageSize);
         int unreadCount = notificationService.countUnreadByUserId(userId);
@@ -66,7 +62,7 @@ public class NotificationController {
     @Operation(summary = "未读通知数量")
     public Result<Map<String, Object>> getUnreadCount(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        Long userId = getUserIdFromToken(authHeader);
+        Long userId = userTokenService.resolveUserId(authHeader);
         if (userId == null) {
             return Result.success(Map.of("count", 0));
         }
@@ -80,8 +76,8 @@ public class NotificationController {
     public Result<Boolean> markAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
-        Long userId = getUserIdFromToken(authHeader);
-        if (userId == null) return Result.error(401, "请先登录");
+        Long userId = userTokenService.resolveUserId(authHeader);
+        if (userId == null) throw new BusinessException(401, "请先登录");
         boolean ok = notificationService.markAsRead(id, userId);
         return Result.success(ok);
     }
@@ -91,8 +87,8 @@ public class NotificationController {
     @Operation(summary = "全部标为已读")
     public Result<Integer> markAllAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        Long userId = getUserIdFromToken(authHeader);
-        if (userId == null) return Result.error(401, "请先登录");
+        Long userId = userTokenService.resolveUserId(authHeader);
+        if (userId == null) throw new BusinessException(401, "请先登录");
         int n = notificationService.markAllAsRead(userId);
         return Result.success(n);
     }
@@ -103,21 +99,15 @@ public class NotificationController {
     public Result<List<Notice>> getUnreadNotices(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "20") Integer limit) {
-        Long userId = getUserIdFromToken(authHeader);
+        Long userId = userTokenService.resolveUserId(authHeader);
         if (noticeService == null) return Result.success(List.of());
         List<Notice> published = noticeService.getNoticeList(null, 1, limit == null ? 20 : limit);
         if (userId == null || userNoticeReadService == null) {
             return Result.success(published);
         }
-        List<Long> readIds;
-        try {
-            readIds = userNoticeReadService.getReadNoticeIds(userId);
-        } catch (Exception ignored) {
-            // 兼容表缺失等异常：直接把所有公告当作未读
-            readIds = List.of();
-        }
+        // 表缺失等异常已在服务层降级为「全部未读」
+        List<Long> readIds = userNoticeReadService.getReadNoticeIds(userId);
         if (readIds.isEmpty()) return Result.success(published);
-        // 避免在 lambda 中引用“可能在 try/catch 中被重新赋值”的局部变量 readIds
         List<Notice> unread = new java.util.ArrayList<>();
         for (Notice n : published) {
             if (n != null && n.getId() != null && !readIds.contains(n.getId())) {
@@ -133,34 +123,12 @@ public class NotificationController {
     public Result<Void> markNoticeAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long noticeId) {
-        Long userId = getUserIdFromToken(authHeader);
-        if (userId == null) return Result.error(401, "请先登录");
+        Long userId = userTokenService.resolveUserId(authHeader);
+        if (userId == null) throw new BusinessException(401, "请先登录");
         if (userNoticeReadService != null) {
             userNoticeReadService.markAsRead(userId, noticeId);
         }
         return Result.success(null);
-    }
-
-    private Long getUserIdFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
-        String token = authHeader.substring(7);
-        if (userService != null) {
-            try {
-                User u = userService.getUserByToken(token);
-                if (u != null) return u.getId();
-            } catch (Exception ignored) {}
-        }
-        if (jwtUtil != null) {
-            try {
-                Claims claims = jwtUtil.parseToken(token);
-                if (claims != null && claims.getSubject() != null) {
-                    User u = userService.getUserByUsername(claims.getSubject());
-                    if (u == null && userService != null) u = userService.getUserByPhone(claims.getSubject());
-                    if (u != null) return u.getId();
-                }
-            } catch (Exception ignored) {}
-        }
-        return null;
     }
 
     @GetMapping("/page")
@@ -171,7 +139,7 @@ public class NotificationController {
             HttpServletRequest request) {
         // 安全修复：该接口返回全量通知（含他人 userId），属管理端功能；C 端请使用 /my
         if (!RequestIdentity.isAdmin(request)) {
-            return Result.error(403, "无权查看通知列表");
+            throw new BusinessException(403, "无权查看通知列表");
         }
         Page<Notification> page = new Page<>(pageNo, pageSize);
         IPage<Notification> result = notificationService.getNotificationList(page);
@@ -184,7 +152,7 @@ public class NotificationController {
                                                    HttpServletRequest request) {
         // 安全修复：原实现任意登录用户即可按 body 指定的 userId 向他人推送通知
         if (!RequestIdentity.isAdmin(request)) {
-            return Result.error(403, "无权创建通知");
+            throw new BusinessException(403, "无权创建通知");
         }
         return Result.success(notificationService.createNotification(notification));
     }
@@ -194,7 +162,7 @@ public class NotificationController {
     public Result<Notification> updateNotification(@RequestBody Notification notification,
                                                    HttpServletRequest request) {
         if (!RequestIdentity.isAdmin(request)) {
-            return Result.error(403, "无权修改通知");
+            throw new BusinessException(403, "无权修改通知");
         }
         return Result.success(notificationService.updateNotification(notification));
     }
@@ -204,7 +172,7 @@ public class NotificationController {
     public Result<Boolean> deleteNotification(@PathVariable Long id,
                                              HttpServletRequest request) {
         if (!RequestIdentity.isAdmin(request)) {
-            return Result.error(403, "无权删除通知");
+            throw new BusinessException(403, "无权删除通知");
         }
         return Result.success(notificationService.deleteNotification(id));
     }
@@ -214,7 +182,7 @@ public class NotificationController {
     public Result<Notification> getNotificationDetail(@PathVariable Long id,
                                                      HttpServletRequest request) {
         if (!RequestIdentity.isAdmin(request)) {
-            return Result.error(403, "无权查看通知详情");
+            throw new BusinessException(403, "无权查看通知详情");
         }
         return Result.success(notificationService.getNotificationById(id));
     }

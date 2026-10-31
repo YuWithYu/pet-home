@@ -2,9 +2,12 @@ package com.pethome.controller.common;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
+import com.pethome.common.SafeCall;
 import com.pethome.entity.Banner;
 import com.pethome.service.common.BannerService;
+import com.pethome.security.RequestIdentity;
 import com.pethome.util.FileUploadUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,8 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,19 +68,31 @@ public class BannerController {
 
     @PostMapping("/create")
     @Operation(summary = "创建横幅")
-    public Result<Banner> createBanner(@RequestBody Banner banner) {
+    public Result<Banner> createBanner(@RequestBody Banner banner, HttpServletRequest request) {
+        // 安全修复：首页轮播图属平台级内容，此前任意登录用户即可发布（广告/钓鱼注入）
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权创建横幅");
+        }
         return Result.success(bannerService.createBanner(banner));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新横幅")
-    public Result<Banner> updateBanner(@RequestBody Banner banner) {
+    public Result<Banner> updateBanner(@RequestBody Banner banner, HttpServletRequest request) {
+        // 安全修复：首页轮播图属平台级内容，仅平台管理员可修改
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权修改横幅");
+        }
         return Result.success(bannerService.updateBanner(banner));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除横幅")
-    public Result<Boolean> deleteBanner(@PathVariable Long id) {
+    public Result<Boolean> deleteBanner(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：首页轮播图属平台级内容，仅平台管理员可删除
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权删除横幅");
+        }
         return Result.success(bannerService.deleteBanner(id));
     }
 
@@ -160,21 +175,23 @@ public class BannerController {
     public Result<Banner> uploadBanner(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) String description) {
-        
-        try {
+            @RequestParam(required = false) String description,
+            HttpServletRequest request) {
+        // 安全修复：轮播图上传属平台级内容，仅平台管理员可操作
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权上传横幅");
+        }
+        return SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             // 压缩后取磁盘上的实际大小，避免列表显示“假的大体积”
             long fileSize = file.getSize();
-            try {
-                int idx = imageUrl != null ? imageUrl.indexOf("/upload/") : -1;
-                if (idx >= 0 && idx + 8 < imageUrl.length()) {
-                    String rel = imageUrl.substring(idx + 8).replace("\\", "/");
-                    String base = (uploadPath != null && !uploadPath.isEmpty()) ? uploadPath.replaceAll("/+$", "") + "/" : "upload/";
-                    File saved = new File(base + rel);
-                    if (saved.exists()) fileSize = saved.length();
-                }
-            } catch (Exception ignored) { }
+            int idx = imageUrl != null ? imageUrl.indexOf("/upload/") : -1;
+            if (idx >= 0 && idx + 8 < imageUrl.length()) {
+                String rel = imageUrl.substring(idx + 8).replace("\\", "/");
+                String base = (uploadPath != null && !uploadPath.isEmpty()) ? uploadPath.replaceAll("/+$", "") + "/" : "upload/";
+                File saved = new File(base + rel);
+                if (saved.exists()) fileSize = saved.length();
+            }
             // 创建Banner对象并保存到数据库
             Banner banner = new Banner();
             banner.setTitle(title != null && !title.isEmpty() ? title : "宠物之家");
@@ -191,19 +208,20 @@ public class BannerController {
 
             Banner savedBanner = bannerService.createBanner(banner);
             return Result.success(savedBanner);
-
-        } catch (IOException e) {
-            log.error("轮播图文件上传失败", e);
-            return Result.error("文件上传失败，请稍后重试");
-        }
+        }, "文件上传失败，请稍后重试", log);
     }
 
     @PutMapping("/{id}/status")
     @Operation(summary = "更新横幅状态")
-    public Result<Banner> updateBannerStatus(@PathVariable Long id, @RequestParam String status) {
+    public Result<Banner> updateBannerStatus(@PathVariable Long id, @RequestParam String status,
+                                             HttpServletRequest request) {
+        // 安全修复：横幅上/下线属平台级内容管理，仅平台管理员可操作
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权修改横幅状态");
+        }
         Banner banner = bannerService.getBannerById(id);
         if (banner == null) {
-            return Result.error("轮播图不存在");
+            throw new BusinessException("轮播图不存在");
         }
         banner.setStatus(status);
         banner.setUpdateTime(LocalDateTime.now());

@@ -1,13 +1,11 @@
 package com.pethome.controller.admin;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
-import com.pethome.entity.User;
 import com.pethome.service.admin.TaskService;
-import com.pethome.service.user.UserService;
-import com.pethome.security.JwtUtil;
-import io.jsonwebtoken.Claims;
+import com.pethome.service.user.UserTokenService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -29,11 +27,8 @@ public class TaskController {
     private static final Logger log = LoggerFactory.getLogger(TaskController.class);
 
     @Autowired
-    private UserService userService;
-    
-    @Autowired
-    private JwtUtil jwtUtil;
-    
+    private UserTokenService userTokenService;
+
     @Autowired
     private TaskService taskService;
 
@@ -41,7 +36,7 @@ public class TaskController {
     @Operation(summary = "获取任务进度")
     public Result<Map<String, Object>> getTaskProgress(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         return com.pethome.common.SafeCall.of(() -> {
-            Long userId = getUserIdFromToken(authHeader);
+            Long userId = userTokenService.resolveUserId(authHeader);
             log.debug("从Token解析出的用户ID: {}", userId);
             
             if (userId == null) {
@@ -68,7 +63,7 @@ public class TaskController {
     @Operation(summary = "获取每日任务")
     public Result<List<Map<String, Object>>> getDailyTasks(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         return com.pethome.common.SafeCall.of(() -> {
-            Long userId = getUserIdFromToken(authHeader);
+            Long userId = userTokenService.resolveUserId(authHeader);
             
             if (userId == null) {
                 return Result.success("获取每日任务成功", new java.util.ArrayList<>());
@@ -89,13 +84,13 @@ public class TaskController {
         return com.pethome.common.SafeCall.of(() -> {
             String taskId = request.get("taskId");
             if (taskId == null || taskId.isEmpty()) {
-                return Result.error("任务ID不能为空");
+                throw new BusinessException("任务ID不能为空");
             }
             
-            Long userId = getUserIdFromToken(authHeader);
+            Long userId = userTokenService.resolveUserId(authHeader);
             
             if (userId == null) {
-                return Result.error("未登录或token无效");
+                throw new BusinessException("未登录或token无效");
             }
             
             // 使用真实服务领取任务奖励
@@ -103,46 +98,5 @@ public class TaskController {
             
             return Result.success("领取奖励成功", data);
         }, "领取奖励失败，请稍后重试", log);
-    }
-    
-    /**
-     * 从token中获取用户ID（与 UserController 一致：先查 Redis 再解析 JWT）
-     */
-    private Long getUserIdFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = authHeader.substring(7);
-        // 1. 先尝试从 Redis 缓存获取（登录时存的 token -> user）
-        try {
-            User cachedUser = userService.getUserByToken(token);
-            if (cachedUser != null) {
-                return cachedUser.getId();
-            }
-        } catch (Exception e) {
-            // 忽略，继续走 JWT 解析
-        }
-        // 2. 解析 JWT，用 subject 查 username/phone/userId
-        try {
-            Claims claims = jwtUtil.parseToken(token);
-            if (claims != null) {
-                String subject = claims.getSubject();
-                if (subject != null) {
-                    User user = userService.getUserByUsername(subject);
-                    if (user == null) {
-                        user = userService.getUserByPhone(subject);
-                    }
-                    if (user == null && subject.matches("\\d+")) {
-                        user = userService.getUserById(Long.parseLong(subject));
-                    }
-                    if (user != null) {
-                        return user.getId();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Token解析失败", e);
-        }
-        return null;
     }
 }

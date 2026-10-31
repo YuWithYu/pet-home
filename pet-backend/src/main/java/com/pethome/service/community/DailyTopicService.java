@@ -6,6 +6,7 @@ import com.pethome.entity.DailyTopic;
 import com.pethome.entity.Post;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 每日专题服务接口
@@ -71,6 +72,12 @@ public interface DailyTopicService extends IService<DailyTopic> {
      * 减少专题点赞数
      */
     void decrementLikeCount(Long topicId);
+
+    /**
+     * 兼容接口的聚合数据：主题/日期/今日专题/帖子/Banner/已发布专题列表。
+     * 单项查询失败时降级为空数据，保证 topics 始终可返回。
+     */
+    Map<String, Object> getDailyTopicsOverview();
 }
 
 

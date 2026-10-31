@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.HospitalService;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.HospitalServiceService;
 import com.pethome.util.FileUploadUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +84,12 @@ public class HospitalServiceController {
 
     @PostMapping("/create")
     @Operation(summary = "创建宠物医院服务")
-    public Result<HospitalService> createHospitalService(@RequestBody HospitalService service) {
+    public Result<HospitalService> createHospitalService(@RequestBody HospitalService service,
+                                                         HttpServletRequest request) {
+        // 安全修复：医院服务与价格为平台级主数据，仅平台管理员可维护
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建医院服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             if (service.getCreatedAt() == null) {
                 service.setCreatedAt(LocalDateTime.now());
@@ -96,7 +103,11 @@ public class HospitalServiceController {
 
     @PutMapping("/update")
     @Operation(summary = "更新宠物医院服务")
-    public Result<HospitalService> updateHospitalService(@RequestBody HospitalService service) {
+    public Result<HospitalService> updateHospitalService(@RequestBody HospitalService service,
+                                                         HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改医院服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             service.setUpdatedAt(LocalDateTime.now());
             HospitalService updated = hospitalServiceService.updateHospitalService(service);
@@ -107,7 +118,10 @@ public class HospitalServiceController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除宠物医院服务")
-    public Result<Boolean> deleteHospitalService(@PathVariable Long id) {
+    public Result<Boolean> deleteHospitalService(@PathVariable Long id, HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除医院服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = hospitalServiceService.deleteHospitalService(id);
             if (success) {
@@ -120,7 +134,11 @@ public class HospitalServiceController {
 
     @PutMapping("/{id}/status")
     @Operation(summary = "更新宠物医院服务状态")
-    public Result<HospitalService> updateHospitalServiceStatus(@PathVariable Long id, @RequestParam String status) {
+    public Result<HospitalService> updateHospitalServiceStatus(@PathVariable Long id, @RequestParam String status,
+                                                               HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改医院服务状态");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             HospitalService service = hospitalServiceService.getHospitalServiceById(id);
             if (service == null) {
@@ -137,7 +155,11 @@ public class HospitalServiceController {
     @PostMapping("/upload")
     @Operation(summary = "上传医院服务图片")
     public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file,
-                                             @RequestParam(value = "id", required = false) Long id) {
+                                             @RequestParam(value = "id", required = false) Long id,
+                                             HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权上传医院服务图片");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             if (id != null) {
@@ -154,7 +176,11 @@ public class HospitalServiceController {
 
     @PostMapping("/{id}/image")
     @Operation(summary = "更新医院服务图片")
-    public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file,
+                                             HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改医院服务图片");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             HospitalService service = hospitalServiceService.getHospitalServiceById(id);

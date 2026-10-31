@@ -135,15 +135,21 @@ public class RoleInterceptor implements HandlerInterceptor {
         // 移除查询参数，只比较路径部分
         String path = uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri;
 
-        if ("GET".equalsIgnoreCase(method) && isPublicReadApi(path)) {
-            return true;
-        }
+        // 安全修复：公开只读接口此前在解析 token 之前直接 return，导致拦截器不写入 role/userId 等身份属性，
+        // 于是 /api/notice/page、/api/service-member/list 等"管理端读全部、C 端脱敏"的接口
+        // 对管理员也一律按匿名处理（管理员看不到未发布数据、手机号被抹掉）。
+        // 现在：带合法 token 的请求继续走身份解析（供 Controller 区分管理员），
+        // 匿名请求仍然直接放行，保持只读接口免登录能力。
+        boolean publicRead = "GET".equalsIgnoreCase(method) && isPublicReadApi(path);
         
         // 获取Authorization header
         String authHeader = request.getHeader("Authorization");
         log.debug("RoleInterceptor uri={}, method={}, bearerPresent={}", uri, method, authHeader != null && authHeader.startsWith("Bearer "));
         
         if (authHeader == null || authHeader.isBlank() || !authHeader.startsWith("Bearer ")) {
+            if (publicRead) {
+                return true;
+            }
             log.debug("Authorization 缺失或格式错误: {}", uri);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
@@ -288,6 +294,12 @@ public class RoleInterceptor implements HandlerInterceptor {
                     }
                 }
             }
+        }
+
+        // 公开只读接口：身份已写入 request 属性（管理端可读全量字段，C 端按 Controller 内脱敏逻辑处理），
+        // 不再受 staff / 管理端路径限制约束（这些限制只针对写接口与管理端接口）
+        if (publicRead) {
+            return true;
         }
 
         // 安全修复：无法确定身份时一律拒绝（此前 role 为 null 会无条件放行所有接口）

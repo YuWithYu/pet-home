@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.pethome.common.Result;
 import com.pethome.entity.LitterServiceBanner;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.LitterServiceBannerService;
 import com.pethome.util.FileUploadUtil;
 
@@ -23,6 +24,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/litter-banners")
@@ -46,7 +49,12 @@ public class LitterServiceBannerController {
 
     @PostMapping("/upload")
     @Operation(summary = "上传铲屎服务展示图")
-    public Result<String> uploadLitterServiceBanner(@RequestParam("file") MultipartFile file) {
+    public Result<String> uploadLitterServiceBanner(@RequestParam("file") MultipartFile file,
+                                                    HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可修改
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             // 使用FileUploadUtil上传文件，自动返回HTTPS URL
             String imageUrl;
@@ -89,7 +97,12 @@ public class LitterServiceBannerController {
 
     @PostMapping("/create")
     @Operation(summary = "创建铲屎服务横幅")
-    public Result<LitterServiceBanner> createLitterServiceBanner(@RequestBody LitterServiceBanner banner) {
+    public Result<LitterServiceBanner> createLitterServiceBanner(@RequestBody LitterServiceBanner banner,
+                                                                 HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可创建
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             banner.setCreatedAt(java.time.LocalDateTime.now());
             banner.setUpdatedAt(java.time.LocalDateTime.now());
@@ -101,7 +114,12 @@ public class LitterServiceBannerController {
 
     @PutMapping("/update")
     @Operation(summary = "更新铲屎服务横幅")
-    public Result<LitterServiceBanner> updateLitterServiceBanner(@RequestBody LitterServiceBanner banner) {
+    public Result<LitterServiceBanner> updateLitterServiceBanner(@RequestBody LitterServiceBanner banner,
+                                                                 HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可修改
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             banner.setUpdatedAt(java.time.LocalDateTime.now());
             LitterServiceBanner updatedBanner = litterServiceBannerService.updateLitterServiceBanner(banner);
@@ -111,7 +129,11 @@ public class LitterServiceBannerController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除铲屎服务横幅")
-    public Result<Boolean> deleteLitterServiceBanner(@PathVariable Long id) {
+    public Result<Boolean> deleteLitterServiceBanner(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可删除
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = litterServiceBannerService.deleteLitterServiceBanner(id);
             if (success) {

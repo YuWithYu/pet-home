@@ -5,12 +5,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pethome.entity.DailyTopic;
 import com.pethome.entity.DailyTopicPost;
+import com.pethome.entity.Banner;
 import com.pethome.entity.Post;
 import com.pethome.mapper.DailyTopicMapper;
 import com.pethome.mapper.DailyTopicPostMapper;
 import com.pethome.mapper.PostMapper;
+import com.pethome.service.common.BannerService;
 import com.pethome.service.community.DailyTopicService;
 import com.pethome.service.community.PostService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,11 +22,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class DailyTopicServiceImpl extends ServiceImpl<DailyTopicMapper, DailyTopic> implements DailyTopicService {
+
+    private static final Logger log = LoggerFactory.getLogger(DailyTopicServiceImpl.class);
 
     @Autowired
     private DailyTopicPostMapper dailyTopicPostMapper;
@@ -32,6 +40,9 @@ public class DailyTopicServiceImpl extends ServiceImpl<DailyTopicMapper, DailyTo
 
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private BannerService bannerService;
 
     @Override
     public DailyTopic getTodayTopic() {
@@ -209,6 +220,60 @@ public class DailyTopicServiceImpl extends ServiceImpl<DailyTopicMapper, DailyTo
             topic.setLikeCount(Math.max(0, current - 1));
             this.updateById(topic);
         }
+    }
+
+    @Override
+    public Map<String, Object> getDailyTopicsOverview() {
+        Map<String, Object> response = new HashMap<>();
+
+        // 今日主题、日期（与业务库无关，始终可返回）
+        String[] themes = {
+            "猫咪护理", "狗狗训练", "宠物健康", "宠物美容",
+            "宠物饮食", "宠物玩具", "宠物训练"
+        };
+        int dayOfWeek = (LocalDate.now().getDayOfWeek().getValue() - 1) % 7;
+        String todayTheme = dayOfWeek >= 0 && dayOfWeek < themes.length ? themes[dayOfWeek] : "宠物健康";
+        response.put("todayTheme", todayTheme);
+        response.put("date", LocalDate.now().toString());
+        response.put("topic", null);
+        response.put("posts", new ArrayList<Post>());
+        response.put("banners", new ArrayList<Banner>());
+
+        // 已发布专题列表（管理员后台创建，供精选专题展示）——优先拉取，确保小程序有列表
+        List<DailyTopic> topics = new ArrayList<>();
+        try {
+            Page<DailyTopic> topicPage = new Page<>(1, 20);
+            Page<DailyTopic> topicResult = getTopicList(topicPage, 1);
+            if (topicResult != null && topicResult.getRecords() != null) {
+                topics = topicResult.getRecords();
+            }
+        } catch (Exception e) {
+            log.error("获取已发布专题列表失败", e);
+        }
+        response.put("topics", topics);
+
+        // 今日专题、Banner 等（失败不影响 topics 返回）
+        try {
+            DailyTopic todayTopic = getTodayTopic();
+            List<Banner> allBanners = bannerService.getAllBanners();
+            if (allBanners == null) {
+                allBanners = new ArrayList<>();
+            }
+            List<Banner> activeBanners = allBanners.size() > 5
+                ? allBanners.subList(0, 5)
+                : allBanners;
+            response.put("banners", activeBanners);
+            if (todayTopic != null) {
+                List<Post> posts = getTopicPosts(todayTopic.getId());
+                todayTopic.setPosts(posts != null ? posts : new ArrayList<>());
+                response.put("topic", todayTopic);
+                response.put("posts", todayTopic.getPosts());
+            }
+        } catch (Exception e) {
+            log.error("获取今日专题及Banner失败", e);
+        }
+
+        return response;
     }
 }
 

@@ -2,17 +2,12 @@ package com.pethome.controller.order;
 
 import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
-import com.pethome.entity.User;
 import com.pethome.entity.UserCoupon;
 import com.pethome.service.order.CouponService;
 import com.pethome.service.order.UserCouponService;
-import com.pethome.service.user.UserService;
-import com.pethome.security.JwtUtil;
-import io.jsonwebtoken.Claims;
+import com.pethome.security.UserTokenResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,8 +32,6 @@ import java.util.Map;
 @RequestMapping("/api/coupons")
 public class CouponController {
 
-    private static final Logger log = LoggerFactory.getLogger(CouponController.class);
-
     @Autowired
     private CouponService couponService;
 
@@ -46,10 +39,7 @@ public class CouponController {
     private UserCouponService userCouponService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
+    private UserTokenResolver userTokenResolver;
 
     @GetMapping("/center")
     @Operation(summary = "领券中心：上架中且在领取窗口内的券（含当前用户可领状态）")
@@ -102,41 +92,9 @@ public class CouponController {
         return userId;
     }
 
-    /** 从 Authorization 头解析当前登录用户 ID（Redis 缓存 → JWT subject 反查，与 SignInController 一致） */
+    /** 从 Authorization 头解析当前登录用户 ID（统一走 UserTokenResolver） */
     private Long getUserIdFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = authHeader.substring(7);
-        try {
-            User cachedUser = userService.getUserByToken(token);
-            if (cachedUser != null) {
-                return cachedUser.getId();
-            }
-        } catch (Exception ignored) {
-            // 继续走 JWT 解析
-        }
-        try {
-            Claims claims = jwtUtil.parseToken(token);
-            if (claims != null) {
-                String subject = claims.getSubject();
-                if (subject != null) {
-                    User user = userService.getUserByUsername(subject);
-                    if (user == null) {
-                        user = userService.getUserByPhone(subject);
-                    }
-                    if (user == null && subject.matches("\\d+")) {
-                        user = userService.getUserById(Long.parseLong(subject));
-                    }
-                    if (user != null) {
-                        return user.getId();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("Token解析失败", e);
-        }
-        return null;
+        return userTokenResolver.getUserIdFromBearer(authHeader);
     }
 
     @SuppressWarnings("unchecked")

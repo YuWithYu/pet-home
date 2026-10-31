@@ -46,7 +46,12 @@ public class MedicalServiceController {
 
     @PostMapping("/create")
     @Operation(summary = "创建医疗服务")
-    public Result<MedicalService> createMedicalService(@RequestBody MedicalService medicalService) {
+    public Result<MedicalService> createMedicalService(@RequestBody MedicalService medicalService,
+                                                       javax.servlet.http.HttpServletRequest request) {
+        // 安全修复：服务项目属平台级主数据，此前任意登录用户即可新增
+        if (!com.pethome.security.RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             MedicalService result = medicalServiceService.createMedicalService(medicalService);
             return Result.success(result);
@@ -55,7 +60,12 @@ public class MedicalServiceController {
 
     @PutMapping("/update")
     @Operation(summary = "更新医疗服务")
-    public Result<MedicalService> updateMedicalService(@RequestBody MedicalService medicalService) {
+    public Result<MedicalService> updateMedicalService(@RequestBody MedicalService medicalService,
+                                                       javax.servlet.http.HttpServletRequest request) {
+        // 安全修复：服务项目属平台级主数据，仅平台管理员可修改
+        if (!com.pethome.security.RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             MedicalService result = medicalServiceService.updateMedicalService(medicalService);
             return Result.success(result);
@@ -64,7 +74,12 @@ public class MedicalServiceController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除医疗服务")
-    public Result<Boolean> deleteMedicalService(@PathVariable Long id) {
+    public Result<Boolean> deleteMedicalService(@PathVariable Long id,
+                                               javax.servlet.http.HttpServletRequest request) {
+        // 安全修复：服务项目属平台级主数据，仅平台管理员可删除
+        if (!com.pethome.security.RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除服务");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean result = medicalServiceService.deleteMedicalService(id);
             return Result.success(result);

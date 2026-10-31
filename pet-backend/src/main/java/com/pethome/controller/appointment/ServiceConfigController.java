@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.ServiceConfig;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.ServiceConfigService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,12 @@ public class ServiceConfigController {
 
     @PostMapping("/create")
     @Operation(summary = "创建服务配置")
-    public Result<ServiceConfig> createServiceConfig(@RequestBody ServiceConfig serviceConfig) {
+    public Result<ServiceConfig> createServiceConfig(@RequestBody ServiceConfig serviceConfig,
+                                                     HttpServletRequest request) {
+        // 安全修复：服务配置为平台级主数据，仅平台管理员可维护（此前任意登录用户可写）
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建服务配置");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             ServiceConfig created = serviceConfigService.createServiceConfig(serviceConfig);
             return Result.success(created);
@@ -74,7 +81,11 @@ public class ServiceConfigController {
 
     @PutMapping("/update")
     @Operation(summary = "更新服务配置")
-    public Result<ServiceConfig> updateServiceConfig(@RequestBody ServiceConfig serviceConfig) {
+    public Result<ServiceConfig> updateServiceConfig(@RequestBody ServiceConfig serviceConfig,
+                                                     HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改服务配置");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             ServiceConfig updated = serviceConfigService.updateServiceConfig(serviceConfig);
             return Result.success(updated);
@@ -83,7 +94,10 @@ public class ServiceConfigController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除服务配置")
-    public Result<Boolean> deleteServiceConfig(@PathVariable Long id) {
+    public Result<Boolean> deleteServiceConfig(@PathVariable Long id, HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除服务配置");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = serviceConfigService.deleteServiceConfig(id);
             return Result.success(success);
@@ -94,7 +108,11 @@ public class ServiceConfigController {
     @Operation(summary = "更新服务状态")
     public Result<Boolean> updateServiceStatus(
             @PathVariable Long id,
-            @RequestParam Integer status) {
+            @RequestParam Integer status,
+            HttpServletRequest request) {
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改服务状态");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = serviceConfigService.updateServiceStatus(id, status);
             return Result.success(success);

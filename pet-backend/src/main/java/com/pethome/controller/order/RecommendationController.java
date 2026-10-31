@@ -4,12 +4,14 @@ package com.pethome.controller.order;
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Post;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.community.PostRecommendationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,12 +40,19 @@ public class RecommendationController {
     @GetMapping("/collaborative-filtering")
     @Operation(summary = "协同过滤推荐（预留接口）")
     public Result<Map<String, Object>> collaborativeFiltering(
-            @RequestParam Long userId,
-            @RequestParam(defaultValue = "20") Integer limit) {
+            @RequestParam(required = false) Long userId,
+            @RequestParam(defaultValue = "20") Integer limit,
+            HttpServletRequest request) {
+        // 安全修复：推荐结果依赖用户行为画像，userId 必须取自登录态（此前可传他人 userId 读取其推荐画像）
+        Long loginUserId = RequestIdentity.userId(request);
+        if (loginUserId == null) {
+            return Result.error(401, "用户未登录或token无效");
+        }
+        int finalLimit = clampLimit(limit);
         return com.pethome.common.SafeCall.of(() -> {
             List<Post> recommendedPosts = postRecommendationService.getCollaborativeRecommendations(
-                    userId,
-                    limit == null ? 20 : limit
+                    loginUserId,
+                    finalLimit
             );
             
             Map<String, Object> result = new HashMap<>();
@@ -62,12 +71,17 @@ public class RecommendationController {
     @PostMapping("/deep-learning")
     @Operation(summary = "深度学习推荐（预留接口）")
     public Result<Map<String, Object>> deepLearningRecommendation(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
+        // 安全修复：忽略 body 中的 userId，个性化推荐只针对当前登录用户
+        Long loginUserId = RequestIdentity.userId(httpRequest);
+        if (loginUserId == null) {
+            return Result.error(401, "用户未登录或token无效");
+        }
+        Integer limit = request.get("limit") != null
+                ? clampLimit(parseInteger(request.get("limit")))
+                : 20;
         return com.pethome.common.SafeCall.of(() -> {
-            Long userId = Long.parseLong(request.get("userId").toString());
-            Integer limit = request.get("limit") != null ? 
-                Integer.parseInt(request.get("limit").toString()) : 20;
-            
             // TODO: 调用深度学习模型API
             // 1. 准备用户特征向量
             // 2. 准备帖子特征向量
@@ -75,7 +89,7 @@ public class RecommendationController {
             // 4. 返回推荐结果
             
             // 当前使用混合推荐作为fallback
-            List<Post> recommendedPosts = postRecommendationService.getExplorePosts(userId, limit);
+            List<Post> recommendedPosts = postRecommendationService.getExplorePosts(loginUserId, limit);
             
             Map<String, Object> result = new HashMap<>();
             result.put("posts", recommendedPosts);
@@ -91,9 +105,15 @@ public class RecommendationController {
      */
     @GetMapping("/user-interests")
     @Operation(summary = "获取用户兴趣标签")
-    public Result<List<String>> getUserInterests(@RequestParam Long userId) {
+    public Result<List<String>> getUserInterests(@RequestParam(required = false) Long userId,
+                                                 HttpServletRequest request) {
+        // 安全修复：兴趣标签属用户画像，必须按登录态查询（此前可枚举他人兴趣标签）
+        Long loginUserId = RequestIdentity.userId(request);
+        if (loginUserId == null) {
+            return Result.error(401, "用户未登录或token无效");
+        }
         return com.pethome.common.SafeCall.of(() -> {
-            List<String> interests = postRecommendationService.getUserInterestTags(userId);
+            List<String> interests = postRecommendationService.getUserInterestTags(loginUserId);
             return Result.success(interests);
         }, "获取用户兴趣失败，请稍后重试", log);
     }
@@ -108,8 +128,27 @@ public class RecommendationController {
     public Result<List<Post>> hotRecommendation(
             @RequestParam(defaultValue = "20") Integer limit) {
         return com.pethome.common.SafeCall.of(() -> {
-            List<Post> hotPosts = postRecommendationService.getHotPosts(limit);
+            List<Post> hotPosts = postRecommendationService.getHotPosts(clampLimit(limit));
             return Result.success(hotPosts);
         }, "热度推荐失败，请稍后重试", log);
+    }
+
+    /** limit 归一：默认 20，上限 100（防止超大分页触发全表扫描） */
+    private static int clampLimit(Integer limit) {
+        if (limit == null || limit < 1) {
+            return 20;
+        }
+        return Math.min(limit, 100);
+    }
+
+    private static Integer parseInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value.toString().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

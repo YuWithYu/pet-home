@@ -6,12 +6,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.Notice;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.community.NoticeService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +43,12 @@ public class NoticeController {
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) Integer status) {
+            @RequestParam(required = false) Integer status,
+            HttpServletRequest request) {
+        // 安全修复：分页接口包含未发布/已下线公告，属管理端功能，不能匿名可读
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权查看公告列表");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             Page<Notice> page = new Page<>(pageNo, pageSize);
             IPage<Notice> result = noticeService.getNoticePage(page, keyword, type, status);
@@ -97,7 +104,11 @@ public class NoticeController {
      */
     @PostMapping("/create")
     @Operation(summary = "创建公告")
-    public Result<Notice> createNotice(@RequestBody Notice notice) {
+    public Result<Notice> createNotice(@RequestBody Notice notice, HttpServletRequest request) {
+        // 安全修复：公告为平台级内容，此前任意登录用户即可发布（钓鱼/数据篡改）
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建公告");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             if (notice.getTitle() == null || notice.getTitle().trim().isEmpty()) {
                 return Result.error("公告标题不能为空");
@@ -118,7 +129,11 @@ public class NoticeController {
      */
     @PutMapping("/update")
     @Operation(summary = "更新公告")
-    public Result<Notice> updateNotice(@RequestBody Notice notice) {
+    public Result<Notice> updateNotice(@RequestBody Notice notice, HttpServletRequest request) {
+        // 安全修复：公告为平台级内容，仅平台管理员可修改
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改公告");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             if (notice.getId() == null) {
                 return Result.error("ID不能为空");
@@ -164,7 +179,11 @@ public class NoticeController {
      */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除公告")
-    public Result<Boolean> deleteNotice(@PathVariable Long id) {
+    public Result<Boolean> deleteNotice(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：公告为平台级内容，仅平台管理员可删除
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除公告");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             Notice existing = noticeService.getById(id);
             if (existing == null) {

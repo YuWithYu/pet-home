@@ -105,6 +105,25 @@ public class PetServiceImpl implements PetService {
         
         return pets != null ? pets : List.of();
     }
+
+    @Override
+    public IPage<Pet> getPetPageForOwner(Long userId, int pageNo, int pageSize) {
+        if (userId != null) {
+            try {
+                List<Pet> allPets = getPetsByUserId(userId);
+                int total = allPets.size();
+                int start = (pageNo - 1) * pageSize;
+                int end = Math.min(start + pageSize, total);
+                List<Pet> pagedList = start < total ? allPets.subList(start, end) : List.of();
+                Page<Pet> pageResult = new Page<>(pageNo, pageSize, total);
+                pageResult.setRecords(pagedList);
+                return pageResult;
+            } catch (Exception e) {
+                logger.error("使用缓存查询失败，降级到数据库分页查询，错误: {}", e.getMessage(), e);
+            }
+        }
+        return getPetListByUserId(new Page<>(pageNo, pageSize), userId);
+    }
     
     @Override
     public void clearPetListCache(Long userId) {

@@ -1,6 +1,7 @@
 package com.pethome.controller.admin;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -159,7 +160,7 @@ public class AdminCommunityController {
         return com.pethome.common.SafeCall.of(() -> {
             Post post = postService.getById(id);
             if (post == null) {
-                return Result.error("帖子不存在");
+                throw new BusinessException("帖子不存在");
             }
             post.setStatus(status);
             post.setUpdateTime(LocalDateTime.now());
@@ -167,13 +168,9 @@ public class AdminCommunityController {
             invalidateStatsCache();
 
             // 审核/下架等会改变「今日发帖」可见数量，同步每日任务「发布内容」进度（修复：仅待审时进度为 0、通过后仍不更新）
+            // 同步失败的降级处理在 TaskService 内部完成，不影响审核主流程
             if (post.getUserId() != null && taskService != null) {
-                try {
-                    int todayCount = postService.getTodayPostCount(post.getUserId());
-                    taskService.updateTaskProgress(post.getUserId(), "post_content", todayCount);
-                } catch (Exception ex) {
-                    log.warn("管理员更新帖子状态后同步发布任务进度失败", ex);
-                }
+                taskService.syncPostContentProgress(post.getUserId());
             }
             return Result.success(null);
         }, "更新帖子状态失败，请稍后重试", log);
@@ -190,7 +187,7 @@ public class AdminCommunityController {
         return com.pethome.common.SafeCall.of(() -> {
             Post post = postService.getById(id);
             if (post == null) {
-                return Result.error("帖子不存在");
+                throw new BusinessException("帖子不存在");
             }
             post.setIsTop(isTop);
             post.setUpdateTime(LocalDateTime.now());
@@ -210,7 +207,7 @@ public class AdminCommunityController {
         return com.pethome.common.SafeCall.of(() -> {
             Post post = postService.getById(id);
             if (post == null) {
-                return Result.error("帖子不存在");
+                throw new BusinessException("帖子不存在");
             }
             post.setIsHot(isHot);
             post.setUpdateTime(LocalDateTime.now());
@@ -228,7 +225,7 @@ public class AdminCommunityController {
         return com.pethome.common.SafeCall.of(() -> {
             boolean removed = postService.deletePostPhysically(id);
             if (!removed) {
-                return Result.error("帖子不存在或已删除");
+                throw new BusinessException("帖子不存在或已删除");
             }
             invalidateStatsCache();
             return Result.success(null);
@@ -276,7 +273,7 @@ public class AdminCommunityController {
         return com.pethome.common.SafeCall.of(() -> {
             Comment comment = commentService.getById(id);
             if (comment == null) {
-                return Result.error("评论不存在");
+                throw new BusinessException("评论不存在");
             }
             comment.setStatus(status);
             comment.setUpdateTime(LocalDateTime.now());
@@ -294,7 +291,7 @@ public class AdminCommunityController {
         return com.pethome.common.SafeCall.of(() -> {
             Comment comment = commentService.getById(id);
             if (comment == null) {
-                return Result.error("评论不存在");
+                throw new BusinessException("评论不存在");
             }
             // 软删除：设置状态为0
             comment.setStatus(0);
@@ -484,7 +481,7 @@ public class AdminCommunityController {
             if (success) {
                 return Result.success(null);
             } else {
-                return Result.error("删除失败");
+                throw new BusinessException("删除失败");
             }
         }, "删除每日专题Banner失败，请稍后重试", log);
     }

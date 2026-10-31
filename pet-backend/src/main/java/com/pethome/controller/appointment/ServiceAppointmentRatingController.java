@@ -155,7 +155,10 @@ public class ServiceAppointmentRatingController {
 
     @GetMapping("/rating/member/{memberId}")
     @Operation(summary = "获取服务人员的所有评价")
-    public Result<List<Map<String, Object>>> getMemberRatings(@PathVariable Long memberId) {
+    public Result<List<Map<String, Object>>> getMemberRatings(@PathVariable Long memberId,
+                                                              javax.servlet.http.HttpServletRequest request) {
+        // 安全修复：评价列表对外仅展示昵称/内容，不返回评价人 userId（避免账号标识被枚举）
+        boolean showUserId = com.pethome.security.RequestIdentity.isAdminOrStaff(request);
         return com.pethome.common.SafeCall.of(() -> {
             List<ServiceAppointmentRating> list = ratingService.listByMemberId(memberId);
             List<Map<String, Object>> result = new ArrayList<>();
@@ -165,7 +168,9 @@ public class ServiceAppointmentRatingController {
                 m.put("appointmentType", r.getAppointmentType());
                 m.put("appointmentId", r.getAppointmentId());
                 m.put("memberId", r.getMemberId());
-                m.put("userId", r.getUserId());
+                if (showUserId) {
+                    m.put("userId", r.getUserId());
+                }
                 m.put("rating", r.getRating());
                 m.put("comment", r.getComment());
                 m.put("createTime", r.getCreateTime());
@@ -176,7 +181,9 @@ public class ServiceAppointmentRatingController {
                 if (r.getUserId() != null && userService != null) {
                     try {
                         User u = userService.getUserById(r.getUserId());
-                        m.put("userName", u != null ? (u.getNickname() != null && !u.getNickname().isEmpty() ? u.getNickname() : u.getUsername()) : "用户" + r.getUserId());
+                        // 安全修复：昵称为空时不得回退到 username（历史用户 username 即手机号，会造成 PII 泄露）
+                        m.put("userName", u != null && u.getNickname() != null && !u.getNickname().isEmpty()
+                                ? u.getNickname() : "用户" + r.getUserId());
                     } catch (Exception ignored) {
                         m.put("userName", "用户" + r.getUserId());
                     }

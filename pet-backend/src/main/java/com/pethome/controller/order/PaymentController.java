@@ -1,6 +1,8 @@
 package com.pethome.controller.order;
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
+import com.pethome.common.SafeCall;
 import com.pethome.entity.Order;
 import com.pethome.entity.User;
 import com.pethome.service.order.OrderService;
@@ -94,10 +96,10 @@ public class PaymentController {
     public Result<Map<String, Object>> prepay(
             @RequestBody Map<String, String> body,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return SafeCall.of(() -> {
             Long currentUserId = userTokenResolver.resolveUserId(token);
             if (currentUserId == null) {
-                return Result.error(401, "未登录或登录已过期");
+                throw new BusinessException(401, "未登录或登录已过期");
             }
 
             // 支付单模式：服务预约（预约状态机与支付解耦，统一落 payment 表）
@@ -105,7 +107,7 @@ public class PaymentController {
                 String serviceType = body.get("serviceType");
                 String bizIdStr = body.get("bizId");
                 if (serviceType == null || bizIdStr == null || !bizIdStr.trim().matches("\\d+")) {
-                    return Result.error(400, "缺少服务类型或预约ID");
+                    throw new BusinessException(400, "缺少服务类型或预约ID");
                 }
                 Map<String, String> payParams = paymentService.createAppointmentPayParams(
                         currentUserId, serviceType.trim(), Long.parseLong(bizIdStr.trim()));
@@ -115,19 +117,19 @@ public class PaymentController {
 
             Order order = resolveOrder(body);
             if (order == null) {
-                return Result.error(400, "订单不存在");
+                throw new BusinessException(400, "订单不存在");
             }
             if (order.getUserId() == null || !currentUserId.equals(order.getUserId().longValue())) {
                 log.warn("prepay 越权尝试：token userId={} 但订单归属 userId={}, orderId={}",
                         currentUserId, order.getUserId(), order.getId());
-                return Result.error(403, "无权支付此订单");
+                throw new BusinessException(403, "无权支付此订单");
             }
             if (order.getStatus() == null || order.getStatus() != 0) {
-                return Result.error(400, "订单状态不允许支付");
+                throw new BusinessException(400, "订单状态不允许支付");
             }
             BigDecimal payable = order.getTotalAmount() == null ? BigDecimal.ZERO : order.getTotalAmount();
             if (payable.compareTo(BigDecimal.ZERO) <= 0) {
-                return Result.error(400, "订单金额异常，无法支付");
+                throw new BusinessException(400, "订单金额异常，无法支付");
             }
             long totalFeeFen = payable.multiply(new BigDecimal("100")).longValue();
 
@@ -142,7 +144,7 @@ public class PaymentController {
 
             User user = userService.getUserById(currentUserId);
             if (user == null || user.getOpenid() == null || user.getOpenid().trim().isEmpty()) {
-                return Result.error(400, "请使用微信登录后支付");
+                throw new BusinessException(400, "请使用微信登录后支付");
             }
 
             Map<String, String> payParams = wechatPayService.createJsapiPayParams(
@@ -152,13 +154,7 @@ public class PaymentController {
             data.put("orderNo", order.getOrderNo());
             data.put("totalFee", totalFeeFen);
             return Result.success(data);
-        } catch (com.pethome.common.BusinessException e) {
-            log.error("统一下单失败", e);
-            return Result.error(e.getCode(), e.getMessage());
-        } catch (Exception e) {
-            log.error("统一下单失败", e);
-            return Result.error(500, "发起支付失败，请稍后重试");
-        }
+        }, "发起支付失败，请稍后重试", log);
     }
 
     /**
@@ -172,10 +168,10 @@ public class PaymentController {
     public Result<Map<String, Object>> query(
             @RequestBody Map<String, String> body,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return SafeCall.of(() -> {
             Long currentUserId = userTokenResolver.resolveUserId(token);
             if (currentUserId == null) {
-                return Result.error(401, "未登录或登录已过期");
+                throw new BusinessException(401, "未登录或登录已过期");
             }
 
             // 支付单模式：服务预约
@@ -183,7 +179,7 @@ public class PaymentController {
                 String serviceType = body.get("serviceType");
                 String bizIdStr = body.get("bizId");
                 if (serviceType == null || bizIdStr == null || !bizIdStr.trim().matches("\\d+")) {
-                    return Result.error(400, "缺少服务类型或预约ID");
+                    throw new BusinessException(400, "缺少服务类型或预约ID");
                 }
                 Map<String, Object> data = paymentService.queryAppointmentPayResult(
                         currentUserId, serviceType.trim(), Long.parseLong(bizIdStr.trim()));
@@ -192,12 +188,12 @@ public class PaymentController {
 
             Order order = resolveOrder(body);
             if (order == null) {
-                return Result.error(400, "订单不存在");
+                throw new BusinessException(400, "订单不存在");
             }
             if (order.getUserId() == null || !currentUserId.equals(order.getUserId().longValue())) {
                 log.warn("query 越权尝试：token userId={} 但订单归属 userId={}, orderId={}",
                         currentUserId, order.getUserId(), order.getId());
-                return Result.error(403, "无权查询此订单");
+                throw new BusinessException(403, "无权查询此订单");
             }
 
             Map<String, Object> data = new HashMap<>();
@@ -218,7 +214,7 @@ public class PaymentController {
                             orderService.updateOrderStatus(order.getId(), 1);
                             paid = true;
                             log.info("查单补偿更新订单为已支付: orderNo={}", order.getOrderNo());
-                        } catch (Exception e) {
+                        } catch (RuntimeException e) {
                             // 并发下回调先到导致状态机拒绝属正常；真实失败时保持未支付，等待回调/下次查询
                             log.warn("查单补偿更新订单状态失败（可能已被回调处理）: orderNo={}, err={}",
                                     order.getOrderNo(), e.getMessage());
@@ -231,13 +227,7 @@ public class PaymentController {
             data.put("paid", paid);
             data.put("orderNo", order.getOrderNo());
             return Result.success(data);
-        } catch (com.pethome.common.BusinessException e) {
-            log.error("查询支付结果失败", e);
-            return Result.error(e.getCode(), e.getMessage());
-        } catch (Exception e) {
-            log.error("查询支付结果失败", e);
-            return Result.error(500, "查询支付结果失败，请稍后重试");
-        }
+        }, "查询支付结果失败，请稍后重试", log);
     }
 
     /**
@@ -254,12 +244,12 @@ public class PaymentController {
             @RequestHeader(value = "Authorization", required = false) String token) {
         if (!mockEnabled) {
             log.warn("模拟支付确认被拒绝（mock 通道未开启）");
-            return Result.error(403, "模拟支付未开启");
+            throw new BusinessException(403, "模拟支付未开启");
         }
-        try {
+        return SafeCall.of(() -> {
             Long currentUserId = userTokenResolver.resolveUserId(token);
             if (currentUserId == null) {
-                return Result.error(401, "未登录或登录已过期");
+                throw new BusinessException(401, "未登录或登录已过期");
             }
 
             // 服务预约支付单：复用回调同款 markPaymentPaid 状态机
@@ -267,7 +257,7 @@ public class PaymentController {
                 String serviceType = body.get("serviceType");
                 String bizIdStr = body.get("bizId");
                 if (serviceType == null || bizIdStr == null || !bizIdStr.trim().matches("\\d+")) {
-                    return Result.error(400, "缺少服务类型或预约ID");
+                    throw new BusinessException(400, "缺少服务类型或预约ID");
                 }
                 Map<String, Object> data = paymentService.mockConfirmAppointmentPay(
                         currentUserId, serviceType.trim(), Long.parseLong(bizIdStr.trim()));
@@ -277,12 +267,12 @@ public class PaymentController {
             // 商品订单：复用回调同款 0→1 状态机 + 超时取消 key 清理
             Order order = resolveOrder(body);
             if (order == null) {
-                return Result.error(400, "订单不存在");
+                throw new BusinessException(400, "订单不存在");
             }
             if (order.getUserId() == null || !currentUserId.equals(order.getUserId().longValue())) {
                 log.warn("模拟支付越权尝试: token userId={} 但订单归属 userId={}, orderId={}",
                         currentUserId, order.getUserId(), order.getId());
-                return Result.error(403, "无权支付此订单");
+                throw new BusinessException(403, "无权支付此订单");
             }
             if (order.getStatus() != null && order.getStatus() >= 1) {
                 // 幂等：已支付直接返回成功
@@ -292,7 +282,7 @@ public class PaymentController {
                 return Result.success(data);
             }
             if (order.getStatus() == null || order.getStatus() != 0) {
-                return Result.error(400, "订单状态不允许支付");
+                throw new BusinessException(400, "订单状态不允许支付");
             }
 
             orderService.updateOrderStatus(order.getId(), 1);
@@ -305,13 +295,7 @@ public class PaymentController {
             data.put("paid", true);
             data.put("orderNo", order.getOrderNo());
             return Result.success(data);
-        } catch (com.pethome.common.BusinessException e) {
-            log.error("模拟支付确认失败", e);
-            return Result.error(e.getCode(), e.getMessage());
-        } catch (Exception e) {
-            log.error("模拟支付确认失败", e);
-            return Result.error(500, "模拟支付确认失败，请稍后重试");
-        }
+        }, "模拟支付确认失败，请稍后重试", log);
     }
 
     /**
@@ -412,7 +396,7 @@ public class PaymentController {
             log.info("支付回调处理成功: orderNo={}, orderId={}", outTradeNo, order.getId());
 
             return buildWechatResponse("SUCCESS", "OK");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("支付回调处理异常", e);
             // 异常路径同样释放锁，保证微信重试可再次进入
             if (lockKey != null) {
@@ -469,7 +453,7 @@ public class PaymentController {
             log.info("支付单回调处理完成: payNo={}, marked={}, transactionId={}",
                     payNo, marked, params.get("transaction_id"));
             return buildWechatResponse("SUCCESS", "OK");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("支付单回调处理异常: payNo={}", payNo, e);
             if (lockKey != null) {
                 return failAndRelease(lockKey, "INTERNAL_ERROR");
@@ -506,7 +490,7 @@ public class PaymentController {
     private String failAndRelease(String lockKey, String msg) {
         try {
             redisTemplate.delete(lockKey);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.warn("释放支付回调幂等锁失败: key={}", lockKey, e);
         }
         return buildWechatResponse("FAIL", msg);
@@ -522,4 +506,3 @@ public class PaymentController {
                 + "</xml>";
     }
 }
-

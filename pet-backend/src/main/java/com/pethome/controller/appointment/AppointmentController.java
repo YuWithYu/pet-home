@@ -5,9 +5,8 @@ import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Admin;
 import com.pethome.entity.Appointment;
-import com.pethome.service.admin.AdminService;
 import com.pethome.service.appointment.AppointmentService;
-import com.pethome.security.JwtUtil;
+import com.pethome.security.AdminContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -34,11 +33,8 @@ public class AppointmentController {
     @Autowired
     private AppointmentService appointmentService;
     
-    @Autowired
-    private AdminService adminService;
-    
-    @Autowired
-    private JwtUtil jwtUtil;
+    @Autowired(required = false)
+    private AdminContext adminContext;
 
     @Autowired
     private com.pethome.service.appointment.AppointmentDelayService appointmentDelayService;

@@ -4,6 +4,7 @@ package com.pethome.controller.appointment;
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.MedicalServiceBanner;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.MedicalServiceBannerService;
 import com.pethome.util.FileUploadUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +56,11 @@ public class HospitalServiceBannerController {
 
     @PostMapping("/upload")
     @Operation(summary = "上传医院服务展示图")
-    public Result<String> uploadBanner(@RequestParam("file") MultipartFile file) {
+    public Result<String> uploadBanner(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可修改
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             String filename = file.getOriginalFilename();
@@ -87,7 +93,11 @@ public class HospitalServiceBannerController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除医院服务展示图")
-    public Result<Boolean> deleteBanner(@PathVariable Long id) {
+    public Result<Boolean> deleteBanner(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可删除
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = medicalServiceBannerService.deleteMedicalServiceBanner(id);
             if (success) {

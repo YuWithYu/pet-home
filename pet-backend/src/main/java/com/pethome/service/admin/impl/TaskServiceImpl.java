@@ -491,6 +491,19 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
         }
     }
     
+    @Override
+    public void syncPostContentProgress(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        try {
+            updateTaskProgress(userId, "post_content", queryTodayPostContentProgress(userId));
+        } catch (Exception e) {
+            // 任务进度同步失败不影响管理员审核结果
+            log.warn("同步发布内容任务进度失败，用户ID: {}", userId, e);
+        }
+    }
+
     private String getTaskDescription(String taskId) {
         switch (taskId) {
             case "daily_signin":

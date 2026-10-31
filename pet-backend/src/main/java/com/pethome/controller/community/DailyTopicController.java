@@ -1,6 +1,7 @@
 package com.pethome.controller.community;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -164,11 +165,11 @@ public class DailyTopicController {
             // 安全修复：点赞人以登录态为准，防止替他人点赞
             Long userId = currentUserId(request);
             if (userId == null) {
-                return Result.error(401, "用户未登录或token无效");
+                throw new BusinessException(401, "用户未登录或token无效");
             }
             boolean success = topicLikeService.likeTopic(id, userId);
             if (!success) {
-                return Result.error("已经点赞过了");
+                throw new BusinessException("已经点赞过了");
             }
             return Result.success(true);
         }, "点赞失败，请稍后重试", log);
@@ -184,7 +185,7 @@ public class DailyTopicController {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
-                return Result.error(401, "用户未登录或token无效");
+                throw new BusinessException(401, "用户未登录或token无效");
             }
             topicLikeService.unlikeTopic(id, userId);
             return Result.success(true);
@@ -201,11 +202,11 @@ public class DailyTopicController {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
-                return Result.error(401, "用户未登录或token无效");
+                throw new BusinessException(401, "用户未登录或token无效");
             }
             boolean success = topicCollectService.collectTopic(id, userId);
             if (!success) {
-                return Result.error("已经收藏过了");
+                throw new BusinessException("已经收藏过了");
             }
             return Result.success(true);
         }, "收藏失败，请稍后重试", log);
@@ -221,7 +222,7 @@ public class DailyTopicController {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
-                return Result.error(401, "用户未登录或token无效");
+                throw new BusinessException(401, "用户未登录或token无效");
             }
             topicCollectService.uncollectTopic(id, userId);
             return Result.success(true);
@@ -244,58 +245,14 @@ public class DailyTopicController {
     /**
      * 获取专题列表（兼容旧接口）
      * 小程序每日专题精选列表依赖 data.topics，优先保障 topics 始终返回且不因其他逻辑异常而 500。
+     * 降级逻辑（列表/今日专题/Banner 单项失败不影响 topics 返回）已下沉到 DailyTopicService。
      */
     @GetMapping
     @Operation(summary = "获取每日专题（兼容接口）")
     public Result<Map<String, Object>> getDailyTopics() {
-        Map<String, Object> response = new HashMap<>();
-        
-        // 今日主题、日期（与业务库无关，始终可返回）
-        String[] themes = {
-            "猫咪护理", "狗狗训练", "宠物健康", "宠物美容",
-            "宠物饮食", "宠物玩具", "宠物训练"
-        };
-        int dayOfWeek = (java.time.LocalDate.now().getDayOfWeek().getValue() - 1) % 7;
-        String todayTheme = dayOfWeek >= 0 && dayOfWeek < themes.length ? themes[dayOfWeek] : "宠物健康";
-        response.put("todayTheme", todayTheme);
-        response.put("date", LocalDate.now().toString());
-        response.put("topic", null);
-        response.put("posts", new ArrayList<Post>());
-        response.put("banners", new ArrayList<Banner>());
-
-        // 已发布专题列表（管理员后台创建，供精选专题展示）——优先拉取，确保小程序有列表
-        List<DailyTopic> topics = new ArrayList<>();
-        try {
-            Page<DailyTopic> topicPage = new Page<>(1, 20);
-            IPage<DailyTopic> topicResult = dailyTopicService.getTopicList(topicPage, 1);
-            if (topicResult != null && topicResult.getRecords() != null) {
-                topics = topicResult.getRecords();
-            }
-        } catch (Exception e) {
-            log.error("获取已发布专题列表失败", e);
-        }
-        response.put("topics", topics);
-
-        // 今日专题、Banner 等（失败不影响 topics 返回）
-        try {
-            DailyTopic todayTopic = dailyTopicService.getTodayTopic();
-            List<Banner> allBanners = bannerService.getAllBanners();
-            if (allBanners == null) allBanners = new ArrayList<Banner>();
-            List<Banner> activeBanners = allBanners.size() > 5
-                ? allBanners.subList(0, 5)
-                : allBanners;
-            response.put("banners", activeBanners);
-            if (todayTopic != null) {
-                List<Post> posts = dailyTopicService.getTopicPosts(todayTopic.getId());
-                todayTopic.setPosts(posts != null ? posts : new ArrayList<Post>());
-                response.put("topic", todayTopic);
-                response.put("posts", todayTopic.getPosts());
-            }
-        } catch (Exception e) {
-            log.error("获取今日专题及Banner失败", e);
-        }
-
-        return Result.success(response);
+        return com.pethome.common.SafeCall.of(
+            () -> Result.success(dailyTopicService.getDailyTopicsOverview()),
+            "获取每日专题失败，请稍后重试", log);
     }
 
     /**
@@ -323,7 +280,7 @@ public class DailyTopicController {
             // 安全修复：评论人以登录态为准，禁止按前端传入 userId 冒充他人发言
             Long userId = currentUserId(request);
             if (userId == null) {
-                return Result.error(401, "用户未登录或token无效");
+                throw new BusinessException(401, "用户未登录或token无效");
             }
             Comment comment = new Comment();
             comment.setTopicId(id);

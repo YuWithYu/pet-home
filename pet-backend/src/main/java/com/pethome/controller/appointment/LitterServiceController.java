@@ -1,6 +1,7 @@
 package com.pethome.controller.appointment;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,6 +13,7 @@ import com.pethome.service.admin.AdminService;
 import com.pethome.service.appointment.LitterServiceService;
 import com.pethome.util.FileUploadUtil;
 import com.pethome.security.JwtUtil;
+import com.pethome.security.RequestIdentity;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -19,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/litter-services")
@@ -55,7 +59,7 @@ public class LitterServiceController {
                     return admin;
                 }
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.warn("解析 token 失败", e);
         }
         return null;
@@ -112,19 +116,33 @@ public class LitterServiceController {
 
     @PostMapping("/create")
     @Operation(summary = "创建铲屎服务")
-    public Result<LitterService> createLitterService(@RequestBody LitterService litterService) {
+    public Result<LitterService> createLitterService(@RequestBody LitterService litterService,
+                                                    HttpServletRequest request) {
+        // 安全修复：服务项目属平台级主数据，仅平台管理员可新增
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权创建服务");
+        }
         return Result.success(litterServiceService.createLitterService(litterService));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新铲屎服务")
-    public Result<LitterService> updateLitterService(@RequestBody LitterService litterService) {
+    public Result<LitterService> updateLitterService(@RequestBody LitterService litterService,
+                                                    HttpServletRequest request) {
+        // 安全修复：服务项目属平台级主数据，仅平台管理员可修改
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权修改服务");
+        }
         return Result.success(litterServiceService.updateLitterService(litterService));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除铲屎服务")
-    public Result<Boolean> deleteLitterService(@PathVariable Long id) {
+    public Result<Boolean> deleteLitterService(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：服务项目属平台级主数据，仅平台管理员可删除
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权删除服务");
+        }
         return Result.success(litterServiceService.deleteLitterService(id));
     }
 
@@ -136,13 +154,23 @@ public class LitterServiceController {
 
     @PostMapping("/upload")
     @Operation(summary = "上传服务图片")
-    public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Long id) {
-        return updateServiceImage(id, file);
+    public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Long id,
+                                             HttpServletRequest request) {
+        // 安全修复：服务图片属平台级内容，仅平台管理员可替换
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权修改服务图片");
+        }
+        return updateServiceImage(id, file, request);
     }
 
     @PutMapping("/{id}/image")
     @Operation(summary = "更新服务图片")
-    public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file,
+                                             HttpServletRequest request) {
+        // 安全修复：服务图片属平台级内容，仅平台管理员可替换
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            throw new BusinessException(403, "无权修改服务图片");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             // 使用FileUploadUtil上传文件
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
@@ -154,7 +182,7 @@ public class LitterServiceController {
                 litterServiceService.updateLitterService(service);
                 return Result.success(imageUrl);
             } else {
-                return Result.error("服务不存在");
+                throw new BusinessException("服务不存在");
             }
         }, "图片上传失败，请稍后重试", log);
     }

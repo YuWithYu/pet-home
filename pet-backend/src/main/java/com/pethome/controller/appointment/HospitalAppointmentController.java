@@ -45,6 +45,11 @@ public class HospitalAppointmentController {
             @Parameter(description = "服务类型") @RequestParam(required = false) String serviceType,
             @Parameter(description = "门店ID") @RequestParam(required = false) Long storeId,
             HttpServletRequest request) {
+        // 安全修复：分页结果含客户姓名、手机号与地址，属门店运营数据；
+        // 此前任意登录用户（含 C 端 user）都可调用并按 storeId 读取全平台预约
+        if (!isStaffOrAdmin(request)) {
+            return Result.error(403, "无权查看医院预约列表");
+        }
 
         Long adminId = (Long) request.getAttribute("adminId");
         if (adminId != null && !"admin".equalsIgnoreCase((String) request.getAttribute("role"))) {

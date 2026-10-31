@@ -457,6 +457,11 @@ public class ServiceScheduleServiceImpl implements ServiceScheduleService {
     }
 
     @Override
+    public ServiceSchedule getScheduleById(Long scheduleId) {
+        return scheduleId == null ? null : scheduleMapper.selectById(scheduleId);
+    }
+
+    @Override
     public ServiceSchedule getScheduleForSlot(String serviceType, LocalDate date, String timeSlot, Long storeId) {
         if (date == null || timeSlot == null || timeSlot.trim().isEmpty()) {
             return null;

@@ -1,6 +1,7 @@
 package com.pethome.controller.common;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.concurrent.TranscodeGate;
@@ -105,20 +106,21 @@ public class CommonUploadController {
                 return;
             }
             try {
-                String tempName = name.substring(0, name.lastIndexOf('.')) + "_transcode_temp.mp4";
-                File tempFile = new File(dir, tempName);
-                File transcoded = videoTranscodeUtil.transcodeVideo(targetFile, tempFile);
-                if (transcoded != null && transcoded.exists() && transcoded.length() > 0) {
-                    if (targetFile.delete()) {
-                        transcoded.renameTo(targetFile);
-                    } else {
-                        transcoded.delete();
+                SafeCall.of(() -> {
+                    String tempName = name.substring(0, name.lastIndexOf('.')) + "_transcode_temp.mp4";
+                    File tempFile = new File(dir, tempName);
+                    File transcoded = videoTranscodeUtil.transcodeVideo(targetFile, tempFile);
+                    if (transcoded != null && transcoded.exists() && transcoded.length() > 0) {
+                        if (targetFile.delete()) {
+                            transcoded.renameTo(targetFile);
+                        } else {
+                            transcoded.delete();
+                        }
+                    } else if (tempFile.exists()) {
+                        tempFile.delete();
                     }
-                } else if (tempFile.exists()) {
-                    tempFile.delete();
-                }
-            } catch (Exception e) {
-                log.error("视频上传后转码异常，保留原视频", e);
+                    return Result.success(null);
+                }, "视频上传后转码异常，保留原视频", log);
             } finally {
                 transcodeGate.exit();
             }
@@ -149,11 +151,10 @@ public class CommonUploadController {
         this.videoUploadPath = withSep;
     }
 
-    private Result<String> rejectIfOversized(MultipartFile file) {
+    private void rejectIfOversized(MultipartFile file) {
         if (file != null && file.getSize() > MAX_GENERIC_UPLOAD_BYTES) {
-            return Result.error("单文件大小不能超过 25MB");
+            throw new BusinessException("单文件大小不能超过 25MB");
         }
-        return null;
     }
 
     @PostMapping("/upload")
@@ -161,17 +162,14 @@ public class CommonUploadController {
     public Result<String> uploadFile(@RequestParam("file") MultipartFile file) {
         return com.pethome.common.SafeCall.of(() -> {
             if (file.isEmpty()) {
-                return Result.error("文件不能为空");
+                throw new BusinessException("文件不能为空");
             }
-            Result<String> sizeCheck = rejectIfOversized(file);
-            if (sizeCheck != null) {
-                return sizeCheck;
-            }
+            rejectIfOversized(file);
 
             // 检查文件类型（支持图片、视频和文档）
             String contentType = file.getContentType();
             if (contentType == null || (!contentType.startsWith("image/") && !contentType.startsWith("video/") && !contentType.startsWith("application/"))) {
-                return Result.error("不支持的文件类型，只支持图片、视频和文档文件");
+                throw new BusinessException("不支持的文件类型，只支持图片、视频和文档文件");
             }
 
             // 使用通用目录上传
@@ -185,10 +183,7 @@ public class CommonUploadController {
     @Operation(summary = "图片上传接口")
     public Result<String> uploadImage(@RequestParam("file") MultipartFile file) {
         return com.pethome.common.SafeCall.of(() -> {
-            Result<String> sizeCheck = rejectIfOversized(file);
-            if (sizeCheck != null) {
-                return sizeCheck;
-            }
+            rejectIfOversized(file);
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         }, "图片上传失败，请稍后重试", log);
@@ -198,10 +193,7 @@ public class CommonUploadController {
     @Operation(summary = "轮播图上传接口")
     public Result<String> uploadBanner(@RequestParam("file") MultipartFile file) {
         return com.pethome.common.SafeCall.of(() -> {
-            Result<String> sizeCheck = rejectIfOversized(file);
-            if (sizeCheck != null) {
-                return sizeCheck;
-            }
+            rejectIfOversized(file);
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         }, "轮播图上传失败，请稍后重试", log);
@@ -211,10 +203,7 @@ public class CommonUploadController {
     @Operation(summary = "商品图片上传接口")
     public Result<String> uploadProduct(@RequestParam("file") MultipartFile file) {
         return com.pethome.common.SafeCall.of(() -> {
-            Result<String> sizeCheck = rejectIfOversized(file);
-            if (sizeCheck != null) {
-                return sizeCheck;
-            }
+            rejectIfOversized(file);
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         }, "商品图片上传失败，请稍后重试", log);
@@ -225,13 +214,13 @@ public class CommonUploadController {
     public Result<String> uploadVideo(@RequestParam("file") MultipartFile file) {
         return com.pethome.common.SafeCall.of(() -> {
             if (file.isEmpty()) {
-                return Result.error("文件不能为空");
+                throw new BusinessException("文件不能为空");
             }
 
             // 检查文件类型
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("video/")) {
-                return Result.error("只能上传视频文件");
+                throw new BusinessException("只能上传视频文件");
             }
 
             // 生成文件名（与分片合并保持一致的命名规则）
@@ -242,7 +231,7 @@ public class CommonUploadController {
                     : ".mp4";
             String extNoDot = ext.startsWith(".") ? ext.substring(1) : ext;
             if (!ALLOWED_VIDEO_EXT.contains(extNoDot)) {
-                return Result.error("不支持的视频格式，仅支持: " + String.join("/", ALLOWED_VIDEO_EXT));
+                throw new BusinessException("不支持的视频格式，仅支持: " + String.join("/", ALLOWED_VIDEO_EXT));
             }
             String finalName = FILES_SUBDIR + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
                     + "-" + UUID.randomUUID().toString().substring(0, 8) + ext;
@@ -250,7 +239,7 @@ public class CommonUploadController {
             // 目标目录：videoUploadPath/files
             File filesDir = new File(videoUploadPath, FILES_SUBDIR);
             if (!filesDir.exists() && !filesDir.mkdirs()) {
-                return Result.error("无法创建视频存储目录");
+                throw new BusinessException("无法创建视频存储目录");
             }
             File targetFile = new File(filesDir, finalName);
             file.transferTo(targetFile);
@@ -282,30 +271,30 @@ public class CommonUploadController {
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         return com.pethome.common.SafeCall.of(() -> {
             if (file.isEmpty()) {
-                return Result.error("分块文件不能为空");
+                throw new BusinessException("分块文件不能为空");
             }
             // 安全修复：uploadId 格式白名单，防止拼接路径造成目录穿越（如 ../../）
             if (!isValidUploadId(uploadId == null ? null : uploadId.trim())) {
-                return Result.error("uploadId 非法");
+                throw new BusinessException("uploadId 非法");
             }
             if (file.getSize() > MAX_GENERIC_UPLOAD_BYTES) {
-                return Result.error("单个分块大小不能超过 25MB");
+                throw new BusinessException("单个分块大小不能超过 25MB");
             }
             // totalChunks 上限：防止合并阶段被恶意大数值拖死（DoS）
             if (chunkIndex == null || totalChunks == null || chunkIndex < 0 || totalChunks < 1
                     || totalChunks > MAX_TOTAL_CHUNKS || chunkIndex >= totalChunks) {
-                return Result.error("分块参数无效");
+                throw new BusinessException("分块参数无效");
             }
             // 分块临时目录放在视频根目录下，避免与图片混用
             String owner = resolveChunkOwner(request, authHeader);
             if (owner == null) {
-                return Result.error(401, "请先登录后再上传");
+                throw new BusinessException(401, "请先登录后再上传");
             }
             String baseDir = videoUploadPath;
             File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + owner + "-" + uploadId.trim());
             if (!chunkDir.exists()) {
                 if (!chunkDir.mkdirs()) {
-                    return Result.error("无法创建分块目录");
+                    throw new BusinessException("无法创建分块目录");
                 }
             }
             File chunkFile = new File(chunkDir, String.valueOf(chunkIndex));
@@ -325,27 +314,27 @@ public class CommonUploadController {
         return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：uploadId 格式白名单 + totalChunks 上限（防路径穿越与合并 DoS）
             if (!isValidUploadId(uploadId == null ? null : uploadId.trim())) {
-                return Result.error("uploadId 非法");
+                throw new BusinessException("uploadId 非法");
             }
             if (totalChunks == null || totalChunks < 1 || totalChunks > MAX_TOTAL_CHUNKS) {
-                return Result.error("参数无效");
+                throw new BusinessException("参数无效");
             }
             // 分片与合并都使用视频根目录
             String owner = resolveChunkOwner(request, authHeader);
             if (owner == null) {
-                return Result.error(401, "请先登录后再上传");
+                throw new BusinessException(401, "请先登录后再上传");
             }
             String baseDir = videoUploadPath;
             File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + owner + "-" + uploadId.trim());
             if (!chunkDir.exists() || !chunkDir.isDirectory()) {
-                return Result.error("分块目录不存在");
+                throw new BusinessException("分块目录不存在");
             }
             // 扩展名白名单校验（与 uploadVideo 一致）
             String ext = (filename != null && filename.contains("."))
                     ? filename.substring(filename.lastIndexOf(".")).toLowerCase() : ".mp4";
             String extNoDot = ext.startsWith(".") ? ext.substring(1) : ext;
             if (!ALLOWED_VIDEO_EXT.contains(extNoDot)) {
-                return Result.error("不支持的视频格式，仅支持: " + String.join("/", ALLOWED_VIDEO_EXT));
+                throw new BusinessException("不支持的视频格式，仅支持: " + String.join("/", ALLOWED_VIDEO_EXT));
             }
             String finalName = FILES_SUBDIR + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + "-" + UUID.randomUUID().toString().substring(0, 8) + ext;
             File filesDir = new File(baseDir, FILES_SUBDIR);
@@ -357,7 +346,7 @@ public class CommonUploadController {
                 for (int i = 0; i < totalChunks; i++) {
                     File chunk = new File(chunkDir, String.valueOf(i));
                     if (!chunk.exists()) {
-                        return Result.error("缺少分块: " + i);
+                        throw new BusinessException("缺少分块: " + i);
                     }
                     Files.copy(chunk.toPath(), out);
                 }

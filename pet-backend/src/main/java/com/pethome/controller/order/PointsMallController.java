@@ -1,6 +1,7 @@
 package com.pethome.controller.order;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.PointsRecord;
@@ -58,17 +59,16 @@ public class PointsMallController {
             @RequestBody Map<String, Object> requestData) {
         Long userId = userTokenResolver.getUserIdFromBearer(token);
         if (userId == null) {
-            return Result.error(401, "未登录");
+            throw new BusinessException(401, "未登录");
         }
-        try {
-            return Result.success(pointsExchangeService.exchange(userId, requestData));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            // 业务校验失败 / 流程中断：事务已在服务层回滚，这里只做错误出口
-            return Result.error(e.getMessage());
-        } catch (Exception e) {
-            log.error("积分兑换失败", e);
-            return Result.error("兑换失败，请稍后重试");
-        }
+        return SafeCall.of(() -> {
+            try {
+                return Result.success(pointsExchangeService.exchange(userId, requestData));
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                // 业务校验失败 / 流程中断：事务已在服务层回滚，转为统一业务异常出口
+                throw new BusinessException(e.getMessage());
+            }
+        }, "兑换失败，请稍后重试", log);
     }
 
     /**

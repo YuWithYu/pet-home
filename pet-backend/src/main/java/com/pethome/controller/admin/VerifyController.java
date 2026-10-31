@@ -11,7 +11,6 @@ import com.pethome.service.community.*;
 import com.pethome.service.user.*;
 import com.pethome.service.admin.*;
 import com.pethome.service.common.*;
-import com.pethome.security.AdminContext;
 import com.pethome.security.RequestIdentity;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,9 +49,6 @@ public class VerifyController {
 
     @Autowired
     private ServiceMemberService serviceMemberService;
-    
-    @Autowired(required = false)
-    private AdminContext adminContext;
 
     @PostMapping("/verify-code")
     @Operation(summary = "核销验证（支持所有类型的预约）")
@@ -148,6 +144,8 @@ public class VerifyController {
     @Operation(summary = "检查核销码状态")
     public Result<Map<String, Object>> checkCode(@PathVariable String verifyCode, HttpServletRequest request) {
         // 安全修复：此前任意登录用户即可按核销码查询完整预约（手机号/地址/金额），并枚举核销码
+        // 安全修复：核销码为 6 位数字可被枚举；非平台管理员只能查询本门店预约，避免跨店 PII 泄露
+        final Long scopeStoreId = scopedStoreId(request);
         if (!RequestIdentity.isAdminOrStaff(request)) {
             return Result.error(403, "无权查询核销码");
         }
@@ -162,6 +160,9 @@ public class VerifyController {
             Map<String, Object> data = findAppointmentByCode(code);
             
             if (data != null && data.containsKey("appointment")) {
+                if (scopeStoreId != null && !matchesScope(data.get("appointment"), scopeStoreId)) {
+                    return Result.error(403, "无权查询其他门店的核销码");
+                }
                 return Result.success("核销码有效", data);
             } else {
                 data = new HashMap<>();
@@ -184,10 +185,9 @@ public class VerifyController {
         }
         return com.pethome.common.SafeCall.of(() -> {
             LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-            Long currentServiceStoreId = null;
-            if (adminContext != null && token != null) {
-                currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
-            }
+            // 安全修复：改用请求身份解析门店（店长/店员无 serviceStoreId 时回落到员工档案），
+            // 避免解析不到门店时退化为「全平台核销记录」
+            Long currentServiceStoreId = scopedStoreId(request);
             List<Map<String, Object>> list = new ArrayList<>();
 
             QueryWrapper<HospitalAppointment> hw = new QueryWrapper<>();
@@ -254,6 +254,50 @@ public class VerifyController {
         }, "获取今日核销记录失败，请稍后重试", log);
     }
     
+    /**
+     * 门店维度：平台管理员返回 null（不限门店）；
+     * 店长/店员返回其服务门店（serviceStoreId，缺失时回落到员工档案的门店），无归属返回 -1。
+     */
+    private Long scopedStoreId(HttpServletRequest request) {
+        if (RequestIdentity.isPlatformAdmin(request)) {
+            return null;
+        }
+        Long scoped = RequestIdentity.serviceStoreId(request);
+        if (scoped != null) {
+            return scoped;
+        }
+        Long adminId = RequestIdentity.adminId(request);
+        if (adminId != null && serviceMemberService != null) {
+            ServiceMember member = serviceMemberService.getMemberByUserId(adminId);
+            if (member != null && member.getStoreId() != null) {
+                return member.getStoreId();
+            }
+        }
+        return -1L;
+    }
+
+    /** 预约是否属于指定门店（storeId 优先，缺失时看服务人员所属门店） */
+    private boolean matchesScope(Object appointment, Long scope) {
+        if (appointment == null || scope == null) {
+            return false;
+        }
+        Long appointmentStoreId = null;
+        Long memberId = null;
+        if (appointment instanceof HospitalAppointment) {
+            appointmentStoreId = ((HospitalAppointment) appointment).getStoreId();
+            memberId = ((HospitalAppointment) appointment).getMemberId();
+        } else if (appointment instanceof GroomingAppointment) {
+            appointmentStoreId = ((GroomingAppointment) appointment).getStoreId();
+            memberId = ((GroomingAppointment) appointment).getMemberId();
+        } else if (appointment instanceof DoorCleaningAppointment) {
+            appointmentStoreId = ((DoorCleaningAppointment) appointment).getStoreId();
+            memberId = ((DoorCleaningAppointment) appointment).getMemberId();
+        } else if (appointment instanceof Appointment) {
+            memberId = ((Appointment) appointment).getMemberId();
+        }
+        return orderBelongsToServiceStore(appointmentStoreId, memberId, scope);
+    }
+
     private static Map<String, Object> unauthorizedNotAssignedMember() {
         Map<String, Object> m = new HashMap<>();
         m.put("unauthorized", true);

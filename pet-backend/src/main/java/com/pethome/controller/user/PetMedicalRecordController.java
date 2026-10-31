@@ -4,15 +4,11 @@ import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
 import com.pethome.entity.Pet;
 import com.pethome.entity.PetMedicalRecord;
-import com.pethome.entity.User;
 import com.pethome.service.user.PetMedicalRecordService;
 import com.pethome.service.user.PetService;
-import com.pethome.service.user.UserService;
-import com.pethome.security.JwtUtil;
+import com.pethome.security.UserTokenResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +28,6 @@ import java.util.Map;
 @Tag(name = "宠物健康档案")
 public class PetMedicalRecordController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PetMedicalRecordController.class);
-
     @Autowired
     private PetMedicalRecordService medicalRecordService;
 
@@ -41,37 +35,11 @@ public class PetMedicalRecordController {
     private PetService petService;
 
     @Autowired
-    private UserService userService;
+    private UserTokenResolver userTokenResolver;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    /** 从 Bearer 解析当前用户 ID（与 PetController 策略一致） */
+    /** 从 Bearer 解析当前用户 ID（统一走 UserTokenResolver） */
     private Long resolveCurrentUserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = authHeader.substring(7).trim();
-        User u = userService.getUserByToken(token);
-        if (u != null && u.getId() != null) {
-            return u.getId();
-        }
-        try {
-            String subject = jwtUtil.getUsernameFromToken(token);
-            if (subject != null) {
-                User byPhone = userService.getUserByPhone(subject);
-                if (byPhone != null) {
-                    return byPhone.getId();
-                }
-                User byName = userService.getUserByUsername(subject);
-                if (byName != null) {
-                    return byName.getId();
-                }
-            }
-        } catch (Exception e) {
-            logger.debug("解析登录用户失败: {}", e.getMessage());
-        }
-        return null;
+        return userTokenResolver.getUserIdFromBearer(authHeader);
     }
 
     /** 优先使用拦截器写入的 userId，否则从 Authorization 解析 */

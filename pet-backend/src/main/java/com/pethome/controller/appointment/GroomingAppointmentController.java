@@ -44,6 +44,11 @@ public class GroomingAppointmentController {
             @Parameter(description = "服务类型") @RequestParam(required = false) String serviceType,
             @Parameter(description = "门店ID") @RequestParam(required = false) Long storeId,
             HttpServletRequest request) {
+        // 安全修复：分页结果含客户姓名、手机号与地址，属门店运营数据；
+        // 此前任意登录用户（含 C 端 user）都可调用并按 storeId 读取全平台预约
+        if (!isStaffOrAdmin(request)) {
+            return Result.error(403, "无权查看洗护预约列表");
+        }
 
         Long adminId = (Long) request.getAttribute("adminId");
         if (adminId != null && !"admin".equalsIgnoreCase((String) request.getAttribute("role"))) {
@@ -91,6 +96,18 @@ public class GroomingAppointmentController {
         if (!isStaffOrAdmin(request)) {
             return Result.error(403, "无权查询服务人员预约列表");
         }
+        // 安全修复：分店账号不得查看其他门店服务人员的预约
+        Long scope = scopedStoreId(request);
+        if (scope != null) {
+            com.pethome.entity.ServiceMember member = serviceMemberService.getMemberById(memberId);
+            if (member == null) {
+                return Result.error(404, "服务人员不存在");
+            }
+            if (!scope.equals(member.getStoreId())) {
+                log.warn("[GroomingAppointment] member/list 跨门店拒绝: scope={}, memberStore={}", scope, member.getStoreId());
+                return Result.error(403, "无权查询其他门店的服务人员预约");
+            }
+        }
         List<GroomingAppointment> appointments = groomingAppointmentService.getAppointmentsByMemberId(memberId);
         return Result.success(appointments);
     }
@@ -128,8 +145,12 @@ public class GroomingAppointmentController {
         if (appointment == null) {
             return Result.error("预约不存在");
         }
-        // 安全修复：详情含手机号/地址等个人信息——staff/admin 可查看全部，普通用户仅能查看本人预约
-        if (!isStaffOrAdmin(request)) {
+        // 安全修复：详情含手机号/地址等个人信息——staff/admin 仅限本门店，普通用户仅能查看本人预约
+        if (isStaffOrAdmin(request)) {
+            if (!canAccessStore(request, appointment.getStoreId())) {
+                return Result.error(403, "无权查看此预约");
+            }
+        } else {
             Object attr = request.getAttribute("userId");
             Long currentUserId = attr instanceof Number ? ((Number) attr).longValue() : null;
             if (currentUserId == null || !currentUserId.equals(appointment.getUserId())) {
@@ -174,11 +195,52 @@ public class GroomingAppointmentController {
     }
 
     /**
+     * 当前管理端账号的可见门店：平台管理员返回 null（不限门店），
+     * 店长/店员返回其服务门店（无门店归属返回 -1，保证查不到任何数据）。
+     */
+    private Long scopedStoreId(HttpServletRequest request) {
+        if (!isStaffOrAdmin(request)) {
+            return null;
+        }
+        Object roleAttr = request.getAttribute("role");
+        if (roleAttr != null && "admin".equalsIgnoreCase(String.valueOf(roleAttr))) {
+            return null;
+        }
+        Object storeAttr = request.getAttribute("serviceStoreId");
+        if (storeAttr instanceof Number) {
+            return ((Number) storeAttr).longValue();
+        }
+        Object adminIdAttr = request.getAttribute("adminId");
+        if (adminIdAttr instanceof Number) {
+            com.pethome.entity.ServiceMember sm =
+                    serviceMemberService.getMemberByUserId(((Number) adminIdAttr).longValue());
+            if (sm != null && sm.getStoreId() != null) {
+                return sm.getStoreId();
+            }
+        }
+        return -1L;
+    }
+
+    /** 门店归属校验：返回 true 表示可访问 */
+    private boolean canAccessStore(HttpServletRequest request, Long storeId) {
+        Long scope = scopedStoreId(request);
+        return scope == null || (storeId != null && scope.equals(storeId));
+    }
+
+    /**
      * 预约状态变更权限校验。
      * @return null 表示放行；非 null 为拒绝原因
      */
     private String checkStatusPermission(Long id, String status, HttpServletRequest request) {
         if (isStaffOrAdmin(request)) {
+            // 安全修复：分店账号只能操作本门店的预约
+            GroomingAppointment appointment = groomingAppointmentService.getAppointmentById(id);
+            if (appointment == null) {
+                return "预约不存在";
+            }
+            if (!canAccessStore(request, appointment.getStoreId())) {
+                return "无权操作此预约";
+            }
             return null;
         }
         // 普通用户：仅允许取消本人预约
@@ -206,7 +268,21 @@ public class GroomingAppointmentController {
             if (!isStaffOrAdmin(request)) {
                 return Result.error(403, "无权修改此预约");
             }
+            GroomingAppointment existing = groomingAppointmentService.getAppointmentById(id);
+            if (existing == null) {
+                return Result.error(404, "预约不存在");
+            }
+            // 安全修复：分店账号不得跨门店修改
+            if (!canAccessStore(request, existing.getStoreId())) {
+                return Result.error(403, "无权修改此预约");
+            }
+            Long scope = scopedStoreId(request);
+            if (scope != null && appointment.getStoreId() != null && !scope.equals(appointment.getStoreId())) {
+                return Result.error(403, "无权将预约转移到其他门店");
+            }
             appointment.setId(id);
+            // 安全修复：归属用户以库中记录为准，禁止通过更新接口改派/伪造客户归属
+            appointment.setUserId(null);
             boolean success = groomingAppointmentService.updateById(appointment);
             if (success) {
                 return Result.success("预约更新成功", appointment);
@@ -225,6 +301,14 @@ public class GroomingAppointmentController {
         return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：物理删除仅限 staff/admin
             if (!isStaffOrAdmin(request)) {
+                return Result.error(403, "无权删除此预约");
+            }
+            GroomingAppointment existing = groomingAppointmentService.getAppointmentById(id);
+            if (existing == null) {
+                return Result.error(404, "预约不存在");
+            }
+            // 安全修复：分店账号不得跨门店删除
+            if (!canAccessStore(request, existing.getStoreId())) {
                 return Result.error(403, "无权删除此预约");
             }
             boolean success = groomingAppointmentService.removeById(id);

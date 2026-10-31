@@ -370,3 +370,47 @@ curl.exe -i -X POST http://127.0.0.1:18080/api/time-slots/create
 2. 将本节的 `body.code` 用例固化为 PR 安全回归脚本（`scripts/` 下），CI 中执行。
 3. `GET /api/admin/staff/list` 当前会把 `Admin` 实体整行返回（`password=null` 已置空），建议改为 DTO 只输出必要字段。
 
+## 11. 第五轮：非 admin 前缀接口越权与 PII 复审（2026-11-01）
+
+前提：`RoleInterceptor` 对已登录普通用户（`role=user`）除 `/api/admin/**` 与 staff 白名单外一律放行，
+资源归属必须由各 Controller / Service 自行校验；本轮按此前提逐接口复核并修复下列问题。
+
+### 11.1 修复清单
+
+| # | 风险 | 位置 | 修复 |
+|---|------|------|------|
+| 1 | staff 可写任意用户主数据（积分/等级/魅力/状态/密码） | `UserController#updateUser`、`PUT /{id}`、`PUT /{id}/status` | 统一收紧为 `RequestIdentity.isAdmin`（admin/store_admin）；C 端仅保留本人安全字段 |
+| 2 | `/api/user/login` 无失败锁定，可绕过管理员锁定爆破 | `UserAuthAppServiceImpl` | Redis 计数 `user:login:fail:`，5 次/15 分钟锁定 |
+| 3 | 洗护/医院/铲屎预约 `/page` 分页 IDOR（C 端可读全平台预约含手机号、地址） | 三个预约 Controller | 仅 staff/admin + 门店 scope |
+| 4 | 公开只读接口提前 return 导致管理端读接口按匿名降级 | `RoleInterceptor` | 公开只读继续解析身份后放行 |
+| 5 | 关注/推荐/@提及/评价接口把 `username`（历史数据即手机号）回传 | `UserFollowController`、`CommunityFeedAppServiceImpl`、`MessageRecommendationAppServiceImpl`、`ServiceAppointmentRatingController` | 统一回传展示名（昵称或「用户+id」），禁止回退 `username` |
+| 6 | staff 可跨门店批量生成排班 | `ScheduleConfigController#generateBatch` | 校验 `memberIds` 属于本门店并强制 `storeId=scope` |
+| 7 | 6 位核销码可枚举且跨门店返回完整预约 PII | `VerifyController#checkCode`、`/today-records` | 仅 staff/admin + 门店 scope，跨店 403 |
+| 8 | 任意管理端账号可冒充平台官方客服（`fromId=-9999`） | `MessageController#sendPlatformMessage` | 仅 `isPlatformAdmin` |
+| 9 | 店长可读全平台客服会话 | `/conversations/all-platform` | 仅 `isPlatformAdmin` |
+| 10 | 可传任意 `serviceStoreId` 跨店读门店客服会话 | `/conversations/all-outlet` | 非平台管理员强制本门店，无归属 403 |
+| 11 | 任意用户传 `storeId` 读取指定店铺全部客服会话 | `/conversations/all-service` + `MessageAppServiceImpl` | Controller 要求 `isAdmin`；Service 侧非管理端 token 不再回退请求参数，未绑定店铺返回空列表 |
+| 12 | 取消/变更申请审批无门店限制（跨店审批他人订单、队列泄露联系方式） | 两个申请 Controller + 新建 `AppointmentStoreGuard` | `listPending` 按 scope 过滤，`approve`/`reject` 增加归属校验 403 |
+| 13 | 推荐/兴趣接口可传他人 `userId` 读取其行为画像与兴趣标签；`limit` 无上限 | `RecommendationController` | `userId` 一律取自登录态，`limit` 收敛至 1–100 |
+
+### 11.2 复测结果（18080 临时实例，`APP_MQ_ENABLED=false APP_KAFKA_ENABLED=false`）
+
+新增用例全部 PASS：
+
+| 用例 | 期望 `body.code` | 实测 |
+|------|------------------|------|
+| 用户 `GET /api/messages/conversations/all-service?storeId=1` | 403 | 403「无权查看客服会话列表」 |
+| 用户 `GET /api/messages/conversations/all-outlet?serviceStoreId=1` | 403 | 403「账号未绑定服务门店，无权查看门店客服会话」 |
+| 用户 `GET /api/messages/conversations/all-platform` | 403 | 403「仅平台客服可查看平台会话」 |
+| 匿名 `GET /api/messages/conversations/all-service` | 401 | 401（HTTP 401） |
+| 用户 `GET /api/recommendation/user-interests?userId=1` | 200（仅本人） | 200，返回本人空兴趣 |
+| 用户 `GET /api/recommendation/collaborative-filtering?userId=1` | 200（仅本人） | 200 |
+| staff 跨门店 `POST /api/schedule-config/generate-batch`（`memberIds=34`） | 403 | 403「无权为其他门店的服务人员生成排班」 |
+| 用户 `PUT /api/user/83`（C 端走 POST `/api/user/update`） | 403 | 403「无权更新用户信息」 |
+| admin `PUT /api/user/83` | 200 | 200 |
+| 用户 `POST /api/user/update`（本人） | 200 | 200 |
+
+C1–C47 全部沿用上表并复测通过；编译 `mvn -B package "-Dmaven.test.skip=true"` → **BUILD SUCCESS**（475 源文件）。
+
+- 验证实例已停止，**需重启正在运行的 8080 后端进程**后修复才生效。
+

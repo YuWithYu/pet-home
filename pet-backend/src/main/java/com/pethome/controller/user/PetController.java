@@ -1,15 +1,14 @@
 package com.pethome.controller.user;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.Pet;
-import com.pethome.entity.User;
 import com.pethome.service.user.PetService;
-import com.pethome.service.user.UserService;
-import com.pethome.security.JwtUtil;
+import com.pethome.security.UserTokenResolver;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -31,39 +30,13 @@ public class PetController {
     private PetService petService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
+    private UserTokenResolver userTokenResolver;
 
     /**
-     * 从 Bearer 解析当前用户 ID（与 UserController 策略一致）
+     * 从 Bearer 解析当前用户 ID（统一走 UserTokenResolver）
      */
     private Long resolveCurrentUserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = authHeader.substring(7).trim();
-        User u = userService.getUserByToken(token);
-        if (u != null && u.getId() != null) {
-            return u.getId();
-        }
-        try {
-            String subject = jwtUtil.getUsernameFromToken(token);
-            if (subject != null) {
-                User byPhone = userService.getUserByPhone(subject);
-                if (byPhone != null) {
-                    return byPhone.getId();
-                }
-                User byName = userService.getUserByUsername(subject);
-                if (byName != null) {
-                    return byName.getId();
-                }
-            }
-        } catch (Exception e) {
-            logger.debug("解析登录用户失败: {}", e.getMessage());
-        }
-        return null;
+        return userTokenResolver.getUserIdFromBearer(authHeader);
     }
 
     /**
@@ -139,7 +112,7 @@ public class PetController {
                 Long ownerId = resolveOwnerId(request, authHeader);
                 if (ownerId == null || !ownerId.equals(userId)) {
                     logger.warn("宠物列表越权尝试：请求 userId={}, 当前登录 userId={}", userId, ownerId);
-                    return Result.error(403, "无权查看他人宠物");
+                    throw new BusinessException(403, "无权查看他人宠物");
                 }
                 effectiveUserId = ownerId;
             }
@@ -156,31 +129,8 @@ public class PetController {
             }
         }
 
-        // 如果指定了 effectiveUserId，优先使用缓存查询（不分页），然后手动分页
-        if (effectiveUserId != null) {
-            try {
-                List<Pet> allPets = petService.getPetsByUserId(effectiveUserId);
-                logger.info("从缓存/数据库获取到 {} 条宠物数据，开始分页处理", allPets.size());
-
-                int total = allPets.size();
-                int start = (pn - 1) * ps;
-                int end = Math.min(start + ps, total);
-
-                List<Pet> pagedList = start < total ? allPets.subList(start, end) : List.of();
-
-                Page<Pet> pageResult = new Page<>(pn, ps, total);
-                pageResult.setRecords(pagedList);
-
-                logger.info("分页结果 - 总数: {}, 当前页记录数: {}", total, pagedList.size());
-    
-                return Result.success(pageResult);
-            } catch (Exception e) {
-                logger.error("使用缓存查询失败，降级到数据库分页查询，错误: {}", e.getMessage(), e);
-            }
-        }
-
-        Page<Pet> pageParam = new Page<>(pn, ps);
-        IPage<Pet> result = petService.getPetListByUserId(pageParam, effectiveUserId);
+        // 缓存优先、失败降级数据库分页的兜底逻辑放在 Service 层
+        IPage<Pet> result = petService.getPetPageForOwner(effectiveUserId, pn, ps);
 
         logger.info("查询结果 - 总数: {}, 当前页记录数: {}", result.getTotal(), result.getRecords().size());
         if (!result.getRecords().isEmpty()) {
@@ -200,13 +150,13 @@ public class PetController {
         return com.pethome.common.SafeCall.of(() -> {
             logger.info("========== 创建宠物 ==========");
             if (pet == null) {
-                return Result.error(400, "请求体不能为空");
+                throw new BusinessException(400, "请求体不能为空");
             }
             logger.info("接收到的宠物数据: {}", pet.toString());
 
             Long ownerId = resolveOwnerId(request, authHeader);
             if (ownerId == null) {
-                return Result.error(401, "请先登录后再添加宠物");
+                throw new BusinessException(401, "请先登录后再添加宠物");
             }
             pet.setUserId(ownerId);
             logger.info("归属用户 userId={}", ownerId);
@@ -238,21 +188,21 @@ public class PetController {
         return com.pethome.common.SafeCall.of(() -> {
             logger.info("========== 更新宠物 ==========");
             if (pet == null || pet.getId() == null) {
-                return Result.error(400, "宠物ID不能为空");
+                throw new BusinessException(400, "宠物ID不能为空");
             }
             Long ownerId = resolveOwnerId(request, authHeader);
             if (ownerId == null) {
-                return Result.error(401, "请先登录");
+                throw new BusinessException(401, "请先登录");
             }
             Pet existing = petService.getPetById(pet.getId().longValue());
             if (existing == null) {
-                return Result.error(404, "宠物不存在");
+                throw new BusinessException(404, "宠物不存在");
             }
             if (existing.getUserId() == null) {
-                return Result.error(400, "宠物数据异常");
+                throw new BusinessException(400, "宠物数据异常");
             }
             if (!ownerId.equals(existing.getUserId().longValue())) {
-                return Result.error(403, "无权修改该宠物");
+                throw new BusinessException(403, "无权修改该宠物");
             }
             pet.setUserId(existing.getUserId());
 
@@ -277,17 +227,17 @@ public class PetController {
 
             Long ownerId = resolveOwnerId(request, authHeader);
             if (ownerId == null) {
-                return Result.error(401, "请先登录");
+                throw new BusinessException(401, "请先登录");
             }
             Pet existing = petService.getPetById(id);
             if (existing == null) {
-                return Result.error(404, "宠物不存在");
+                throw new BusinessException(404, "宠物不存在");
             }
             if (existing.getUserId() == null) {
-                return Result.error(400, "宠物数据异常");
+                throw new BusinessException(400, "宠物数据异常");
             }
             if (!ownerId.equals(existing.getUserId().longValue())) {
-                return Result.error(403, "无权删除该宠物");
+                throw new BusinessException(403, "无权删除该宠物");
             }
 
             boolean result = petService.deletePet(id);
@@ -311,7 +261,7 @@ public class PetController {
             Pet pet = petService.getPetById(id);
             if (pet == null) {
                 logger.warn("未找到宠物，ID: {}", id);
-                return Result.error(404, "宠物不存在");
+                throw new BusinessException(404, "宠物不存在");
             }
 
             // 安全修复（上次审查遗留项）：归属校验——管理端可查看任意宠物；
@@ -323,7 +273,7 @@ public class PetController {
             Long ownerId = resolveOwnerId(request, authHeader);
             if (ownerId == null || pet.getUserId() == null || !ownerId.equals(pet.getUserId().longValue())) {
                 logger.warn("宠物详情归属校验未通过: petId={}, ownerId={}", id, ownerId);
-                return Result.error(403, "无权查看该宠物");
+                throw new BusinessException(403, "无权查看该宠物");
             }
 
             return Result.success(pet);

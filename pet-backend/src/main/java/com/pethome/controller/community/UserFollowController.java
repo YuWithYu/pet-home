@@ -1,6 +1,7 @@
 package com.pethome.controller.community;
 
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.UserFollow;
@@ -35,62 +36,50 @@ public class UserFollowController {
     @Operation(summary = "关注用户")
     public Result<Boolean> followUser(@RequestParam Long followingId, @RequestParam Long followerId,
                                       HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：关注人以登录态为准（原从 query 取，可替他人批量关注刷粉）
             Object attrId = request.getAttribute("userId");
-            if (attrId instanceof Number) {
-                followerId = ((Number) attrId).longValue();
-            }
-            if (followerId == null) {
-                return Result.error(401, "用户未登录或token无效");
+            Long effectiveFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : followerId;
+            if (effectiveFollowerId == null) {
+                throw new BusinessException(401, "用户未登录或token无效");
             }
             // 不能关注自己
-            if (followerId.equals(followingId)) {
-                return Result.error("不能关注自己");
+            if (effectiveFollowerId.equals(followingId)) {
+                throw new BusinessException("不能关注自己");
             }
 
             // 检查是否已经关注
-            boolean isFollowing = userFollowService.isFollowing(followerId, followingId);
+            boolean isFollowing = userFollowService.isFollowing(effectiveFollowerId, followingId);
             if (isFollowing) {
                 // 已经关注过了，返回成功（避免前端显示错误）
                 return Result.success(true);
             }
 
-            boolean success = userFollowService.followUser(followerId, followingId);
-            if (success) {
-                return Result.success(true);
-            } else {
-                return Result.error("关注失败，请稍后重试");
+            boolean success = userFollowService.followUser(effectiveFollowerId, followingId);
+            if (!success) {
+                throw new BusinessException("关注失败，请稍后重试");
             }
-        } catch (Exception e) {
-            log.error("关注用户失败", e);
-            return Result.error("关注用户失败，请稍后重试");
-        }
+            return Result.success(true);
+        }, "关注用户失败，请稍后重试", log);
     }
 
     @DeleteMapping("/follow")
     @Operation(summary = "取消关注用户")
     public Result<Boolean> unfollowUser(@RequestParam Long followingId, @RequestParam Long followerId,
                                         HttpServletRequest request) {
-        try {
+        return SafeCall.of(() -> {
             // 安全修复：取关人以登录态为准（原从 query 取，可强制取关他人）
             Object attrId = request.getAttribute("userId");
-            if (attrId instanceof Number) {
-                followerId = ((Number) attrId).longValue();
+            Long effectiveFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : followerId;
+            if (effectiveFollowerId == null) {
+                throw new BusinessException(401, "用户未登录或token无效");
             }
-            if (followerId == null) {
-                return Result.error(401, "用户未登录或token无效");
+            boolean success = userFollowService.unfollowUser(effectiveFollowerId, followingId);
+            if (!success) {
+                throw new BusinessException("取消关注失败，可能没有关注过");
             }
-            boolean success = userFollowService.unfollowUser(followerId, followingId);
-            if (success) {
-                return Result.success(true);
-            } else {
-                return Result.error("取消关注失败，可能没有关注过");
-            }
-        } catch (Exception e) {
-            log.error("取消关注用户失败", e);
-            return Result.error("取消关注用户失败，请稍后重试");
-        }
+            return Result.success(true);
+        }, "取消关注用户失败，请稍后重试", log);
     }
 
     @GetMapping("/follow/status")
@@ -102,7 +91,7 @@ public class UserFollowController {
             Object attrId = request.getAttribute("userId");
             final Long targetFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : null;
             if (targetFollowerId == null) {
-                return Result.error(401, "用户未登录或token无效");
+                throw new BusinessException(401, "用户未登录或token无效");
             }
             boolean isFollowing = userFollowService.isFollowing(targetFollowerId, followingId);
             return Result.success(isFollowing);
@@ -166,7 +155,7 @@ public class UserFollowController {
     @GetMapping("/users/{userId}/recommended")
     @Operation(summary = "获取推荐用户列表（前端调用）")
     public Result<List<Map<String, Object>>> getRecommendedUsers(@PathVariable Long userId) {
-        try {
+        return SafeCall.of(() -> {
             // 排除已关注与自身
             List<UserFollow> followingList = userFollowService.getFollowingList(userId);
             java.util.Set<Long> excluded = new java.util.HashSet<>();
@@ -208,7 +197,8 @@ public class UserFollowController {
                 }
                 m.put("name", displayName);
                 m.put("nickname", u.getNickname() != null ? u.getNickname() : "");
-                m.put("username", u.getUsername() != null ? u.getUsername() : "");
+                // 安全修复：username 可能是手机号等账号标识，对外只回传展示名
+                m.put("username", displayName);
                 // 确保头像URL不为空且有效
                 String avatarUrl = u.getAvatar();
                 // 检查是否是有效的URL（包含http://或https://或/开头），排除临时文件标识符
@@ -260,7 +250,8 @@ public class UserFollowController {
                     }
                     m.put("name", displayName);
                     m.put("nickname", u.getNickname() != null ? u.getNickname() : "");
-                    m.put("username", u.getUsername() != null ? u.getUsername() : "");
+                    // 安全修复：username 可能是手机号等账号标识，对外只回传展示名
+                    m.put("username", displayName);
                     // 确保头像URL不为空且有效
                     String avatarUrl = u.getAvatar();
                     // 检查是否是有效的URL（包含http://或https://或/开头），排除临时文件标识符
@@ -295,17 +286,16 @@ public class UserFollowController {
                 userId, followingList.size(), result.size(), finalResult.size());
 
             return Result.success(finalResult);
-        } catch (Exception e) {
-            log.error("获取推荐用户列表失败", e);
-            return Result.error("获取推荐用户列表失败，请稍后重试");
-        }
+        }, "获取推荐用户列表失败，请稍后重试", log);
     }
 
     /** 判断是否为账号型用户名（如 wx_xxx、微信用户xxx），不应直接作为展示昵称 */
     private static boolean isAccountLikeUsername(String username) {
         if (username == null || username.isEmpty()) return true;
         String s = username.trim();
-        return s.startsWith("wx_") || s.startsWith("微信用户") || s.startsWith("wechat_");
+        // 安全修复：手机号/纯数字账号也是「账号标识」而非展示名，不能回传给其他用户
+        return s.startsWith("wx_") || s.startsWith("微信用户") || s.startsWith("wechat_")
+                || s.matches("\\d{6,}");
     }
 
 }

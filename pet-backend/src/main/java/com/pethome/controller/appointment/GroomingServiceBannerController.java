@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.pethome.common.Result;
 import com.pethome.entity.GroomingServiceBanner;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.GroomingServiceBannerService;
 import com.pethome.util.FileUploadUtil;
 
@@ -23,6 +24,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/grooming-banners")
@@ -46,7 +49,12 @@ public class GroomingServiceBannerController {
 
     @PostMapping("/upload")
     @Operation(summary = "上传洗护服务展示图")
-    public Result<String> uploadGroomingServiceBanner(@RequestParam("file") MultipartFile file) {
+    public Result<String> uploadGroomingServiceBanner(@RequestParam("file") MultipartFile file,
+                                                      HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可修改（此前任意登录用户可篡改首页图）
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             // 使用FileUploadUtil上传文件，自动返回HTTPS URL
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
@@ -83,7 +91,12 @@ public class GroomingServiceBannerController {
 
     @PostMapping("/create")
     @Operation(summary = "创建洗护服务横幅")
-    public Result<GroomingServiceBanner> createGroomingServiceBanner(@RequestBody GroomingServiceBanner banner) {
+    public Result<GroomingServiceBanner> createGroomingServiceBanner(@RequestBody GroomingServiceBanner banner,
+                                                                    HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可创建
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             banner.setCreatedAt(java.time.LocalDateTime.now());
             banner.setUpdatedAt(java.time.LocalDateTime.now());
@@ -95,7 +108,12 @@ public class GroomingServiceBannerController {
 
     @PutMapping("/update")
     @Operation(summary = "更新洗护服务横幅")
-    public Result<GroomingServiceBanner> updateGroomingServiceBanner(@RequestBody GroomingServiceBanner banner) {
+    public Result<GroomingServiceBanner> updateGroomingServiceBanner(@RequestBody GroomingServiceBanner banner,
+                                                                     HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可修改
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             banner.setUpdatedAt(java.time.LocalDateTime.now());
             GroomingServiceBanner updatedBanner = groomingServiceBannerService.updateGroomingServiceBanner(banner);
@@ -105,7 +123,11 @@ public class GroomingServiceBannerController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除洗护服务横幅")
-    public Result<Boolean> deleteGroomingServiceBanner(@PathVariable Long id) {
+    public Result<Boolean> deleteGroomingServiceBanner(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：展示图属平台级内容，仅平台管理员可删除
+        if (!RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除展示图");
+        }
         return com.pethome.common.SafeCall.of(() -> {
             boolean success = groomingServiceBannerService.deleteGroomingServiceBanner(id);
             if (success) {

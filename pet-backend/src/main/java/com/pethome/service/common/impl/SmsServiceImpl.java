@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,6 +48,10 @@ public class SmsServiceImpl implements SmsService {
     private static final long DAILY_SEND_LIMIT = 10;
     /** 验证码最大失败尝试次数，超过即作废 */
     private static final long MAX_VERIFY_ATTEMPTS = 5;
+
+    /** 单 IP 每小时发送上限：与「手机号 60s/条 + 10 条/日」叠加，防止换号轰炸消耗短信费用 */
+    private static final long IP_HOURLY_LIMIT = 60;
+    private static final String IP_LIMIT_KEY_PREFIX = "sms:limit:ip:";
 
     /** 密码学安全随机数发生器 */
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -158,6 +164,70 @@ public class SmsServiceImpl implements SmsService {
             logger.error("发送验证码短信失败，手机号: {}, 错误: {}", maskPhone(phone), e.getMessage(), e);
             return (e.getMessage() != null ? e.getMessage() : "验证码发送异常，请稍后重试");
         }
+    }
+
+    @Override
+    public Map<String, Object> sendSmsCode(String phone, String clientIp) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (phone == null || phone.trim().isEmpty()) {
+                result.put("code", 1);
+                result.put("msg", "手机号不能为空");
+                return result;
+            }
+
+            // 验证手机号格式
+            if (!phone.matches("^1[3-9]\\d{9}$")) {
+                result.put("code", 1);
+                result.put("msg", "请输入正确的手机号");
+                return result;
+            }
+
+            // 不再在此处拦截「该手机号已被绑定」：忘记密码、忘记原密码需要向当前账号已绑定的手机号发验证码；
+            // 是否被其他账号占用在「注册/绑定/更换手机」等提交时再校验即可。
+
+            if (overIpLimit(clientIp)) {
+                result.put("code", 1);
+                result.put("msg", "请求过于频繁，请稍后再试");
+                return result;
+            }
+
+            String smsResult = sendVerificationCode(phone);
+            if ("success".equals(smsResult)) {
+                result.put("code", 200);
+                result.put("msg", "验证码发送成功");
+            } else {
+                result.put("code", 1);
+                String errMsg = smsResult != null ? smsResult.trim() : "";
+                if ("failed".equals(errMsg) || "fail".equals(errMsg) || errMsg.isEmpty()) {
+                    errMsg = "验证码发送失败，请稍后重试";
+                }
+                result.put("msg", errMsg);
+            }
+        } catch (Exception e) {
+            logger.error("发送验证码失败", e);
+            // 安全修复：异常细节只进日志，不回传内部信息
+            result.put("code", 500);
+            result.put("msg", "发送验证码失败，请稍后重试");
+        }
+        return result;
+    }
+
+    /** 单 IP 每小时发送上限（安全修复：原实现只按手机号限流，换号即可绕过） */
+    private boolean overIpLimit(String ip) {
+        if (stringRedisTemplate == null || ip == null || ip.isEmpty()) {
+            return false;
+        }
+        String key = IP_LIMIT_KEY_PREFIX + ip;
+        Long count = stringRedisTemplate.opsForValue().increment(key);
+        if (count != null && count == 1L) {
+            stringRedisTemplate.expire(key, 1, TimeUnit.HOURS);
+        }
+        if (count != null && count > IP_HOURLY_LIMIT) {
+            logger.warn("短信发送超过单 IP 每小时上限: ip={}, 次数={}", ip, count);
+            return true;
+        }
+        return false;
     }
 
     /** 号码认证服务（短信认证）endpoint: dypnsapi.aliyuncs.com */

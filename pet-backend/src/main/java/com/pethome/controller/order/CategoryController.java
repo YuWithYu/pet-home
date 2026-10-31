@@ -22,6 +22,8 @@ import com.pethome.service.order.CategoryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/categories")
 @Tag(name = "分类管理")
@@ -49,14 +51,22 @@ public class CategoryController {
 
     @PostMapping("/create")
     @Operation(summary = "创建分类")
-    public Result<Category> createCategory(@RequestBody Category category) {
+    public Result<Category> createCategory(@RequestBody Category category, HttpServletRequest request) {
+        // 安全修复：商品分类为平台级主数据，此前任意登录用户即可增删改
+        if (!com.pethome.security.RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权创建分类");
+        }
         Category created = categoryService.createCategory(category);
         return Result.success(created);
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新分类")
-    public Result<Category> updateCategory(@RequestBody Category category) {
+    public Result<Category> updateCategory(@RequestBody Category category, HttpServletRequest request) {
+        // 安全修复：商品分类为平台级主数据，仅平台管理员可修改
+        if (!com.pethome.security.RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权修改分类");
+        }
         if (category == null || category.getId() == null) {
             return Result.error("分类ID不能为空");
         }
@@ -66,7 +76,11 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除分类")
-    public Result<Boolean> deleteCategory(@PathVariable Long id) {
+    public Result<Boolean> deleteCategory(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：商品分类为平台级主数据，仅平台管理员可删除
+        if (!com.pethome.security.RequestIdentity.isPlatformAdmin(request)) {
+            return Result.error(403, "无权删除分类");
+        }
         boolean ok = categoryService.deleteCategory(id);
         return Result.success(ok);
     }
