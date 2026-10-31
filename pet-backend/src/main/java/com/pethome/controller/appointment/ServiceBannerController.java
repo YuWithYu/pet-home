@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -177,13 +179,10 @@ public class ServiceBannerController {
     @GetMapping("/service-banners/service-selection")
     @Operation(summary = "获取选择服务下方的展示图")
     public Result<MedicalServiceBanner> getServiceSelectionBanner() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 获取医疗服务展示图作为选择服务下方的展示图
             MedicalServiceBanner banner = medicalServiceBannerService.getBannerByPosition("medical-page-top");
             return Result.success(banner);
-        } catch (Exception e) {
-            log.error("获取服务展示图失败", e);
-            return Result.error("获取服务展示图失败，请稍后重试");
-        }
+        }, "获取服务展示图失败，请稍后重试", log);
     }
 }

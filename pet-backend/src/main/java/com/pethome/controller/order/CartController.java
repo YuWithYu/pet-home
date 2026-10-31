@@ -1,5 +1,7 @@
 package com.pethome.controller.order;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -139,7 +141,7 @@ public class CartController {
     @PostMapping("/delete")
     @Operation(summary = "删除购物车商品（支持批量删除）")
     public Result<Boolean> deleteCartItem(@RequestBody java.util.Map<String, Object> params, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = currentUserId(request);
             if (userId == null) {
                 return Result.error(401, "用户未登录或token无效");
@@ -166,10 +168,7 @@ public class CartController {
             } else {
                 return Result.error("ids参数格式错误");
             }
-        } catch (Exception e) {
-            log.error("删除购物车商品失败", e);
-            return Result.error("删除失败，请稍后重试");
-        }
+        }, "删除失败，请稍后重试", log);
     }
 
     /** 删除指定购物车项，校验归属后删除；返回是否删除成功 */
@@ -188,7 +187,7 @@ public class CartController {
     @PostMapping("/update/quantity")
     @Operation(summary = "更新购物车商品数量")
     public Result<Cart> updateQuantity(@RequestBody java.util.Map<String, Object> params, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = currentUserId(request);
             if (userId == null) {
                 return Result.error(401, "用户未登录或token无效");
@@ -217,16 +216,13 @@ public class CartController {
             cart.setQuantity(quantity);
             Cart updatedCart = cartService.updateCartItem(cart);
             return Result.success(updatedCart);
-        } catch (Exception e) {
-            log.error("更新购物车数量失败", e);
-            return Result.error("更新数量失败，请稍后重试");
-        }
+        }, "更新数量失败，请稍后重试", log);
     }
 
     @PostMapping("/clear")
     @Operation(summary = "清空购物车")
     public Result<Boolean> clearCart(HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：userId 只取登录态，不再接收 body 传入值
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -234,10 +230,7 @@ public class CartController {
             }
             boolean success = cartService.clearUserCart(userId);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("清空购物车失败", e);
-            return Result.error("清空购物车失败，请稍后重试");
-        }
+        }, "清空购物车失败，请稍后重试", log);
     }
 
     @GetMapping("/count")
@@ -248,13 +241,10 @@ public class CartController {
             log.warn("购物车数量越权尝试: targetUserId={}, currentUserId={}", userId, currentUserId(request));
             return Result.error(403, "无权查看他人购物车");
         }
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Integer count = cartService.getCartCount(userId);
             return Result.success(count);
-        } catch (Exception e) {
-            log.error("获取购物车数量失败", e);
-            return Result.error("获取购物车数量失败，请稍后重试");
-        }
+        }, "获取购物车数量失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}")

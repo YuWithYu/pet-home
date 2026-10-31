@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -81,13 +83,10 @@ public class ServiceStoreController {
     @PostMapping("/create")
     @Operation(summary = "创建门店")
     public Result<ServiceStore> createStore(@RequestBody ServiceStore store) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             ServiceStore created = serviceStoreService.createStore(store);
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("创建门店失败", e);
-            return Result.error("创建门店失败，请稍后重试");
-        }
+        }, "创建门店失败，请稍后重试", log);
     }
 
     /** 将完整 URL 转为相对路径存库，便于小程序用配置的域名拼接 */
@@ -107,40 +106,31 @@ public class ServiceStoreController {
     @PutMapping("/update")
     @Operation(summary = "更新门店")
     public Result<ServiceStore> updateStore(@RequestBody ServiceStore store) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
                 store.setImageUrl(normalizeImageUrlToRelative(store.getImageUrl()));
             }
             ServiceStore updated = serviceStoreService.updateStore(store);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("更新门店失败", e);
-            return Result.error("更新门店失败，请稍后重试");
-        }
+        }, "更新门店失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除门店")
     public Result<Boolean> deleteStore(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = serviceStoreService.deleteStore(id);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("删除门店失败", e);
-            return Result.error("删除门店失败，请稍后重试");
-        }
+        }, "删除门店失败，请稍后重试", log);
     }
 
     @PostMapping("/upload")
     @Operation(summary = "上传门店图片")
     public Result<String> uploadStoreImage(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 }
 

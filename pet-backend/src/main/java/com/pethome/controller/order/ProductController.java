@@ -1,10 +1,13 @@
 package com.pethome.controller.order;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.Product;
 import com.pethome.entity.ProductReview;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.order.ProductService;
 import com.pethome.service.order.ProductFavoriteService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -199,8 +202,13 @@ public class ProductController {
     @Operation(summary = "创建商品")
     public Result<Product> createProduct(
             @RequestBody Product product,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
         try {
+            // 安全修复：原实现只做店铺隔离，普通用户解析不到店铺时可直接创建全平台商品
+            if (!RequestIdentity.isAdmin(request)) {
+                return Result.error(403, "无权创建商品");
+            }
             // 数据隔离：如果是店铺管理员，自动设置店铺ID
             Long currentStoreId = null;
             if (adminContext != null && token != null) {
@@ -233,8 +241,13 @@ public class ProductController {
     @Operation(summary = "更新商品")
     public Result<Product> updateProduct(
             @RequestBody Product product,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
         try {
+            // 安全修复：普通用户可绕过店铺隔离修改任意商品（含价格）
+            if (!RequestIdentity.isAdmin(request)) {
+                return Result.error(403, "无权修改商品");
+            }
             // 数据隔离：如果是店铺管理员，验证商品是否属于其店铺
             Long currentStoreId = null;
             if (adminContext != null && token != null) {
@@ -270,8 +283,13 @@ public class ProductController {
     @Operation(summary = "删除商品")
     public Result<Boolean> deleteProduct(
             @PathVariable Long id,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
+        return com.pethome.common.SafeCall.of(() -> {
+            // 安全修复：普通用户可绕过店铺隔离删除全平台商品
+            if (!RequestIdentity.isAdmin(request)) {
+                return Result.error(403, "无权删除商品");
+            }
             // 数据隔离：如果是店铺管理员，验证商品是否属于其店铺
             Long currentStoreId = null;
             if (adminContext != null && token != null) {
@@ -287,10 +305,7 @@ public class ProductController {
             
             boolean success = productService.deleteProduct(id);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("删除商品失败", e);
-            return Result.error("删除商品失败，请稍后重试");
-        }
+        }, "删除商品失败，请稍后重试", log);
     }
 
     @GetMapping("/hot")
@@ -317,7 +332,7 @@ public class ProductController {
     @GetMapping("/{id}")
     @Operation(summary = "获取商品详情")
     public Result<Product> getProductDetail(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Product product = productService.getProductById(id);
             if (product == null) {
                 return Result.error("商品不存在");
@@ -325,10 +340,7 @@ public class ProductController {
             // 根据 specs 生成 skuStockList，使前端规格选择时价格/库存/图随规格变化（京东/拼多多逻辑）
             product.setSkuStockList(buildSkuStockList(product));
             return Result.success(product);
-        } catch (Exception e) {
-            log.error("获取商品详情失败", e);
-            return Result.error("获取商品详情失败，请稍后重试");
-        }
+        }, "获取商品详情失败，请稍后重试", log);
     }
 
     /**
@@ -517,7 +529,7 @@ public class ProductController {
     public Result<java.util.List<ProductReview>> getProductReviews(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<ProductReview> reviews = productService.getProductReviews(id);
             
             // 如果传入了userId，设置每个评论的点赞状态
@@ -528,22 +540,16 @@ public class ProductController {
             }
             
             return Result.success(reviews);
-        } catch (Exception e) {
-            log.error("获取商品评价失败", e);
-            return Result.error("获取商品评价失败，请稍后重试");
-        }
+        }, "获取商品评价失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}/sales")
     @Operation(summary = "获取商品销售记录")
     public Result<java.util.List<java.util.Map<String, Object>>> getProductSalesRecords(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             java.util.List<java.util.Map<String, Object>> salesRecords = productService.getProductSalesRecords(id);
             return Result.success(salesRecords);
-        } catch (Exception e) {
-            log.error("获取商品销售记录失败", e);
-            return Result.error("获取商品销售记录失败，请稍后重试");
-        }
+        }, "获取商品销售记录失败，请稍后重试", log);
     }
 
     @PostMapping("/{id}/reviews")
@@ -597,7 +603,7 @@ public class ProductController {
     public Result<java.util.Map<String, Object>> toggleReviewLike(
             @PathVariable Long reviewId,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：点赞人以登录态为准（原从 body 取 userId，可替他人点赞）
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -612,10 +618,7 @@ public class ProductController {
             result.put("likeCount", likeCount);
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("操作失败", e);
-            return Result.error("操作失败，请稍后重试");
-        }
+        }, "操作失败，请稍后重试", log);
     }
     
     @GetMapping("/review/{reviewId}/like/status")
@@ -623,7 +626,7 @@ public class ProductController {
     public Result<java.util.Map<String, Object>> getReviewLikeStatus(
             @PathVariable Long reviewId,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean isLiked = userId != null ? productService.isReviewLiked(reviewId, userId) : false;
             Integer likeCount = productService.getReviewLikeCount(reviewId);
             
@@ -632,10 +635,7 @@ public class ProductController {
             result.put("likeCount", likeCount);
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取失败", e);
-            return Result.error("获取失败，请稍后重试");
-        }
+        }, "获取失败，请稍后重试", log);
     }
     
     // ========== 评论回复相关接口 ==========
@@ -646,7 +646,7 @@ public class ProductController {
             @PathVariable Long reviewId,
             @RequestBody java.util.Map<String, Object> params,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：回复人以登录态为准（原从 body 取 userId，可替他人回复）
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -660,29 +660,23 @@ public class ProductController {
             
             com.pethome.entity.ReviewReply reply = productService.createReviewReply(reviewId, userId, content);
             return Result.success(reply);
-        } catch (Exception e) {
-            log.error("回复失败", e);
-            return Result.error("回复失败，请稍后重试");
-        }
+        }, "回复失败，请稍后重试", log);
     }
     
     @GetMapping("/review/{reviewId}/replies")
     @Operation(summary = "获取评论的回复列表")
     public Result<java.util.List<com.pethome.entity.ReviewReply>> getReviewReplies(
             @PathVariable Long reviewId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             java.util.List<com.pethome.entity.ReviewReply> replies = productService.getReviewReplies(reviewId);
             return Result.success(replies);
-        } catch (Exception e) {
-            log.error("获取回复列表失败", e);
-            return Result.error("获取回复列表失败，请稍后重试");
-        }
+        }, "获取回复列表失败，请稍后重试", log);
     }
 
     @PostMapping("/{id}/collect")
     @Operation(summary = "收藏商品")
     public Result<Boolean> collectProduct(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：收藏人以登录态为准（原从 query 取 userId，可操作他人收藏）
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -694,16 +688,13 @@ public class ProductController {
             } else {
                 return Result.error("已经收藏过了");
             }
-        } catch (Exception e) {
-            log.error("收藏失败", e);
-            return Result.error("收藏失败，请稍后重试");
-        }
+        }, "收藏失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}/collect")
     @Operation(summary = "取消收藏商品")
     public Result<Boolean> uncollectProduct(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -715,16 +706,13 @@ public class ProductController {
             } else {
                 return Result.error("没有收藏记录");
             }
-        } catch (Exception e) {
-            log.error("取消收藏失败", e);
-            return Result.error("取消收藏失败，请稍后重试");
-        }
+        }, "取消收藏失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}/collect/status")
     @Operation(summary = "检查商品收藏状态")
     public Result<Boolean> checkProductCollectStatus(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：收藏状态属个人数据，以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -732,10 +720,7 @@ public class ProductController {
             }
             boolean isCollected = productFavoriteService.isCollected(id, userId);
             return Result.success(isCollected);
-        } catch (Exception e) {
-            log.error("检查收藏状态失败", e);
-            return Result.error("检查收藏状态失败，请稍后重试");
-        }
+        }, "检查收藏状态失败，请稍后重试", log);
     }
 
     @GetMapping("/collected")
@@ -744,7 +729,7 @@ public class ProductController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：收藏列表属个人数据，以登录态为准（原从 query 取 userId，可越权查看他人收藏）
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -764,10 +749,7 @@ public class ProductController {
             response.put("pages", result.getPages());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取收藏列表失败", e);
-            return Result.error("获取收藏列表失败，请稍后重试");
-        }
+        }, "获取收藏列表失败，请稍后重试", log);
     }
 }
 

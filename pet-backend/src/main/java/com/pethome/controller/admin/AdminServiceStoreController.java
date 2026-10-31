@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.ServiceStore;
 import com.pethome.service.appointment.ServiceStoreService;
@@ -35,7 +37,7 @@ public class AdminServiceStoreController {
     @Operation(summary = "获取服务门店列表（管理员用，带数据隔离）")
     public Result<List<ServiceStore>> getServiceStores(
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
                 currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
@@ -49,10 +51,7 @@ public class AdminServiceStoreController {
                 list = serviceStoreService.getAllActiveStores();
             }
             return Result.success(list);
-        } catch (Exception e) {
-            log.error("获取服务门店列表失败", e);
-            return Result.error("获取服务门店列表失败，请稍后重试");
-        }
+        }, "获取服务门店列表失败，请稍后重试", log);
     }
 }
 

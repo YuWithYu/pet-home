@@ -1,5 +1,7 @@
 package com.pethome.controller.community;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.UserFollow;
 import com.pethome.service.user.UserFollowService;
@@ -95,51 +97,40 @@ public class UserFollowController {
     @Operation(summary = "检查关注状态")
     public Result<Boolean> checkFollowStatus(@RequestParam Long followerId, @RequestParam Long followingId,
                                              HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：关注状态以登录态为准（原从 query 取，可探测任意两人的关注关系）
             Object attrId = request.getAttribute("userId");
-            if (attrId instanceof Number) {
-                followerId = ((Number) attrId).longValue();
-            }
-            if (followerId == null) {
+            final Long targetFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : null;
+            if (targetFollowerId == null) {
                 return Result.error(401, "用户未登录或token无效");
             }
-            boolean isFollowing = userFollowService.isFollowing(followerId, followingId);
+            boolean isFollowing = userFollowService.isFollowing(targetFollowerId, followingId);
             return Result.success(isFollowing);
-        } catch (Exception e) {
-            log.error("检查关注状态失败", e);
-            return Result.error("检查关注状态失败，请稍后重试");
-        }
+        }, "检查关注状态失败，请稍后重试", log);
     }
 
     @GetMapping("/users/{userId}/following")
     @Operation(summary = "获取用户关注列表")
     public Result<List<UserFollow>> getFollowingList(@PathVariable Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<UserFollow> followingList = userFollowService.getFollowingList(userId);
             return Result.success(followingList);
-        } catch (Exception e) {
-            log.error("获取关注列表失败", e);
-            return Result.error("获取关注列表失败，请稍后重试");
-        }
+        }, "获取关注列表失败，请稍后重试", log);
     }
 
     @GetMapping("/users/{userId}/followers")
     @Operation(summary = "获取用户粉丝列表")
     public Result<List<UserFollow>> getFollowerList(@PathVariable Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<UserFollow> followerList = userFollowService.getFollowerList(userId);
             return Result.success(followerList);
-        } catch (Exception e) {
-            log.error("获取粉丝列表失败", e);
-            return Result.error("获取粉丝列表失败，请稍后重试");
-        }
+        }, "获取粉丝列表失败，请稍后重试", log);
     }
 
     @GetMapping("/users/{userId}/follow-stats")
     @Operation(summary = "获取用户关注统计")
     public Result<Map<String, Object>> getFollowStats(@PathVariable Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             int followingCount = userFollowService.getFollowingCount(userId);
             int followerCount = userFollowService.getFollowerCount(userId);
             
@@ -148,16 +139,13 @@ public class UserFollowController {
             stats.put("followerCount", followerCount);
             
             return Result.success(stats);
-        } catch (Exception e) {
-            log.error("获取关注统计失败", e);
-            return Result.error("获取关注统计失败，请稍后重试");
-        }
+        }, "获取关注统计失败，请稍后重试", log);
     }
 
     @GetMapping("/users/{userId}/followed")
     @Operation(summary = "获取用户关注的用户列表（前端调用）")
     public Result<List<Map<String, Object>>> getFollowedUsers(@PathVariable Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<UserFollow> followingList = userFollowService.getFollowingList(userId);
             
             // 转换为前端需要的格式
@@ -172,10 +160,7 @@ public class UserFollowController {
             }
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取关注用户列表失败", e);
-            return Result.error("获取关注用户列表失败，请稍后重试");
-        }
+        }, "获取关注用户列表失败，请稍后重试", log);
     }
 
     @GetMapping("/users/{userId}/recommended")

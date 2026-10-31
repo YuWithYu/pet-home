@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Admin;
 import com.pethome.entity.ServiceMember;
@@ -36,27 +38,21 @@ public class ServiceMemberController {
     public Result<List<ServiceMember>> getMembersByServiceType(
             @RequestParam String serviceType,
             @RequestParam(required = false) Long storeId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<ServiceMember> members = storeId == null
                     ? memberService.getMembersByServiceType(serviceType)
                     : memberService.getMembersByServiceTypeAndStore(serviceType, storeId);
             return Result.success(members);
-        } catch (Exception e) {
-            log.error("查询服务人员列表失败", e);
-            return Result.error("查询服务人员列表失败，请稍后重试");
-        }
+        }, "查询服务人员列表失败，请稍后重试", log);
     }
 
     @GetMapping("/all")
     @Operation(summary = "获取所有服务人员（不区分服务类型）")
     public Result<List<ServiceMember>> getAllMembers() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<ServiceMember> members = memberService.getAllMembers();
             return Result.success(members);
-        } catch (Exception e) {
-            log.error("查询所有服务人员失败", e);
-            return Result.error("查询所有服务人员失败，请稍后重试");
-        }
+        }, "查询所有服务人员失败，请稍后重试", log);
     }
 
     @PostMapping("/auto-assign")
@@ -85,60 +81,48 @@ public class ServiceMemberController {
     public Result<Integer> getMemberWorkload(
             @PathVariable Long memberId,
             @RequestParam String date) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
             int workload = memberService.getMemberWorkload(memberId, localDate);
             return Result.success(workload);
-        } catch (Exception e) {
-            log.error("查询工作量失败", e);
-            return Result.error("查询工作量失败，请稍后重试");
-        }
+        }, "查询工作量失败，请稍后重试", log);
     }
 
     @PostMapping("/create")
     @Operation(summary = "创建服务人员")
     public Result<ServiceMember> createMember(@RequestBody ServiceMember member) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             ServiceMember created = memberService.createMember(member);
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("创建服务人员失败", e);
-            return Result.error("创建服务人员失败，请稍后重试");
-        }
+        }, "创建服务人员失败，请稍后重试", log);
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新服务人员信息")
     public Result<Boolean> updateMember(@RequestBody ServiceMember member) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = memberService.updateMember(member);
             return success ? Result.success(true) : Result.error("更新失败");
-        } catch (Exception e) {
-            log.error("更新服务人员信息失败", e);
-            return Result.error("更新服务人员信息失败，请稍后重试");
-        }
+        }, "更新服务人员信息失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "根据ID查询服务人员")
     public Result<ServiceMember> getMemberById(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             ServiceMember member = memberService.getMemberById(id);
             if (member != null) {
                 return Result.success(member);
             } else {
                 return Result.error("服务人员不存在");
             }
-        } catch (Exception e) {
-            log.error("查询服务人员失败", e);
-            return Result.error("查询服务人员失败，请稍后重试");
-        }
+        }, "查询服务人员失败，请稍后重试", log);
     }
 
     @GetMapping("/by-user/{userId}")
     @Operation(summary = "根据用户ID查询服务人员")
     public Result<ServiceMember> getMemberByUserId(@PathVariable Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             ServiceMember member = memberService.getMemberByUserId(userId);
             if (member != null) {
                 return Result.success(member);
@@ -156,22 +140,16 @@ public class ServiceMemberController {
                 }
             }
             return Result.error("未找到对应的服务人员");
-        } catch (Exception e) {
-            log.error("查询服务人员失败", e);
-            return Result.error("查询服务人员失败，请稍后重试");
-        }
+        }, "查询服务人员失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除服务人员")
     public Result<Boolean> deleteMember(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = memberService.deleteMember(id);
             return success ? Result.success(true) : Result.error("删除失败");
-        } catch (Exception e) {
-            log.error("删除服务人员失败", e);
-            return Result.error("删除服务人员失败，请稍后重试");
-        }
+        }, "删除服务人员失败，请稍后重试", log);
     }
 }
 

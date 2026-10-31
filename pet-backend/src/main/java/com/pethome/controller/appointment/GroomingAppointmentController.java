@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -220,7 +222,7 @@ public class GroomingAppointmentController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除宠物洗护预约")
     public Result<Boolean> deleteGroomingAppointment(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：物理删除仅限 staff/admin
             if (!isStaffOrAdmin(request)) {
                 return Result.error(403, "无权删除此预约");
@@ -231,10 +233,7 @@ public class GroomingAppointmentController {
             } else {
                 return Result.error("预约删除失败");
             }
-        } catch (Exception e) {
-            log.error("预约删除失败", e);
-            return Result.error("预约删除失败，请稍后重试");
-        }
+        }, "预约删除失败，请稍后重试", log);
     }
 }
 

@@ -291,3 +291,82 @@ curl.exe -i -X POST http://127.0.0.1:18080/api/time-slots/create
 `/api/(grooming|hospital|litter)-services/(page|list|{id})`
 
 **约定**：该清单只允许只读 GET；任何新增写接口默认需要登录，避免被旧前缀「顺带放行」。
+
+---
+
+## 10. 第四轮：细粒度越权复审（2026-11-01）
+
+### 10.1 背景与方法
+
+第三轮把 `/api/admin/**` 下沉到 Spring Security 后，仍有大量业务接口挂在 `/api/orders/**`、`/api/product/**`、
+`/api/verify/**`、`/api/hospital-appointments/**` 等非 admin 前缀下。这些路径只要求「登录」，不做角色/归属校验，
+因此**任意普通 C 端用户 token 即可调用管理端业务**。本轮以「普通用户 token + 越权路径」逐接口实测取证：
+
+> 注意本项目响应约定：被拒绝时 HTTP 仍返回 200，业务码在响应体 `code` 字段。复测一律按 `body.code` 判定。
+
+身份读取统一收敛到新增工具类 [RequestIdentity.java](file:///c:/Users/Yu/Desktop/pet-home/pet-backend/src/main/java/com/pethome/security/RequestIdentity.java)，
+只读 `RoleInterceptor` 写入的 request attribute（`role` / `userId` / `adminId` / `serviceStoreId`），不重复解析 token。
+
+### 10.2 发现与修复
+
+| # | 问题 | 位置 | 影响 | 修复 |
+|---|------|------|------|------|
+| 1 | 退款列表无角色校验 | `OrderController#getRefundList` | 普通用户可读全平台退款单（含订单号、金额、原因） | 非 `admin/store_admin/staff` → 403 |
+| 2 | 退款审批无角色校验 | `OrderController#approveRefund/rejectRefund` | 普通用户可尝试审批他人退款（服务层仅拦 staff，未拦 user） | 非管理员 → 403 |
+| 3 | 物流详情 IDOR | `OrderController#getLogistics` | 任意登录用户按订单号读取他人收货人、电话、地址 | 非管理端必须 `order.userId == 当前用户` |
+| 4 | 物流写入 IDOR | `OrderController#updateLogistics` | 任意登录用户可修改他人订单物流 | 非管理端 → 403 |
+| 5 | 铲屎预约列表全量泄露 | `OrderController#getLitterAppointments` | 普通用户拿到全平台预约（含手机号、地址） | 管理端全量；普通用户仅 `getUserAppointments(userId)` |
+| 6 | 发货仓管理无角色校验 | `OrderController` `/warehouses` GET/POST/DELETE | 普通用户可读/建/删发货仓 | 读需 `admin/staff`；写仅管理员 |
+| 7 | 商品写接口无角色校验 | `ProductController` create/update/delete | 普通用户可上架/改价/下架商品 | 非管理员 → 403 |
+| 8 | 核销码查询与今日核销记录 | `VerifyController` `check-code`、`today-records` | 普通用户可凭核销码查询/枚举核销数据 | 非 `admin/staff` → 403 |
+| 9 | `/api/user/current` 匿名回退 + 用户名枚举 | `UserController#getCurrentUser` | 匿名可拿到用户资料骨架；可按 username 探测账号存在性 | 匿名 → 401；统一「用户不存在或已被禁用」 |
+| 10 | 通知/时间段/排班写接口 | `NotificationController`、`TimeSlotController`、`ServiceScheduleController`、`ScheduleConfigController#generate-batch` | 普通用户可发站内通知、改可预约时段、批量生成排班 | 写接口非 `admin/staff` → 403 |
+| 11 | 客服发信与社区身份伪造 | `MessageController` `/messages/service`、`/follows`、`/comments` | 普通用户可向任意门店发客服消息；按参数冒充他人查询关注/评论 | 发信非 `admin/staff` → 403；列表强制登录态 |
+| 12 | 每日专题评论冒充 | `DailyTopicController#addTopicComment` | 请求体传 `userId` 即可以他人身份发言 | 评论人取登录态，未登录 → 401 |
+| 13 | 积分兑换地址归属 | `PointsExchangeServiceImpl` | 传他人 `addressId` 可把他人地址设默认/作为收货地址 | 仅接受 `address.userId == 当前用户`，否则忽略并记日志 |
+| 14 | 预约跨门店可见性 | `HospitalAppointmentController`、`AppointmentController` | staff 可按 `memberId`/预约 id 读取其他门店客户预约 | 统一 `serviceStoreId` 收敛；跨店 → 403 |
+
+另外修复了上一提交遗留的 4 处编译错误（lambda 捕获可变局部变量、`IOException` 未捕获）：
+`VerifyController`、`UserController`、`MessageController`、`UserFollowController`、`LitterServiceBannerController`。
+根因是 IDE 写入的增量 class 掩盖了真实错误，**必须删除 `target/classes` 后全量编译才能暴露**。
+
+### 10.3 复测结果（18080 临时实例，`APP_MQ_ENABLED=false APP_KAFKA_ENABLED=false`）
+
+| 用例 | 期望 | 实测 `body.code` | 结果 |
+|------|------|------------------|------|
+| 匿名 `GET /api/admin/staff/list` | 401 | 401（HTTP 401） | PASS |
+| admin `GET /api/admin/staff/list` | 200 | 200 | PASS |
+| staff `GET /api/admin/staff/list` | 403 | 403（HTTP 403） | PASS |
+| 用户 `POST /api/product/create` | 403 | 403「无权创建商品」 | PASS |
+| 用户 `GET /api/orders/refunds` | 403 | 403「无权查看退款列表」 | PASS |
+| 用户 `PUT /api/orders/refunds/56/approve` | 403 | 403「无权审批退款」 | PASS |
+| 用户 `GET /api/orders/56/logistics` | 403 | 403「无权查看此订单」 | PASS |
+| 用户 `PUT /api/orders/56/logistics` | 403 | 403「无权操作此订单物流」 | PASS |
+| 用户 `GET /api/verify/check-code/123456` | 403 | 403「无权查询核销码」 | PASS |
+| 用户 `GET /api/verify/today-records` | 403 | 403「无权查看核销记录」 | PASS |
+| 匿名 `GET /api/user/current` | 401 | 401「未登录，请先登录」 | PASS |
+| 用户 `POST /api/notifications/create` | 403 | 403「无权创建通知」 | PASS |
+| 用户 `POST /api/time-slots/create` | 403 | 403「无权操作时间段配置」 | PASS |
+| 用户 `POST /api/schedule-config/generate-batch` | 403 | 403「无权生成排班」 | PASS |
+| 用户 `POST /api/messages/service` | 403 | 403「无权发送客服消息」 | PASS |
+| staff 查他店 `GET /api/hospital-appointments/member/list?memberId=34` | 403 | 403「无权查询其他门店的服务人员预约」 | PASS |
+| staff 查本店同参数 `memberId=36` | 200 | 200 | PASS |
+| admin `GET /api/orders/refunds` | 200 | 200（5 条） | PASS |
+| 用户 `GET /api/orders/litter-appointments` | 200 | 200（仅本人，0 条） | PASS |
+| 用户 `GET /api/orders/warehouses` | 403 | 403「无权查看发货仓」 | PASS |
+| admin `GET /api/orders/warehouses` | 200 | 200 | PASS |
+| 用户 `POST /api/orders/warehouses` | 403 | 403「无权维护发货仓」 | PASS |
+| 用户 `DELETE /api/orders/warehouses/999` | 403 | 403「无权维护发货仓」 | PASS |
+| 用户发专题评论并伪造 `userId=1` | 以本人身份落库 | 返回 `userId=83`（登录态） | PASS |
+
+- 编译：删除 `target/classes` 后 `mvn -B -DskipTests package` → **BUILD SUCCESS**（430 源文件全量编译）。
+- 例外说明：积分兑换地址归属用例（`POST /api/points/exchange`，`productId=1`）因商品不存在停在业务前置校验（500「商品不存在」），
+  未能触达地址分支；该修复以代码复核为准（仅接受本人 `addressId`）。
+- 验证实例已停止，**需重启正在运行的 8080 后端进程**后修复才生效。
+
+### 10.4 后续建议
+
+1. 把上述非 `/api/admin/**` 的管理端接口迁移到 `/api/admin/**` 前缀，让 Spring Security 统一兜底，避免逐接口补校验。
+2. 将本节的 `body.code` 用例固化为 PR 安全回归脚本（`scripts/` 下），CI 中执行。
+3. `GET /api/admin/staff/list` 当前会把 `Admin` 实体整行返回（`password=null` 已置空），建议改为 DTO 只输出必要字段。
+

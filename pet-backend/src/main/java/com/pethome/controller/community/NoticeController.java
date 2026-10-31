@@ -1,5 +1,7 @@
 package com.pethome.controller.community;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -40,14 +42,11 @@ public class NoticeController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Integer status) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<Notice> page = new Page<>(pageNo, pageSize);
             IPage<Notice> result = noticeService.getNoticePage(page, keyword, type, status);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("查询公告列表失败", e);
-            return Result.error("查询公告列表失败，请稍后重试");
-        }
+        }, "查询公告列表失败，请稍后重试", log);
     }
 
     /**
@@ -59,13 +58,10 @@ public class NoticeController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false, defaultValue = "5") Integer limit) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Notice> list = noticeService.getNoticeList(type, status, limit);
             return Result.success(list);
-        } catch (Exception e) {
-            log.error("获取公告列表失败", e);
-            return Result.error("获取公告列表失败，请稍后重试");
-        }
+        }, "获取公告列表失败，请稍后重试", log);
     }
 
     /**
@@ -74,7 +70,7 @@ public class NoticeController {
     @GetMapping("/last-one")
     @Operation(summary = "获取最新公告")
     public Result<Map<String, Object>> getLastNotice(@RequestParam(required = false) String type) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Notice latest = noticeService.getLatestNotice(type);
             if (latest == null) {
                 return Result.error("暂无有效公告");
@@ -93,10 +89,7 @@ public class NoticeController {
             notice.put("updateTime", latest.getUpdateTime());
 
             return Result.success(notice);
-        } catch (Exception e) {
-            log.error("获取公告失败", e);
-            return Result.error("获取公告失败，请稍后重试");
-        }
+        }, "获取公告失败，请稍后重试", log);
     }
 
     /**
@@ -105,7 +98,7 @@ public class NoticeController {
     @PostMapping("/create")
     @Operation(summary = "创建公告")
     public Result<Notice> createNotice(@RequestBody Notice notice) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (notice.getTitle() == null || notice.getTitle().trim().isEmpty()) {
                 return Result.error("公告标题不能为空");
             }
@@ -117,10 +110,7 @@ public class NoticeController {
             }
             Notice created = noticeService.createNotice(notice);
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("创建公告失败", e);
-            return Result.error("创建公告失败，请稍后重试");
-        }
+        }, "创建公告失败，请稍后重试", log);
     }
 
     /**
@@ -129,7 +119,7 @@ public class NoticeController {
     @PutMapping("/update")
     @Operation(summary = "更新公告")
     public Result<Notice> updateNotice(@RequestBody Notice notice) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (notice.getId() == null) {
                 return Result.error("ID不能为空");
             }
@@ -166,10 +156,7 @@ public class NoticeController {
 
             Notice updated = noticeService.updateNotice(existing);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("更新公告失败", e);
-            return Result.error("更新公告失败，请稍后重试");
-        }
+        }, "更新公告失败，请稍后重试", log);
     }
 
     /**
@@ -178,17 +165,14 @@ public class NoticeController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除公告")
     public Result<Boolean> deleteNotice(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Notice existing = noticeService.getById(id);
             if (existing == null) {
                 return Result.error("公告不存在");
             }
             boolean success = noticeService.deleteNotice(id);
             return success ? Result.success(true) : Result.error("删除公告失败");
-        } catch (Exception e) {
-            log.error("删除公告失败", e);
-            return Result.error("删除公告失败，请稍后重试");
-        }
+        }, "删除公告失败，请稍后重试", log);
     }
 
     /**
@@ -197,16 +181,13 @@ public class NoticeController {
     @GetMapping("/{id}")
     @Operation(summary = "获取公告详情")
     public Result<Notice> getNoticeDetail(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Notice notice = noticeService.getById(id);
             if (notice == null) {
                 return Result.error("公告不存在");
             }
             return Result.success(notice);
-        } catch (Exception e) {
-            log.error("获取公告详情失败", e);
-            return Result.error("获取公告详情失败，请稍后重试");
-        }
+        }, "获取公告详情失败，请稍后重试", log);
     }
 }
 

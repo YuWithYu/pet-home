@@ -1,5 +1,7 @@
 package com.pethome.controller.order;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Post;
 import com.pethome.service.community.PostRecommendationService;
@@ -38,7 +40,7 @@ public class RecommendationController {
     public Result<Map<String, Object>> collaborativeFiltering(
             @RequestParam Long userId,
             @RequestParam(defaultValue = "20") Integer limit) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Post> recommendedPosts = postRecommendationService.getCollaborativeRecommendations(
                     userId,
                     limit == null ? 20 : limit
@@ -50,10 +52,7 @@ public class RecommendationController {
             result.put("message", "基于用户的协同过滤推荐");
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("协同过滤推荐失败", e);
-            return Result.error("协同过滤推荐失败，请稍后重试");
-        }
+        }, "协同过滤推荐失败，请稍后重试", log);
     }
     
     /**
@@ -64,7 +63,7 @@ public class RecommendationController {
     @Operation(summary = "深度学习推荐（预留接口）")
     public Result<Map<String, Object>> deepLearningRecommendation(
             @RequestBody Map<String, Object> request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = Long.parseLong(request.get("userId").toString());
             Integer limit = request.get("limit") != null ? 
                 Integer.parseInt(request.get("limit").toString()) : 20;
@@ -84,10 +83,7 @@ public class RecommendationController {
             result.put("message", "深度学习模型待接入，当前使用混合推荐算法");
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("深度学习推荐失败", e);
-            return Result.error("深度学习推荐失败，请稍后重试");
-        }
+        }, "深度学习推荐失败，请稍后重试", log);
     }
     
     /**
@@ -96,13 +92,10 @@ public class RecommendationController {
     @GetMapping("/user-interests")
     @Operation(summary = "获取用户兴趣标签")
     public Result<List<String>> getUserInterests(@RequestParam Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<String> interests = postRecommendationService.getUserInterestTags(userId);
             return Result.success(interests);
-        } catch (Exception e) {
-            log.error("获取用户兴趣失败", e);
-            return Result.error("获取用户兴趣失败，请稍后重试");
-        }
+        }, "获取用户兴趣失败，请稍后重试", log);
     }
 
     /**
@@ -114,12 +107,9 @@ public class RecommendationController {
     @Operation(summary = "基于热度的推荐（发现页使用）")
     public Result<List<Post>> hotRecommendation(
             @RequestParam(defaultValue = "20") Integer limit) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Post> hotPosts = postRecommendationService.getHotPosts(limit);
             return Result.success(hotPosts);
-        } catch (Exception e) {
-            log.error("热度推荐失败", e);
-            return Result.error("热度推荐失败，请稍后重试");
-        }
+        }, "热度推荐失败，请稍后重试", log);
     }
 }

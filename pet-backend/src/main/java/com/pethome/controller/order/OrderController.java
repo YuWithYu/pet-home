@@ -1,5 +1,7 @@
 package com.pethome.controller.order;
 
+
+import com.pethome.common.SafeCall;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +50,9 @@ import com.pethome.service.order.OrderWarehouseAppService;
 import com.pethome.service.order.ProductService;
 import com.pethome.service.order.RefundRequestService;
 import com.pethome.service.user.UserService;
+import com.pethome.security.RequestIdentity;
+
+import javax.servlet.http.HttpServletRequest;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -187,11 +192,18 @@ public class OrderController {
      */
     @GetMapping("/litter-appointments")
     @Operation(summary = "获取铲屎服务预约订单列表")
-    public Result<Map<String, Object>> getLitterAppointments(@RequestParam(required = false) String status) {
-        try {
-            Page<Appointment> page = new Page<>(1, 1000);
-            IPage<Appointment> appointmentPage = appointmentService.getAppointmentList(page);
-            List<Appointment> allAppointments = appointmentPage.getRecords();
+    public Result<Map<String, Object>> getLitterAppointments(@RequestParam(required = false) String status,
+                                                             HttpServletRequest request) {
+        return com.pethome.common.SafeCall.of(() -> {
+            // 安全修复：非管理端只能看到自己的铲屎预约（原实现返回全平台预约，含客户手机号/地址）
+            boolean adminSide = RequestIdentity.isAdminOrStaff(request);
+            Long currentUserId = RequestIdentity.userId(request);
+            if (!adminSide && currentUserId == null) {
+                return Result.error(401, "未登录或token无效");
+            }
+            List<Appointment> allAppointments = adminSide
+                    ? appointmentService.getAppointmentList(new Page<>(1, 1000)).getRecords()
+                    : appointmentService.getUserAppointments(currentUserId);
             List<Map<String, Object>> orders = new ArrayList<>();
             for (Appointment appointment : allAppointments) {
                 Map<String, Object> order = new HashMap<>();
@@ -221,10 +233,7 @@ public class OrderController {
             data.put("shippedCount", 0);
             data.put("completedCount", (int) orders.stream().filter(o -> "completed".equals(o.get("status"))).count());
             return Result.success(data);
-        } catch (Exception e) {
-            log.error("获取铲屎服务预约列表失败", e);
-            return Result.error("获取铲屎服务预约列表失败，请稍后重试");
-        }
+        }, "获取铲屎服务预约列表失败，请稍后重试", log);
     }
 
     /**
@@ -1167,7 +1176,8 @@ public class OrderController {
     @Operation(summary = "获取订单物流信息")
     public Result<Map<String, Object>> getOrderLogistics(
             @PathVariable String orderId,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
         try {
             // 数据隔离：获取当前登录用户的店铺ID
             Long currentStoreId = null;
@@ -1190,6 +1200,14 @@ public class OrderController {
             
             if (order == null) {
                 return Result.error(404, "订单不存在");
+            }
+            
+            // 安全修复：物流详情含收货人姓名/电话/详细地址，非管理端仅限订单本人
+            if (!RequestIdentity.isAdminOrStaff(request)) {
+                Long currentUserId = RequestIdentity.userId(request);
+                if (currentUserId == null || !currentUserId.equals(order.getUserId())) {
+                    return Result.error(403, "无权查看此订单");
+                }
             }
             
             // 数据隔离：如果是店铺管理员，检查订单是否包含该店铺的商品
@@ -1314,7 +1332,12 @@ public class OrderController {
     @Operation(summary = "获取当前店铺的发货仓列表")
     public Result<List<StoreWarehouse>> listWarehouses(
             @RequestHeader(value = "Authorization", required = false) String token,
-            @RequestParam(required = false) Long storeId) {
+            @RequestParam(required = false) Long storeId,
+            HttpServletRequest request) {
+        // 安全修复：发货仓地址属经营数据，禁止未登录/C 端用户按 storeId 枚举
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权查看发货仓");
+        }
         Long currentStoreId = adminContext != null && token != null ? adminContext.getCurrentStoreId(token) : null;
         if (currentStoreId == null && storeId != null) {
             currentStoreId = storeId;
@@ -1331,7 +1354,12 @@ public class OrderController {
     @Operation(summary = "添加发货仓地址")
     public Result<StoreWarehouse> addWarehouse(
             @RequestBody Map<String, Object> body,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
+        // 安全修复：发货仓维护仅限管理员
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权维护发货仓");
+        }
         Long currentStoreId = adminContext != null && token != null ? adminContext.getCurrentStoreId(token) : null;
         boolean isPlatform = adminContext != null && token != null && adminContext.isPlatformAdmin(token);
         return Result.success(orderWarehouseAppService.addWarehouse(body, currentStoreId, isPlatform));
@@ -1341,7 +1369,12 @@ public class OrderController {
     @Operation(summary = "删除发货仓地址")
     public Result<Boolean> deleteWarehouse(
             @PathVariable Long id,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
+        // 安全修复：发货仓维护仅限管理员
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权维护发货仓");
+        }
         Long currentStoreId = adminContext != null && token != null ? adminContext.getCurrentStoreId(token) : null;
         boolean isPlatform = adminContext != null && token != null && adminContext.isPlatformAdmin(token);
         orderWarehouseAppService.deleteWarehouse(id, currentStoreId, isPlatform);
@@ -1356,8 +1389,13 @@ public class OrderController {
     public Result<Boolean> updateOrderLogistics(
             @PathVariable String orderId, 
             @RequestBody Map<String, Object> logisticsData,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
         try {
+            // 安全修复：发货物流属管理端操作，禁止 C 端用户改写订单收货信息
+            if (!RequestIdentity.isAdminOrStaff(request)) {
+                return Result.error(403, "无权操作此订单物流");
+            }
             // 数据隔离：获取当前登录用户的店铺ID
             Long currentStoreId = null;
             if (adminContext != null && token != null) {
@@ -1485,13 +1523,10 @@ public class OrderController {
     @GetMapping("/logistics/companies")
     @Operation(summary = "获取支持的物流公司列表")
     public Result<List<Map<String, String>>> getLogisticsCompanies() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Map<String, String>> companies = logisticsService.getSupportedCompanies();
             return Result.success(companies);
-        } catch (Exception e) {
-            log.error("获取物流公司列表失败", e);
-            return Result.error("获取物流公司列表失败，请稍后重试");
-        }
+        }, "获取物流公司列表失败，请稍后重试", log);
     }
 
     /**
@@ -1535,7 +1570,12 @@ public class OrderController {
             @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
             @RequestParam(required = false) String status,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
+        // 安全修复：退款列表属管理端数据，普通用户/匿名禁止访问
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权查看退款列表");
+        }
         Long currentStoreId = adminContext != null && token != null ? adminContext.getCurrentStoreId(token) : null;
         log.debug("退款列表 - 当前店铺ID: {}", currentStoreId);
         int p = page != null && page > 0 ? page : 1;
@@ -1550,7 +1590,12 @@ public class OrderController {
     @Operation(summary = "批准退款申请")
     public Result<Map<String, Object>> approveRefund(
             @PathVariable String orderId,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
+        // 安全修复：退款审批属管理员权限，staff 与普通用户禁止
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权审批退款");
+        }
         Admin currentAdmin = adminContext != null && token != null ? adminContext.getCurrentAdmin(token) : null;
         String role = currentAdmin != null && currentAdmin.getRole() != null ? currentAdmin.getRole().toLowerCase() : "";
         Long currentStoreId = adminContext != null && token != null ? adminContext.getCurrentStoreId(token) : null;
@@ -1565,7 +1610,12 @@ public class OrderController {
     public Result<Map<String, Object>> rejectRefund(
             @PathVariable String orderId,
             @RequestBody(required = false) Map<String, Object> body,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest request) {
+        // 安全修复：退款审批属管理员权限，staff 与普通用户禁止
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权审批退款");
+        }
         Admin currentAdmin = adminContext != null && token != null ? adminContext.getCurrentAdmin(token) : null;
         String role = currentAdmin != null && currentAdmin.getRole() != null ? currentAdmin.getRole().toLowerCase() : "";
         Long currentStoreId = adminContext != null && token != null ? adminContext.getCurrentStoreId(token) : null;

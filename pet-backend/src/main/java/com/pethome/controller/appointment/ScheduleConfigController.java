@@ -1,6 +1,7 @@
 package com.pethome.controller.appointment;
 
 import com.pethome.common.Result;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.ServiceScheduleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +34,12 @@ public class ScheduleConfigController {
             @RequestParam(defaultValue = "1") Integer maxCapacity,
             @RequestParam List<Long> memberIds,
             @RequestParam List<String> timeSlots,
-            @RequestParam(required = false) Long storeId) {
+            @RequestParam(required = false) Long storeId,
+            HttpServletRequest request) {
+        // 安全修复：此前任意登录用户即可批量生成排班，污染全平台排班数据
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权生成排班");
+        }
         if (serviceType == null || serviceType.trim().isEmpty()) {
             return Result.error("服务类型不能为空");
         }

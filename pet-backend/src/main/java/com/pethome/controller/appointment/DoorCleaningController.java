@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -43,7 +45,7 @@ public class DoorCleaningController {
     @Operation(summary = "创建上门铲屎预约")
     public Result<DoorCleaningAppointment> createAppointment(@RequestBody DoorCleaningAppointment appointment,
                                                               HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：归属强制以登录态为准（拦截器解析 token 后写入的 userId attribute），
             // body 中的 userId 一律覆盖，杜绝伪造他人归属创建预约
             Object attr = request.getAttribute("userId");
@@ -68,16 +70,13 @@ public class DoorCleaningController {
                 return Result.success(appointment);
             }
             return Result.error("创建预约失败");
-        } catch (Exception e) {
-            logger.error("创建上门铲屎预约失败", e);
-            return Result.error("创建预约失败，请稍后重试");
-        }
+        }, "创建预约失败，请稍后重试", logger);
     }
 
     @GetMapping("/user/list/{userId}")
     @Operation(summary = "获取用户上门铲屎预约列表")
     public Result<List<DoorCleaningAppointment>> getUserAppointments(@PathVariable Long userId, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：归属校验——userId 必须以登录态为准（拦截器写入的 userId attribute），
             // 路径参数仅兼容旧前端；未登录或与登录身份不一致时视为越权，返回空列表。
             Object attr = request.getAttribute("userId");
@@ -90,16 +89,13 @@ public class DoorCleaningController {
             List<DoorCleaningAppointment> appointments = doorCleaningAppointmentService.getAppointmentsByUserId(userId);
             logger.info("查询到预约数量: {}", appointments != null ? appointments.size() : 0);
             return Result.success(appointments);
-        } catch (Exception e) {
-            logger.error("获取预约列表失败", e);
-            return Result.error("获取预约列表失败，请稍后重试");
-        }
+        }, "获取预约列表失败，请稍后重试", logger);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "获取预约详情")
     public Result<DoorCleaningAppointment> getAppointmentDetail(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             DoorCleaningAppointment appointment = doorCleaningAppointmentService.getAppointmentById(id);
             if (appointment == null) {
                 return Result.error("预约不存在");
@@ -117,10 +113,7 @@ public class DoorCleaningController {
                 appointment.setAppointmentDate(appointment.getDate().atStartOfDay());
             }
             return Result.success(appointment);
-        } catch (Exception e) {
-            logger.error("获取预约详情失败", e);
-            return Result.error("获取预约详情失败，请稍后重试");
-        }
+        }, "获取预约详情失败，请稍后重试", logger);
     }
 
     /** staff/admin 判定：RoleInterceptor 在管理端登录后写入 adminId attribute */
@@ -152,17 +145,14 @@ public class DoorCleaningController {
     @Operation(summary = "获取服务人员分配的上门铲屎预约列表")
     public Result<List<DoorCleaningAppointment>> getMemberAppointments(@RequestParam Long memberId,
                                                                       HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：服务人员维度查询会返回客户手机号/地址等敏感信息，仅限 staff/admin
             if (!isStaffOrAdmin(request)) {
                 return Result.error(403, "无权查询服务人员预约列表");
             }
             List<DoorCleaningAppointment> appointments = doorCleaningAppointmentService.getAppointmentsByMemberId(memberId);
             return Result.success(appointments);
-        } catch (Exception e) {
-            logger.error("获取服务人员预约列表失败", e);
-            return Result.error("获取预约列表失败，请稍后重试");
-        }
+        }, "获取预约列表失败，请稍后重试", logger);
     }
 
     @GetMapping("/page")
@@ -176,7 +166,8 @@ public class DoorCleaningController {
             @RequestParam(required = false) Long storeId,
             HttpServletRequest request
     ) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
+            Long queryStoreId = storeId;
             Long adminId = (Long) request.getAttribute("adminId");
             if (adminId != null && !"admin".equalsIgnoreCase((String) request.getAttribute("role"))) {
                 com.pethome.entity.Admin admin = adminService.getById(adminId);
@@ -189,19 +180,16 @@ public class DoorCleaningController {
                         }
                     }
                     if (effectiveStoreId != null) {
-                        storeId = effectiveStoreId;
+                        queryStoreId = effectiveStoreId;
                     } else {
-                        storeId = -1L;
+                        queryStoreId = -1L;
                     }
                 }
             }
             Page<DoorCleaningAppointment> page = new Page<>(pageNo, pageSize);
-            IPage<DoorCleaningAppointment> result = doorCleaningAppointmentService.getAppointmentPage(page, status, keyword, serviceType, storeId);
+            IPage<DoorCleaningAppointment> result = doorCleaningAppointmentService.getAppointmentPage(page, status, keyword, serviceType, queryStoreId);
             return Result.success(result);
-        } catch (Exception e) {
-            logger.error("分页查询预约列表失败", e);
-            return Result.error("获取预约列表失败，请稍后重试");
-        }
+        }, "获取预约列表失败，请稍后重试", logger);
     }
 
     @PutMapping("/{id}/status")
@@ -210,7 +198,7 @@ public class DoorCleaningController {
                                        @RequestParam(required = false) String rejectReason,
                                        @RequestParam(required = false, defaultValue = "false") boolean forceCancelAfterServiceStart,
                                        HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：状态接口越权防护——
             // 普通用户仅允许取消自己的预约（status=cancelled 且归属本人）；
             // confirmed/rejected/completed 等运营态变更仅限 staff/admin，防止用户绕过审核自审自发
@@ -227,10 +215,7 @@ public class DoorCleaningController {
                 return Result.success("状态更新成功");
             }
             return Result.error("状态更新失败，记录不存在");
-        } catch (Exception e) {
-            logger.error("更新预约状态失败", e);
-            return Result.error("更新预约状态失败，请稍后重试");
-        }
+        }, "更新预约状态失败，请稍后重试", logger);
     }
 }
 

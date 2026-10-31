@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -64,37 +66,28 @@ public class ServiceConfigController {
     @PostMapping("/create")
     @Operation(summary = "创建服务配置")
     public Result<ServiceConfig> createServiceConfig(@RequestBody ServiceConfig serviceConfig) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             ServiceConfig created = serviceConfigService.createServiceConfig(serviceConfig);
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("创建服务配置失败", e);
-            return Result.error("创建服务配置失败，请稍后重试");
-        }
+        }, "创建服务配置失败，请稍后重试", log);
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新服务配置")
     public Result<ServiceConfig> updateServiceConfig(@RequestBody ServiceConfig serviceConfig) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             ServiceConfig updated = serviceConfigService.updateServiceConfig(serviceConfig);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("更新服务配置失败", e);
-            return Result.error("更新服务配置失败，请稍后重试");
-        }
+        }, "更新服务配置失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除服务配置")
     public Result<Boolean> deleteServiceConfig(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = serviceConfigService.deleteServiceConfig(id);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("删除服务配置失败", e);
-            return Result.error("删除服务配置失败，请稍后重试");
-        }
+        }, "删除服务配置失败，请稍后重试", log);
     }
 
     @PutMapping("/{id}/status")
@@ -102,13 +95,10 @@ public class ServiceConfigController {
     public Result<Boolean> updateServiceStatus(
             @PathVariable Long id,
             @RequestParam Integer status) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = serviceConfigService.updateServiceStatus(id, status);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("更新状态失败", e);
-            return Result.error("更新状态失败，请稍后重试");
-        }
+        }, "更新状态失败，请稍后重试", log);
     }
 }
 

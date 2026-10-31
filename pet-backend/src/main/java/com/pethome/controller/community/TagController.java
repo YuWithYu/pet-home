@@ -1,5 +1,7 @@
 package com.pethome.controller.community;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Post;
 import com.pethome.entity.Tag;
@@ -32,36 +34,27 @@ public class TagController {
     @GetMapping("/hot")
     @Operation(summary = "获取热门标签")
     public Result<List<String>> getHotTags(@RequestParam(defaultValue = "10") Integer limit) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<String> hotTags = tagService.getHotTags(limit);
             return Result.success(hotTags);
-        } catch (Exception e) {
-            log.error("获取热门标签失败", e);
-            return Result.error("获取热门标签失败，请稍后重试");
-        }
+        }, "获取热门标签失败，请稍后重试", log);
     }
 
     @GetMapping("/all")
     @Operation(summary = "获取全部标签（发现页标签栏）")
     public Result<List<String>> getAllTags() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             return Result.success(tagService.getAllTagNames());
-        } catch (Exception e) {
-            log.error("获取标签列表失败", e);
-            return Result.error("获取标签列表失败，请稍后重试");
-        }
+        }, "获取标签列表失败，请稍后重试", log);
     }
     
     @GetMapping("/post/{postId}")
     @Operation(summary = "获取帖子的标签列表")
     public Result<List<Tag>> getPostTags(@PathVariable Long postId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Tag> tags = tagService.getTagsByPostId(postId);
             return Result.success(tags);
-        } catch (Exception e) {
-            log.error("获取帖子标签失败", e);
-            return Result.error("获取帖子标签失败，请稍后重试");
-        }
+        }, "获取帖子标签失败，请稍后重试", log);
     }
     
     @GetMapping("/posts")
@@ -70,7 +63,7 @@ public class TagController {
             @RequestParam String tag,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 根据标签名获取帖子ID列表
             List<Long> postIds = tagService.getPostIdsByTagName(tag);
             
@@ -106,16 +99,13 @@ public class TagController {
             response.put("size", size);
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("根据标签查询帖子失败", e);
-            return Result.error("根据标签查询帖子失败，请稍后重试");
-        }
+        }, "根据标签查询帖子失败，请稍后重试", log);
     }
     
     @GetMapping("/recommend")
     @Operation(summary = "获取推荐帖子（基于热门标签）")
     public Result<List<Post>> getRecommendPosts(@RequestParam(defaultValue = "10") Integer limit) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 获取热门标签
             List<String> hotTags = tagService.getHotTags(10);
             
@@ -156,41 +146,32 @@ public class TagController {
             }
             
             return Result.success(posts);
-        } catch (Exception e) {
-            log.error("获取推荐帖子失败", e);
-            return Result.error("获取推荐帖子失败，请稍后重试");
-        }
+        }, "获取推荐帖子失败，请稍后重试", log);
     }
 
     @PostMapping("/admin/create")
     @Operation(summary = "管理员新增标签")
     public Result<Tag> createTag(@RequestBody Map<String, String> request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String name = request != null ? request.get("name") : null;
             Tag tag = tagService.createTag(name);
             if (tag == null) {
                 return Result.error("标签名不能为空");
             }
             return Result.success(tag);
-        } catch (Exception e) {
-            log.error("新增标签失败", e);
-            return Result.error("新增标签失败，请稍后重试");
-        }
+        }, "新增标签失败，请稍后重试", log);
     }
 
     @DeleteMapping("/admin/{name}")
     @Operation(summary = "管理员删除标签（推荐标签不可删除）")
     public Result<Boolean> deleteTag(@PathVariable String name) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean ok = tagService.deleteTagByName(name);
             if (!ok) {
                 return Result.error("删除失败：标签不存在或为受保护标签");
             }
             return Result.success(true);
-        } catch (Exception e) {
-            log.error("删除标签失败", e);
-            return Result.error("删除标签失败，请稍后重试");
-        }
+        }, "删除标签失败，请稍后重试", log);
     }
 }
 

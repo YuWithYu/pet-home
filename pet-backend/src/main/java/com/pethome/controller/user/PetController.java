@@ -1,5 +1,7 @@
 package com.pethome.controller.user;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -195,7 +197,7 @@ public class PetController {
             @RequestBody Pet pet,
             HttpServletRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             logger.info("========== 创建宠物 ==========");
             if (pet == null) {
                 return Result.error(400, "请求体不能为空");
@@ -224,10 +226,7 @@ public class PetController {
             logger.info("宠物创建成功，ID: {}, 已自动清除缓存", createdPet.getId());
             
             return Result.success(createdPet);
-        } catch (Exception e) {
-            logger.error("创建宠物失败", e);
-            return Result.error("创建宠物失败，请稍后重试");
-        }
+        }, "创建宠物失败，请稍后重试", logger);
     }
 
     @PutMapping("/update")
@@ -236,7 +235,7 @@ public class PetController {
             @RequestBody Pet pet,
             HttpServletRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             logger.info("========== 更新宠物 ==========");
             if (pet == null || pet.getId() == null) {
                 return Result.error(400, "宠物ID不能为空");
@@ -263,10 +262,7 @@ public class PetController {
             logger.info("宠物更新成功，ID: {}, 已自动清除缓存", updatedPet.getId());
             
             return Result.success(updatedPet);
-        } catch (Exception e) {
-            logger.error("更新宠物失败", e);
-            return Result.error("更新宠物失败，请稍后重试");
-        }
+        }, "更新宠物失败，请稍后重试", logger);
     }
 
     @DeleteMapping("/{id}")
@@ -275,7 +271,7 @@ public class PetController {
             @PathVariable Long id,
             HttpServletRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             logger.info("========== 删除宠物 ==========");
             logger.info("宠物ID: {}", id);
 
@@ -302,10 +298,7 @@ public class PetController {
             }
             
             return Result.success(result);
-        } catch (Exception e) {
-            logger.error("删除宠物失败: petId={}", id, e);
-            return Result.error("删除宠物失败，请稍后重试");
-        }
+        }, "删除宠物失败，请稍后重试", logger);
     }
 
     @GetMapping("/{id}")
@@ -314,7 +307,7 @@ public class PetController {
             @PathVariable Long id,
             HttpServletRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Pet pet = petService.getPetById(id);
             if (pet == null) {
                 logger.warn("未找到宠物，ID: {}", id);
@@ -334,9 +327,6 @@ public class PetController {
             }
 
             return Result.success(pet);
-        } catch (Exception e) {
-            logger.error("查询宠物详情失败: petId={}", id, e);
-            return Result.error("查询宠物详情失败，请稍后重试");
-        }
+        }, "查询宠物详情失败，请稍后重试", logger);
     }
 }

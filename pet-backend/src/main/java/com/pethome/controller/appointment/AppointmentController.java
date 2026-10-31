@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Admin;
 import com.pethome.entity.Appointment;
@@ -40,6 +42,74 @@ public class AppointmentController {
 
     @Autowired
     private com.pethome.service.appointment.AppointmentDelayService appointmentDelayService;
+
+    @Autowired
+    private com.pethome.service.appointment.ServiceMemberService serviceMemberService;
+
+    /** 管理端账号关联的服务人员 ID（staff 的工单归属判定用） */
+    private Long resolveMemberId(Admin admin) {
+        if (admin == null) {
+            return null;
+        }
+        com.pethome.entity.ServiceMember member = serviceMemberService.getMemberByUserId(admin.getId());
+        return member != null ? member.getId() : null;
+    }
+
+    /** 受限门店：平台管理员返回 null（不限门店），其它账号返回其服务门店（无归属返回 -1） */
+    private Long resolveScopedStoreId(Admin admin) {
+        if (admin == null || admin.isSuperAdmin()) {
+            return null;
+        }
+        Long storeId = admin.getServiceStoreId();
+        if (storeId == null) {
+            com.pethome.entity.ServiceMember member = serviceMemberService.getMemberByUserId(admin.getId());
+            if (member != null) {
+                storeId = member.getStoreId();
+            }
+        }
+        return storeId != null ? storeId : -1L;
+    }
+
+    /** 本门店服务人员 ID 集合；平台管理员返回 null 表示不限制 */
+    private java.util.Set<Long> allowedMemberIds(Admin admin) {
+        Long scope = resolveScopedStoreId(admin);
+        if (scope == null) {
+            return null;
+        }
+        java.util.Set<Long> ids = new java.util.HashSet<>();
+        List<com.pethome.entity.ServiceMember> members = serviceMemberService.getAllMembers();
+        if (members != null) {
+            for (com.pethome.entity.ServiceMember member : members) {
+                if (member.getId() != null && scope.equals(member.getStoreId())) {
+                    ids.add(member.getId());
+                }
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * 预约归属校验：平台管理员不限；staff 仅限本人工单；店长仅限本门店服务人员的工单。
+     * 修复原实现用 adminId 直接与 memberId 比较（id 语义不一致，可能命中他人工单）。
+     */
+    private boolean canAccessAppointment(Admin admin, Appointment appointment) {
+        if (admin == null || appointment == null) {
+            return false;
+        }
+        if (admin.isSuperAdmin()) {
+            return true;
+        }
+        Long memberId = appointment.getMemberId();
+        if (memberId == null) {
+            return false;
+        }
+        if ("staff".equals(admin.getRole())) {
+            Long ownMemberId = resolveMemberId(admin);
+            return ownMemberId != null && ownMemberId.equals(memberId);
+        }
+        java.util.Set<Long> allowed = allowedMemberIds(admin);
+        return allowed != null && allowed.contains(memberId);
+    }
     
     /**
      * 添加预约（小程序端用户）
@@ -48,7 +118,7 @@ public class AppointmentController {
     @Operation(summary = "添加预约")
     public Result<Appointment> addAppointment(@RequestBody Appointment appointment,
                                               javax.servlet.http.HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：归属强制以登录态为准（拦截器解析 token 后写入的 userId attribute），
             // body 中的 userId 一律覆盖，杜绝伪造他人归属创建预约
             Object attr = request.getAttribute("userId");
@@ -90,10 +160,7 @@ public class AppointmentController {
                 appointmentDelayService.registerReminderKeys(st, created.getId(), created.getUserId(), aptTime, svcName);
             }
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("添加预约失败", e);
-            return Result.error("添加预约失败，请稍后重试");
-        }
+        }, "添加预约失败，请稍后重试", log);
     }
     
     /**
@@ -105,7 +172,7 @@ public class AppointmentController {
                                                        @RequestParam String date,
                                                        @RequestParam String timeSlot,
                                                        @RequestParam(required = false) Long memberId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             LocalDate localDate = LocalDate.parse(date);
             boolean available = appointmentService.checkTimeSlotAvailable(serviceType, localDate, timeSlot, memberId);
             
@@ -117,10 +184,7 @@ public class AppointmentController {
             result.put("message", available ? "时间段可用" : "时间段已被占用");
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("检查失败", e);
-            return Result.error("检查失败，请稍后重试");
-        }
+        }, "检查失败，请稍后重试", log);
     }
     
     /**
@@ -132,7 +196,7 @@ public class AppointmentController {
                                                          @RequestParam(required = false) String date,
                                                          @RequestParam(required = false) String status,
                                                          @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Appointment> appointments;
             
             // 从 token 获取当前登录用户信息
@@ -140,12 +204,13 @@ public class AppointmentController {
             
             if (currentAdmin != null) {
                 if ("staff".equals(currentAdmin.getRole())) {
-                    // 服务人员：只能查看自己的预约
-                    // 需要先找到对应的 member_id（根据 admin 的 department 和 name 匹配 service_member）
-                    // 这里简化处理，假设 admin.id 对应 member_id（需要根据实际情况调整）
-                    appointments = appointmentService.getAppointmentsByMemberId(currentAdmin.getId());
+                    // 服务人员：只能查看自己的预约（adminId 需先映射到服务人员 ID）
+                    Long ownMemberId = resolveMemberId(currentAdmin);
+                    appointments = ownMemberId != null
+                            ? appointmentService.getAppointmentsByMemberId(ownMemberId)
+                            : java.util.Collections.emptyList();
                 } else {
-                    // 超级管理员：可以查看所有预约
+                    // 平台管理员：可以查看所有预约；店长/门店账号：仅本门店服务人员的预约
                     if (serviceType != null && date != null) {
                         LocalDate localDate = LocalDate.parse(date);
                         appointments = appointmentService.getAppointmentsByServiceTypeAndDate(serviceType, localDate);
@@ -155,6 +220,12 @@ public class AppointmentController {
                             LocalDate.now().minusDays(30),
                             LocalDate.now().plusDays(30)
                         );
+                    }
+                    java.util.Set<Long> allowedMemberIds = allowedMemberIds(currentAdmin);
+                    if (allowedMemberIds != null) {
+                        appointments = appointments.stream()
+                                .filter(a -> a.getMemberId() != null && allowedMemberIds.contains(a.getMemberId()))
+                                .collect(java.util.stream.Collectors.toList());
                     }
                 }
             } else {
@@ -171,10 +242,7 @@ public class AppointmentController {
             }
             
             return Result.success(appointments);
-        } catch (Exception e) {
-            log.error("获取预约列表失败", e);
-            return Result.error("获取预约列表失败，请稍后重试");
-        }
+        }, "获取预约列表失败，请稍后重试", log);
     }
 
     /**
@@ -183,7 +251,7 @@ public class AppointmentController {
     @GetMapping("/listByStaff")
     @Operation(summary = "服务人员查看自己的预约列表")
     public Result<List<Appointment>> listByStaff(@RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
                 return Result.error("未登录或登录已过期");
@@ -193,16 +261,14 @@ public class AppointmentController {
                 return Result.error("该接口仅限服务人员访问");
             }
             
-            // 获取服务人员的预约列表
-            // 需要根据 admin 找到对应的 service_member 的 id
-            // 这里简化处理，假设可以通过某种方式关联
-            List<Appointment> appointments = appointmentService.getAppointmentsByMemberId(currentAdmin.getId());
+            // 获取服务人员的预约列表（adminId 需映射到服务人员 ID）
+            Long ownMemberId = resolveMemberId(currentAdmin);
+            List<Appointment> appointments = ownMemberId != null
+                    ? appointmentService.getAppointmentsByMemberId(ownMemberId)
+                    : java.util.Collections.emptyList();
             
             return Result.success(appointments);
-        } catch (Exception e) {
-            log.error("获取服务人员预约列表失败", e);
-            return Result.error("获取预约列表失败，请稍后重试");
-        }
+        }, "获取预约列表失败，请稍后重试", log);
     }
     
     /**
@@ -213,7 +279,7 @@ public class AppointmentController {
     public Result<Appointment> assignAppointment(@RequestParam Long appointmentId,
                                                    @RequestParam Long memberId,
                                                    @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
                 return Result.error("未登录或登录已过期");
@@ -231,10 +297,7 @@ public class AppointmentController {
                 appointmentDelayService.registerReminderKeys(st, appointment.getId(), appointment.getUserId(), aptTime, svcName);
             }
             return Result.success(appointment);
-        } catch (Exception e) {
-            log.error("分配工单失败", e);
-            return Result.error("分配工单失败，请稍后重试");
-        }
+        }, "分配工单失败，请稍后重试", log);
     }
     
     /**
@@ -245,7 +308,7 @@ public class AppointmentController {
     public Result<Appointment> updateAppointment(@PathVariable Long id,
                                                    @RequestBody Appointment appointment,
                                                    @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
                 return Result.error("未登录或登录已过期");
@@ -256,21 +319,16 @@ public class AppointmentController {
                 return Result.error("预约不存在");
             }
             
-            // 服务人员只能更新自己工单的信息
-            if ("staff".equals(currentAdmin.getRole())) {
-                if (existing.getMemberId() == null || !existing.getMemberId().equals(currentAdmin.getId())) {
-                    return Result.error("无权操作此预约");
-                }
+            // 安全修复：staff 仅限本人工单，店长仅限本门店工单（原实现用 adminId 与 memberId 直接比较）
+            if (!canAccessAppointment(currentAdmin, existing)) {
+                return Result.error(403, "无权操作此预约");
             }
             
             // 设置ID并更新
             appointment.setId(id);
             Appointment updated = appointmentService.updateAppointment(appointment);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("更新预约失败", e);
-            return Result.error("更新预约失败，请稍后重试");
-        }
+        }, "更新预约失败，请稍后重试", log);
     }
     
     /**
@@ -281,7 +339,7 @@ public class AppointmentController {
     public Result<Appointment> updateStatus(@PathVariable Long id,
                                              @RequestParam String status,
                                              @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
                 return Result.error("未登录或登录已过期");
@@ -292,19 +350,14 @@ public class AppointmentController {
                 return Result.error("预约不存在");
             }
             
-            // 服务人员只能更新自己工单的状态
-            if ("staff".equals(currentAdmin.getRole())) {
-                if (appointment.getMemberId() == null || !appointment.getMemberId().equals(currentAdmin.getId())) {
-                    return Result.error("无权操作此预约");
-                }
+            // 安全修复：staff 仅限本人工单，店长仅限本门店工单
+            if (!canAccessAppointment(currentAdmin, appointment)) {
+                return Result.error(403, "无权操作此预约");
             }
             
             Appointment updated = appointmentService.updateAppointmentStatus(id, status);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("更新预约状态失败", e);
-            return Result.error("更新状态失败，请稍后重试");
-        }
+        }, "更新状态失败，请稍后重试", log);
     }
     
     /**
@@ -314,7 +367,7 @@ public class AppointmentController {
     @Operation(summary = "获取预约详情")
     public Result<Appointment> getAppointmentDetail(@PathVariable Long id,
                                                       @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = getCurrentAdminFromToken(token);
             if (currentAdmin == null) {
                 return Result.error("未登录或登录已过期");
@@ -325,18 +378,13 @@ public class AppointmentController {
                 return Result.error("预约不存在");
             }
             
-            // 服务人员只能查看自己的预约
-            if ("staff".equals(currentAdmin.getRole())) {
-                if (appointment.getMemberId() == null || !appointment.getMemberId().equals(currentAdmin.getId())) {
-                    return Result.error("无权查看此预约");
-                }
+            // 安全修复：staff 仅限本人工单，店长仅限本门店工单
+            if (!canAccessAppointment(currentAdmin, appointment)) {
+                return Result.error(403, "无权查看此预约");
             }
             
             return Result.success(appointment);
-        } catch (Exception e) {
-            log.error("获取预约详情失败", e);
-            return Result.error("获取预约详情失败，请稍后重试");
-        }
+        }, "获取预约详情失败，请稍后重试", log);
     }
     
     /**

@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,9 +47,15 @@ public class LitterServiceBannerController {
     @PostMapping("/upload")
     @Operation(summary = "上传铲屎服务展示图")
     public Result<String> uploadLitterServiceBanner(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 使用FileUploadUtil上传文件，自动返回HTTPS URL
-            String imageUrl = fileUploadUtil.uploadImage(file, "files");
+            String imageUrl;
+            try {
+                imageUrl = fileUploadUtil.uploadImage(file, "files");
+            } catch (java.io.IOException e) {
+                log.error("上传展示图失败", e);
+                return Result.error("图片上传失败，请稍后重试");
+            }
             String originalFilename = file.getOriginalFilename();
             
             // 创建或更新展示图记录到数据库
@@ -76,53 +84,41 @@ public class LitterServiceBannerController {
             }
             
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 
     @PostMapping("/create")
     @Operation(summary = "创建铲屎服务横幅")
     public Result<LitterServiceBanner> createLitterServiceBanner(@RequestBody LitterServiceBanner banner) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             banner.setCreatedAt(java.time.LocalDateTime.now());
             banner.setUpdatedAt(java.time.LocalDateTime.now());
             banner.setIsDeleted(false);
             LitterServiceBanner createdBanner = litterServiceBannerService.createLitterServiceBanner(banner);
             return Result.success(createdBanner);
-        } catch (Exception e) {
-            log.error("创建展示图失败", e);
-            return Result.error("创建展示图失败，请稍后重试");
-        }
+        }, "创建展示图失败，请稍后重试", log);
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新铲屎服务横幅")
     public Result<LitterServiceBanner> updateLitterServiceBanner(@RequestBody LitterServiceBanner banner) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             banner.setUpdatedAt(java.time.LocalDateTime.now());
             LitterServiceBanner updatedBanner = litterServiceBannerService.updateLitterServiceBanner(banner);
             return Result.success(updatedBanner);
-        } catch (Exception e) {
-            log.error("更新展示图失败", e);
-            return Result.error("更新展示图失败，请稍后重试");
-        }
+        }, "更新展示图失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除铲屎服务横幅")
     public Result<Boolean> deleteLitterServiceBanner(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = litterServiceBannerService.deleteLitterServiceBanner(id);
             if (success) {
                 return Result.success(true);
             } else {
                 return Result.error("删除展示图失败");
             }
-        } catch (Exception e) {
-            log.error("删除展示图失败", e);
-            return Result.error("删除展示图失败，请稍后重试");
-        }
+        }, "删除展示图失败，请稍后重试", log);
     }
 }

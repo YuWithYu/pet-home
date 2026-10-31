@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -91,13 +93,10 @@ public class GroomingServiceController {
     @PostMapping("/create")
     @Operation(summary = "创建洗护服务")
     public Result<GroomingService> createGroomingService(@RequestBody GroomingService service) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             GroomingService created = groomingServiceService.createGroomingService(service);
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("服务创建失败", e);
-            return Result.error("服务创建失败，请稍后重试");
-        }
+        }, "服务创建失败，请稍后重试", log);
     }
 
     @PutMapping("/update")
@@ -106,28 +105,22 @@ public class GroomingServiceController {
         if (service.getId() == null) {
             return Result.error("服务ID不能为空");
         }
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             GroomingService updated = groomingServiceService.updateGroomingService(service);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("服务更新失败", e);
-            return Result.error("服务更新失败，请稍后重试");
-        }
+        }, "服务更新失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除洗护服务")
     public Result<Boolean> deleteGroomingService(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = groomingServiceService.deleteGroomingService(id);
             if (success) {
                 return Result.success("删除成功", true);
             }
             return Result.error("删除失败");
-        } catch (Exception e) {
-            log.error("删除失败", e);
-            return Result.error("删除失败，请稍后重试");
-        }
+        }, "删除失败，请稍后重试", log);
     }
 
     @PutMapping("/{id}/status")
@@ -146,7 +139,7 @@ public class GroomingServiceController {
     @Operation(summary = "上传洗护服务图片")
     public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file,
                                              @RequestParam(value = "id", required = false) Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             if (id != null) {
                 GroomingService service = groomingServiceService.getGroomingServiceById(id);
@@ -156,16 +149,13 @@ public class GroomingServiceController {
                 }
             }
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 
     @PostMapping("/{id}/image")
     @Operation(summary = "更新洗护服务图片")
     public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             GroomingService service = groomingServiceService.getGroomingServiceById(id);
             if (service == null) {
@@ -174,9 +164,6 @@ public class GroomingServiceController {
             service.setImageUrl(imageUrl);
             groomingServiceService.updateGroomingService(service);
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 }

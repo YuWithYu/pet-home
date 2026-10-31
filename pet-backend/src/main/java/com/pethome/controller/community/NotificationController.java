@@ -11,11 +11,14 @@ import com.pethome.service.community.NoticeService;
 import com.pethome.service.community.UserNoticeReadService;
 import com.pethome.service.user.UserService;
 import com.pethome.security.JwtUtil;
+import com.pethome.security.RequestIdentity;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.List;
@@ -164,7 +167,12 @@ public class NotificationController {
     @Operation(summary = "分页查询通知")
     public Result<IPage<Notification>> getNotificationPage(
             @RequestParam(defaultValue = "1") Integer pageNo,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            HttpServletRequest request) {
+        // 安全修复：该接口返回全量通知（含他人 userId），属管理端功能；C 端请使用 /my
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权查看通知列表");
+        }
         Page<Notification> page = new Page<>(pageNo, pageSize);
         IPage<Notification> result = notificationService.getNotificationList(page);
         return Result.success(result);
@@ -172,25 +180,42 @@ public class NotificationController {
 
     @PostMapping("/create")
     @Operation(summary = "创建通知")
-    public Result<Notification> createNotification(@RequestBody Notification notification) {
+    public Result<Notification> createNotification(@RequestBody Notification notification,
+                                                   HttpServletRequest request) {
+        // 安全修复：原实现任意登录用户即可按 body 指定的 userId 向他人推送通知
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权创建通知");
+        }
         return Result.success(notificationService.createNotification(notification));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新通知")
-    public Result<Notification> updateNotification(@RequestBody Notification notification) {
+    public Result<Notification> updateNotification(@RequestBody Notification notification,
+                                                   HttpServletRequest request) {
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权修改通知");
+        }
         return Result.success(notificationService.updateNotification(notification));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除通知")
-    public Result<Boolean> deleteNotification(@PathVariable Long id) {
+    public Result<Boolean> deleteNotification(@PathVariable Long id,
+                                             HttpServletRequest request) {
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权删除通知");
+        }
         return Result.success(notificationService.deleteNotification(id));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "获取通知详情")
-    public Result<Notification> getNotificationDetail(@PathVariable Long id) {
+    public Result<Notification> getNotificationDetail(@PathVariable Long id,
+                                                     HttpServletRequest request) {
+        if (!RequestIdentity.isAdmin(request)) {
+            return Result.error(403, "无权查看通知详情");
+        }
         return Result.success(notificationService.getNotificationById(id));
     }
 }

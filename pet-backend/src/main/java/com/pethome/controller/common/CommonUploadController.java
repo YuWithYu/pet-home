@@ -1,5 +1,7 @@
 package com.pethome.controller.common;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.concurrent.TranscodeGate;
 import com.pethome.config.AsyncConfig;
@@ -157,7 +159,7 @@ public class CommonUploadController {
     @PostMapping("/upload")
     @Operation(summary = "通用文件上传接口")
     public Result<String> uploadFile(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (file.isEmpty()) {
                 return Result.error("文件不能为空");
             }
@@ -176,64 +178,52 @@ public class CommonUploadController {
             String imageUrl = fileUploadUtil.uploadFile(file, "files");
             
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("文件上传失败", e);
-            return Result.error("文件上传失败，请稍后重试");
-        }
+        }, "文件上传失败，请稍后重试", log);
     }
 
     @PostMapping("/upload/image")
     @Operation(summary = "图片上传接口")
     public Result<String> uploadImage(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Result<String> sizeCheck = rejectIfOversized(file);
             if (sizeCheck != null) {
                 return sizeCheck;
             }
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 
     @PostMapping("/upload/banner")
     @Operation(summary = "轮播图上传接口")
     public Result<String> uploadBanner(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Result<String> sizeCheck = rejectIfOversized(file);
             if (sizeCheck != null) {
                 return sizeCheck;
             }
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("轮播图上传失败", e);
-            return Result.error("轮播图上传失败，请稍后重试");
-        }
+        }, "轮播图上传失败，请稍后重试", log);
     }
 
     @PostMapping("/upload/product")
     @Operation(summary = "商品图片上传接口")
     public Result<String> uploadProduct(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Result<String> sizeCheck = rejectIfOversized(file);
             if (sizeCheck != null) {
                 return sizeCheck;
             }
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("商品图片上传失败", e);
-            return Result.error("商品图片上传失败，请稍后重试");
-        }
+        }, "商品图片上传失败，请稍后重试", log);
     }
 
     @PostMapping("/upload/video")
     @Operation(summary = "视频上传接口")
     public Result<String> uploadVideo(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (file.isEmpty()) {
                 return Result.error("文件不能为空");
             }
@@ -274,10 +264,7 @@ public class CommonUploadController {
                     ? videoBaseUrl + FILES_SUBDIR + "/" + finalName
                     : videoBaseUrl + "/" + FILES_SUBDIR + "/" + finalName;
             return Result.success(videoUrl);
-        } catch (Exception e) {
-            log.error("视频上传失败", e);
-            return Result.error("视频上传失败，请稍后重试");
-        }
+        }, "视频上传失败，请稍后重试", log);
     }
 
     /** 分块大小建议 ≤8MB，避免超过微信单次上传 10MB 限制 */
@@ -293,7 +280,7 @@ public class CommonUploadController {
             @RequestParam("file") MultipartFile file,
             HttpServletRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (file.isEmpty()) {
                 return Result.error("分块文件不能为空");
             }
@@ -324,10 +311,7 @@ public class CommonUploadController {
             File chunkFile = new File(chunkDir, String.valueOf(chunkIndex));
             file.transferTo(chunkFile);
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("分块上传失败", e);
-            return Result.error("分块上传失败，请稍后重试");
-        }
+        }, "分块上传失败，请稍后重试", log);
     }
 
     @PostMapping("/upload/video/merge")
@@ -338,7 +322,7 @@ public class CommonUploadController {
             @RequestParam(value = "filename", required = false) String filename,
             HttpServletRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：uploadId 格式白名单 + totalChunks 上限（防路径穿越与合并 DoS）
             if (!isValidUploadId(uploadId == null ? null : uploadId.trim())) {
                 return Result.error("uploadId 非法");
@@ -393,9 +377,6 @@ public class CommonUploadController {
                     ? videoBaseUrl + FILES_SUBDIR + "/" + finalName
                     : videoBaseUrl + "/" + FILES_SUBDIR + "/" + finalName;
             return Result.success(videoUrl);
-        } catch (Exception e) {
-            log.error("视频分块合并失败", e);
-            return Result.error("合并失败，请稍后重试");
-        }
+        }, "合并失败，请稍后重试", log);
     }
 }

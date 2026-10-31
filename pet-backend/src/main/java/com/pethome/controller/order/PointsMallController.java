@@ -1,5 +1,7 @@
 package com.pethome.controller.order;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.PointsRecord;
 import com.pethome.security.UserTokenResolver;
@@ -40,12 +42,9 @@ public class PointsMallController {
     @Operation(summary = "获取积分商城商品列表")
     public Result<Map<String, Object>> getPointsMallProducts(
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             return Result.success(pointsExchangeService.listMallProducts());
-        } catch (Exception e) {
-            log.error("获取积分商品列表失败", e);
-            return Result.error("获取商品列表失败，请稍后重试");
-        }
+        }, "获取商品列表失败，请稍后重试", log);
     }
 
     /**
@@ -81,7 +80,7 @@ public class PointsMallController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：与订单列表（#50）策略对齐——userId 只认登录态，
             // 不再 fallback 到 query 参数（否则可越权查询他人兑换记录）。
             // 该接口已从 RoleInterceptor 匿名白名单移除，未登录请求会被 401 拦截。
@@ -130,9 +129,6 @@ public class PointsMallController {
             result.put("size", size);
 
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取兑换记录失败", e);
-            return Result.error("获取兑换记录失败，请稍后重试");
-        }
+        }, "获取兑换记录失败，请稍后重试", log);
     }
 }

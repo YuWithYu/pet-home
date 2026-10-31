@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -47,7 +49,7 @@ public class AdminDailyTopicController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) Integer status) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<DailyTopic> topicPage = new Page<>(page, size);
             IPage<DailyTopic> result = dailyTopicService.getTopicList(topicPage, status);
 
@@ -59,10 +61,7 @@ public class AdminDailyTopicController {
             response.put("size", result.getSize());
 
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取专题列表失败", e);
-            return Result.error("获取专题列表失败，请稍后重试");
-        }
+        }, "获取专题列表失败，请稍后重试", log);
     }
 
     /**
@@ -71,7 +70,7 @@ public class AdminDailyTopicController {
     @GetMapping("/{id}")
     @Operation(summary = "获取专题详情")
     public Result<DailyTopic> getTopicDetail(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             DailyTopic topic = dailyTopicService.getById(id);
             if (topic != null) {
                 // 加载关联的帖子
@@ -79,10 +78,7 @@ public class AdminDailyTopicController {
                 topic.setPosts(posts);
             }
             return Result.success(topic);
-        } catch (Exception e) {
-            log.error("获取专题详情失败", e);
-            return Result.error("获取专题详情失败，请稍后重试");
-        }
+        }, "获取专题详情失败，请稍后重试", log);
     }
 
     /**
@@ -91,7 +87,7 @@ public class AdminDailyTopicController {
     @PostMapping
     @Operation(summary = "创建专题")
     public Result<DailyTopic> createTopic(@RequestBody Map<String, Object> request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             DailyTopic topic = new DailyTopic();
             topic.setTitle((String) request.get("title"));
             topic.setDescription((String) request.get("description"));
@@ -119,10 +115,7 @@ public class AdminDailyTopicController {
             // 允许多个专题使用同一发布日期（仅作展示/排序用，不做「一日一篇」限制）
             DailyTopic created = dailyTopicService.createWithPosts(topic, postIds);
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("创建专题失败", e);
-            return Result.error("创建专题失败，请稍后重试");
-        }
+        }, "创建专题失败，请稍后重试", log);
     }
 
     /**
@@ -131,7 +124,7 @@ public class AdminDailyTopicController {
     @PutMapping("/{id}")
     @Operation(summary = "更新专题")
     public Result<DailyTopic> updateTopic(@PathVariable Long id, @RequestBody Map<String, Object> request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             DailyTopic topic = dailyTopicService.getById(id);
             if (topic == null) {
                 return Result.error("专题不存在");
@@ -171,10 +164,7 @@ public class AdminDailyTopicController {
 
             DailyTopic updated = dailyTopicService.updateWithPosts(topic, postIds);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("更新专题失败", e);
-            return Result.error("更新专题失败，请稍后重试");
-        }
+        }, "更新专题失败，请稍后重试", log);
     }
 
     /**
@@ -183,17 +173,14 @@ public class AdminDailyTopicController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除专题")
     public Result<Void> deleteTopic(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = dailyTopicService.removeById(id);
             if (success) {
                 return Result.success(null);
             } else {
                 return Result.error("删除失败");
             }
-        } catch (Exception e) {
-            log.error("删除专题失败", e);
-            return Result.error("删除专题失败，请稍后重试");
-        }
+        }, "删除专题失败，请稍后重试", log);
     }
 
     /**
@@ -202,17 +189,14 @@ public class AdminDailyTopicController {
     @PostMapping("/{id}/publish")
     @Operation(summary = "发布专题")
     public Result<Void> publishTopic(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = dailyTopicService.publishTopic(id);
             if (success) {
                 return Result.success(null);
             } else {
                 return Result.error("发布失败");
             }
-        } catch (Exception e) {
-            log.error("发布专题失败", e);
-            return Result.error("发布专题失败，请稍后重试");
-        }
+        }, "发布专题失败，请稍后重试", log);
     }
 
     /**
@@ -221,17 +205,14 @@ public class AdminDailyTopicController {
     @PostMapping("/{id}/offline")
     @Operation(summary = "下线专题")
     public Result<Void> offlineTopic(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = dailyTopicService.offlineTopic(id);
             if (success) {
                 return Result.success(null);
             } else {
                 return Result.error("下线失败");
             }
-        } catch (Exception e) {
-            log.error("下线专题失败", e);
-            return Result.error("下线专题失败，请稍后重试");
-        }
+        }, "下线专题失败，请稍后重试", log);
     }
 
     /**
@@ -240,13 +221,10 @@ public class AdminDailyTopicController {
     @GetMapping("/{id}/posts")
     @Operation(summary = "获取专题关联的帖子")
     public Result<List<Post>> getTopicPosts(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Post> posts = dailyTopicService.getTopicPosts(id);
             return Result.success(posts);
-        } catch (Exception e) {
-            log.error("获取专题帖子失败", e);
-            return Result.error("获取专题帖子失败，请稍后重试");
-        }
+        }, "获取专题帖子失败，请稍后重试", log);
     }
 
     /**
@@ -255,7 +233,7 @@ public class AdminDailyTopicController {
     @PostMapping("/{id}/posts")
     @Operation(summary = "关联帖子到专题")
     public Result<Void> associatePosts(@PathVariable Long id, @RequestBody Map<String, Object> request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             DailyTopic topic = dailyTopicService.getById(id);
             if (topic == null) {
                 return Result.error("专题不存在");
@@ -265,10 +243,7 @@ public class AdminDailyTopicController {
 
             dailyTopicService.updateWithPosts(topic, postIds);
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("关联帖子失败", e);
-            return Result.error("关联帖子失败，请稍后重试");
-        }
+        }, "关联帖子失败，请稍后重试", log);
     }
 
     /**
@@ -321,7 +296,7 @@ public class AdminDailyTopicController {
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<Post> postPage = new Page<>(page, size);
             QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("status", 1); // 只查询正常状态的帖子
@@ -351,10 +326,7 @@ public class AdminDailyTopicController {
             response.put("total", result.getTotal());
 
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("搜索帖子失败", e);
-            return Result.error("搜索帖子失败，请稍后重试");
-        }
+        }, "搜索帖子失败，请稍后重试", log);
     }
 
     /**

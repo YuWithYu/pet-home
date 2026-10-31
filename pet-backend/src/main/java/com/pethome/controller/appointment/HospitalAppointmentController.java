@@ -92,6 +92,18 @@ public class HospitalAppointmentController {
         if (!isStaffOrAdmin(request)) {
             return Result.error(403, "无权查询服务人员预约列表");
         }
+        // 安全修复：分店账号不得查看其他门店服务人员的预约（含客户手机号/地址）
+        Long scope = scopedStoreId(request);
+        if (scope != null) {
+            com.pethome.entity.ServiceMember member = serviceMemberService.getMemberById(memberId);
+            if (member == null) {
+                return Result.error(404, "服务人员不存在");
+            }
+            if (!scope.equals(member.getStoreId())) {
+                log.warn("[HospitalAppointment] member/list 跨门店拒绝: scope={}, memberStore={}", scope, member.getStoreId());
+                return Result.error(403, "无权查询其他门店的服务人员预约");
+            }
+        }
         List<HospitalAppointment> appointments = hospitalAppointmentService.getAppointmentsByMemberId(memberId);
         return Result.success(appointments);
     }
@@ -139,8 +151,12 @@ public class HospitalAppointmentController {
         if (appointment == null) {
             return Result.error("预约不存在");
         }
-        // 安全修复：详情含手机号/地址等个人信息——staff/admin 可查看全部，普通用户仅能查看本人预约
-        if (!isStaffOrAdmin(request)) {
+        // 安全修复：详情含手机号/地址等个人信息——staff/admin 仅限本人门店，普通用户仅能查看本人预约
+        if (isStaffOrAdmin(request)) {
+            if (!canAccessStore(request, appointment.getStoreId())) {
+                return Result.error(403, "无权查看此预约");
+            }
+        } else {
             Object attr = request.getAttribute("userId");
             Long currentUserId = attr instanceof Number ? ((Number) attr).longValue() : null;
             if (currentUserId == null || !currentUserId.equals(appointment.getUserId())) {
@@ -156,11 +172,53 @@ public class HospitalAppointmentController {
     }
 
     /**
+     * 当前管理端账号的可见门店：平台管理员返回 null（不限门店），
+     * 店长/店员返回其服务门店（无门店归属返回 -1，保证查不到任何数据）。
+     * 用于防止分店账号跨门店查看/操作其它门店的预约。
+     */
+    private Long scopedStoreId(HttpServletRequest request) {
+        if (!isStaffOrAdmin(request)) {
+            return null;
+        }
+        Object roleAttr = request.getAttribute("role");
+        if (roleAttr != null && "admin".equalsIgnoreCase(String.valueOf(roleAttr))) {
+            return null;
+        }
+        Object storeAttr = request.getAttribute("serviceStoreId");
+        if (storeAttr instanceof Number) {
+            return ((Number) storeAttr).longValue();
+        }
+        Object adminIdAttr = request.getAttribute("adminId");
+        if (adminIdAttr instanceof Number) {
+            com.pethome.entity.ServiceMember sm =
+                    serviceMemberService.getMemberByUserId(((Number) adminIdAttr).longValue());
+            if (sm != null && sm.getStoreId() != null) {
+                return sm.getStoreId();
+            }
+        }
+        return -1L;
+    }
+
+    /** 门店归属校验：返回 true 表示可访问 */
+    private boolean canAccessStore(HttpServletRequest request, Long storeId) {
+        Long scope = scopedStoreId(request);
+        return scope == null || (storeId != null && scope.equals(storeId));
+    }
+
+    /**
      * 预约状态变更权限校验。
      * @return null 表示放行；非 null 为拒绝原因
      */
     private String checkStatusPermission(Long id, HttpServletRequest request) {
         if (isStaffOrAdmin(request)) {
+            // 安全修复：分店账号只能操作本门店的预约
+            HospitalAppointment appointment = hospitalAppointmentService.getAppointmentById(id);
+            if (appointment == null) {
+                return "预约不存在";
+            }
+            if (!canAccessStore(request, appointment.getStoreId())) {
+                return "无权操作此预约";
+            }
             return null;
         }
         Object attr = request.getAttribute("userId");
@@ -185,6 +243,25 @@ public class HospitalAppointmentController {
             // 安全修复：分配服务人员属运营操作，仅限 staff/admin，防止用户端擅自改派
             if (!isStaffOrAdmin(request)) {
                 return Result.error(403, "无权分配服务人员");
+            }
+            // 安全修复：分店账号不得跨门店分配（预约与本门店、服务人员门店双重校验）
+            HospitalAppointment target = hospitalAppointmentService.getAppointmentById(id);
+            if (target == null) {
+                return Result.error(404, "预约不存在");
+            }
+            if (!canAccessStore(request, target.getStoreId())) {
+                return Result.error(403, "无权操作此预约");
+            }
+            Long scope = scopedStoreId(request);
+            if (scope != null) {
+                com.pethome.entity.ServiceMember member = serviceMemberService.getMemberById(memberId);
+                if (member == null) {
+                    return Result.error(404, "服务人员不存在");
+                }
+                if (!scope.equals(member.getStoreId())) {
+                    log.warn("[HospitalAppointment] assign 跨门店拒绝: scope={}, memberStore={}", scope, member.getStoreId());
+                    return Result.error(403, "无权分配其他门店的服务人员");
+                }
             }
             boolean success = hospitalAppointmentService.assignMember(id, memberId);
             if (success) {

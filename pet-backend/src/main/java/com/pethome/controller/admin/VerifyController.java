@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.pethome.common.Result;
 import com.pethome.entity.*;
@@ -10,6 +12,7 @@ import com.pethome.service.user.*;
 import com.pethome.service.admin.*;
 import com.pethome.service.common.*;
 import com.pethome.security.AdminContext;
+import com.pethome.security.RequestIdentity;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -54,7 +57,7 @@ public class VerifyController {
     @PostMapping("/verify-code")
     @Operation(summary = "核销验证（支持所有类型的预约）")
     public Result<Map<String, Object>> verifyCode(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String verifyCode = request.get("verifyCode");
             
             if (verifyCode == null || verifyCode.trim().isEmpty()) {
@@ -138,45 +141,48 @@ public class VerifyController {
                 return Result.error("核销码无效或已使用");
             }
             
-        } catch (Exception e) {
-            log.error("核销失败", e);
-            return Result.error("核销失败，请稍后重试");
-        }
+        }, "核销失败，请稍后重试", log);
     }
 
     @GetMapping("/check-code/{verifyCode}")
     @Operation(summary = "检查核销码状态")
-    public Result<Map<String, Object>> checkCode(@PathVariable String verifyCode) {
-        try {
+    public Result<Map<String, Object>> checkCode(@PathVariable String verifyCode, HttpServletRequest request) {
+        // 安全修复：此前任意登录用户即可按核销码查询完整预约（手机号/地址/金额），并枚举核销码
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权查询核销码");
+        }
+        return com.pethome.common.SafeCall.of(() -> {
             if (verifyCode == null || verifyCode.trim().isEmpty()) {
                 return Result.error("核销码不能为空");
             }
             
-            verifyCode = verifyCode.trim();
+            final String code = verifyCode.trim();
             
             // 从各种预约表中查找
-            Map<String, Object> data = findAppointmentByCode(verifyCode);
+            Map<String, Object> data = findAppointmentByCode(code);
             
             if (data != null && data.containsKey("appointment")) {
                 return Result.success("核销码有效", data);
             } else {
                 data = new HashMap<>();
-                data.put("verifyCode", verifyCode);
+                data.put("verifyCode", code);
                 data.put("isValid", false);
                 data.put("isVerified", false);
                 return Result.error("核销码不存在");
             }
             
-        } catch (Exception e) {
-            log.error("检查核销码状态失败", e);
-            return Result.error("检查失败，请稍后重试");
-        }
+        }, "检查失败，请稍后重试", log);
     }
 
     @GetMapping("/today-records")
     @Operation(summary = "获取今日核销记录（所有已核销的预约，按核销时间倒序）")
-    public Result<List<Map<String, Object>>> getTodayVerifyRecords(@RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+    public Result<List<Map<String, Object>>> getTodayVerifyRecords(@RequestHeader(value = "Authorization", required = false) String token,
+                                                                   HttpServletRequest request) {
+        // 安全修复：普通用户 token 解析不到服务门店时会退化为全平台核销记录（姓名+手机号+核销码）
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权查看核销记录");
+        }
+        return com.pethome.common.SafeCall.of(() -> {
             LocalDateTime todayStart = LocalDate.now().atStartOfDay();
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
@@ -245,10 +251,7 @@ public class VerifyController {
             }).collect(Collectors.toList());
 
             return Result.success(sorted);
-        } catch (Exception e) {
-            log.error("获取今日核销记录失败", e);
-            return Result.error("获取今日核销记录失败，请稍后重试");
-        }
+        }, "获取今日核销记录失败，请稍后重试", log);
     }
     
     private static Map<String, Object> unauthorizedNotAssignedMember() {

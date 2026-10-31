@@ -1,5 +1,7 @@
 package com.pethome.controller.order;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Post;
 import com.pethome.service.order.SearchService;
@@ -31,17 +33,14 @@ public class SearchController {
     @GetMapping("/home")
     @Operation(summary = "首页搜索")
     public Result<SearchService.HomeSearchResult> searchHome(@RequestParam String keyword) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (keyword == null || keyword.trim().isEmpty()) {
                 return Result.error("搜索关键词不能为空");
             }
             
             SearchService.HomeSearchResult result = searchService.searchHome(keyword);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("首页搜索失败", e);
-            return Result.error("搜索失败，请稍后重试");
-        }
+        }, "搜索失败，请稍后重试", log);
     }
     
     /**
@@ -50,17 +49,14 @@ public class SearchController {
     @GetMapping("/community")
     @Operation(summary = "社区搜索")
     public Result<List<Post>> searchCommunity(@RequestParam String keyword) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (keyword == null || keyword.trim().isEmpty()) {
                 return Result.error("搜索关键词不能为空");
             }
             
             List<Post> result = searchService.searchCommunity(keyword);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("社区搜索失败", e);
-            return Result.error("搜索失败，请稍后重试");
-        }
+        }, "搜索失败，请稍后重试", log);
     }
     
     /**
@@ -69,13 +65,10 @@ public class SearchController {
     @GetMapping("/hot")
     @Operation(summary = "热搜关键词")
     public Result<List<String>> getHotKeywords() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<String> hotKeywords = searchService.getHotKeywords();
             return Result.success(hotKeywords);
-        } catch (Exception e) {
-            log.error("获取热搜失败", e);
-            return Result.error("获取热搜失败，请稍后重试");
-        }
+        }, "获取热搜失败，请稍后重试", log);
     }
 }
 

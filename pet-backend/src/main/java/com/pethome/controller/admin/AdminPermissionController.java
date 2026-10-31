@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Admin;
 import com.pethome.entity.AdminPermission;
@@ -71,7 +73,7 @@ public class AdminPermissionController {
     @GetMapping("/{adminId}")
     @Operation(summary = "获取指定账号的权限列表")
     public Result<List<AdminPermission>> getPermissions(@PathVariable Long adminId, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = resolveCurrentAdmin(request);
             Admin targetAdmin = adminService.getById(adminId);
             if (!canManageTarget(currentAdmin, targetAdmin)) {
@@ -80,10 +82,7 @@ public class AdminPermissionController {
             
             List<AdminPermission> permissions = adminPermissionService.getPermissionsByAdminId(adminId);
             return Result.success(permissions);
-        } catch (Exception e) {
-            log.error("获取权限列表失败", e);
-            return Result.error("获取权限列表失败，请稍后重试");
-        }
+        }, "获取权限列表失败，请稍后重试", log);
     }
     
     /**
@@ -92,17 +91,14 @@ public class AdminPermissionController {
     @GetMapping("/available")
     @Operation(summary = "获取所有可用的权限列表")
     public Result<List<AdminPermission>> getAvailablePermissions(HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = resolveCurrentAdmin(request);
             if (currentAdmin == null) {
                 return Result.error("未登录或无权限");
             }
             List<AdminPermission> permissions = adminPermissionService.getAllAvailablePermissions();
             return Result.success(permissions);
-        } catch (Exception e) {
-            log.error("获取可用权限列表失败", e);
-            return Result.error("获取可用权限列表失败，请稍后重试");
-        }
+        }, "获取可用权限列表失败，请稍后重试", log);
     }
     
     /**
@@ -114,7 +110,7 @@ public class AdminPermissionController {
             @PathVariable Long adminId,
             @RequestBody Object requestBody,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = resolveCurrentAdmin(request);
             Admin targetAdmin = adminService.getById(adminId);
             if (!canManageTarget(currentAdmin, targetAdmin)) {
@@ -170,10 +166,7 @@ public class AdminPermissionController {
             // 允许空列表：表示清空该账号的全部细粒度权限
             adminPermissionService.setPermissions(adminId, permissions);
             return Result.success(permissions.isEmpty() ? "权限已清空" : "权限设置成功");
-        } catch (Exception e) {
-            log.error("设置权限失败", e);
-            return Result.error("设置权限失败，请稍后重试");
-        }
+        }, "设置权限失败，请稍后重试", log);
     }
     
     /**
@@ -270,7 +263,7 @@ public class AdminPermissionController {
             @PathVariable Long adminId,
             @RequestParam String permissionCode,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin currentAdmin = resolveCurrentAdmin(request);
             Admin targetAdmin = adminService.getById(adminId);
             if (!canManageTarget(currentAdmin, targetAdmin)) {
@@ -278,9 +271,6 @@ public class AdminPermissionController {
             }
             boolean hasPermission = adminPermissionService.hasPermission(adminId, permissionCode);
             return Result.success(hasPermission);
-        } catch (Exception e) {
-            log.error("检查权限失败", e);
-            return Result.error("检查权限失败，请稍后重试");
-        }
+        }, "检查权限失败，请稍后重试", log);
     }
 }

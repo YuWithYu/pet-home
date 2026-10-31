@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.service.order.ProductService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,19 +32,16 @@ public class AdminProductController {
     public Result<Boolean> setProductHot(
             @PathVariable Long id,
             @RequestParam Boolean isHot) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = productService.setProductHot(id, isHot);
             return success ? Result.success(true) : Result.error("商品不存在或操作失败");
-        } catch (Exception e) {
-            log.error("设置商品热门推荐失败", e);
-            return Result.error("操作失败，请稍后重试");
-        }
+        }, "操作失败，请稍后重试", log);
     }
 
     @PutMapping("/hot/batch")
     @Operation(summary = "批量设置/取消热门推荐")
     public Result<Boolean> batchSetHotProducts(@RequestBody Map<String, Object> body) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             @SuppressWarnings("unchecked")
             List<Number> ids = (List<Number>) body.get("productIds");
             if (ids == null || ids.isEmpty()) {
@@ -55,9 +54,6 @@ public class AdminProductController {
             }
             boolean success = productService.batchSetHotProducts(productIds, isHot);
             return success ? Result.success(true) : Result.error("批量操作失败");
-        } catch (Exception e) {
-            log.error("批量设置商品热门推荐失败", e);
-            return Result.error("操作失败，请稍后重试");
-        }
+        }, "操作失败，请稍后重试", log);
     }
 }

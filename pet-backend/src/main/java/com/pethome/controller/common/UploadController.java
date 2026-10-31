@@ -1,5 +1,7 @@
 package com.pethome.controller.common;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.util.FileUploadUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,7 +38,7 @@ public class UploadController {
     public Result<String> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "type", required = false, defaultValue = "general") String type) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String contentType = file.getContentType();
             boolean isImage = contentType != null && contentType.startsWith("image/");
             String subDir = isImage && ("product".equals(type) || "banner".equals(type)) ? type : "files";
@@ -44,10 +46,7 @@ public class UploadController {
                     ? fileUploadUtil.uploadImage(file, subDir)
                     : fileUploadUtil.uploadFile(file, type);
             return Result.success(url);
-        } catch (Exception e) {
-            log.error("文件上传失败", e);
-            return Result.error("文件上传失败，请稍后重试");
-        }
+        }, "文件上传失败，请稍后重试", log);
     }
 }
 

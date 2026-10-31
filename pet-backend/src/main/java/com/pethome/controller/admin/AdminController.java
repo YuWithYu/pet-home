@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -607,7 +609,7 @@ public class AdminController {
     @Operation(summary = "当前用户更新头像")
     public Result<Map<String, Object>> updateMyAvatar(@RequestBody Map<String, String> body,
                                                        @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin admin = getCurrentAdminFromToken(token);
             if (admin == null) {
                 return Result.error("请先登录");
@@ -633,10 +635,7 @@ public class AdminController {
             Map<String, Object> result = new HashMap<>();
             result.put("avatar", admin.getAvatar());
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("更新头像失败", e);
-            return Result.error("更新头像失败，请稍后重试");
-        }
+        }, "更新头像失败，请稍后重试", log);
     }
     
     /**
@@ -707,7 +706,7 @@ public class AdminController {
     @PutMapping("/staff/update")
     @Operation(summary = "更新员工或商家信息")
     public Result<Boolean> updateStaff(@RequestBody Admin staff, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String role = normalizeRole(staff.getRole());
             if (!"admin".equals(role) && !"staff".equals(role) && !"store_admin".equals(role)) {
                 return Result.error("角色只能是：admin、store_admin 或 staff");
@@ -753,10 +752,7 @@ public class AdminController {
                 }
             }
             return success ? Result.success(true) : Result.error("更新失败");
-        } catch (Exception e) {
-            log.error("更新账号信息失败", e);
-            return Result.error("更新账号信息失败，请稍后重试");
-        }
+        }, "更新账号信息失败，请稍后重试", log);
     }
     
     /**
@@ -798,7 +794,7 @@ public class AdminController {
     @DeleteMapping("/user/{id}")
     @Operation(summary = "管理员删除用户")
     public Result<Boolean> deleteUser(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (userService == null) {
                 return Result.error("用户服务不可用");
             }
@@ -808,10 +804,7 @@ public class AdminController {
                 return Result.success(true);
             }
             return Result.error("用户不存在或删除失败");
-        } catch (Exception e) {
-            log.error("删除用户失败", e);
-            return Result.error("删除用户失败，请稍后重试");
-        }
+        }, "删除用户失败，请稍后重试", log);
     }
     
     /**
@@ -820,7 +813,7 @@ public class AdminController {
     @DeleteMapping("/staff/{id}")
     @Operation(summary = "删除员工")
     public Result<Boolean> deleteStaff(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 自我保护：不允许删除当前登录账号
             Long currentAdminId = (Long) request.getAttribute("adminId");
             if (currentAdminId != null && currentAdminId.equals(id)) {
@@ -855,10 +848,7 @@ public class AdminController {
             }
             boolean success = adminService.deleteAdmin(id);
             return success ? Result.success(true) : Result.error("删除失败");
-        } catch (Exception e) {
-            log.error("删除员工失败", e);
-            return Result.error("删除员工失败，请稍后重试");
-        }
+        }, "删除员工失败，请稍后重试", log);
     }
 
     /**
@@ -893,7 +883,7 @@ public class AdminController {
     @GetMapping("/staff/{id}")
     @Operation(summary = "根据ID查询员工")
     public Result<Admin> getStaffById(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin admin = adminService.getById(id);
             if (admin == null) {
                 return Result.error("员工不存在");
@@ -915,10 +905,7 @@ public class AdminController {
                 }
             }
             return Result.success(admin);
-        } catch (Exception e) {
-            log.error("查询员工失败", e);
-            return Result.error("查询员工失败，请稍后重试");
-        }
+        }, "查询员工失败，请稍后重试", log);
     }
     
     /**
@@ -985,7 +972,7 @@ public class AdminController {
     @GetMapping("/self/work-orders")
     @Operation(summary = "工作人员获取自己的工单列表（小程序端）")
     public Result<List<Map<String, Object>>> getMyWorkOrders(HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long adminId = (Long) request.getAttribute("adminId");
             if (adminId == null) {
                 return Result.error("未登录或Token无效");
@@ -1041,10 +1028,7 @@ public class AdminController {
             });
             
             return Result.success(orders);
-        } catch (Exception e) {
-            log.error("获取工单列表失败", e);
-            return Result.error("获取工单列表失败，请稍后重试");
-        }
+        }, "获取工单列表失败，请稍后重试", log);
     }
 
     /**
@@ -1053,7 +1037,7 @@ public class AdminController {
     @GetMapping("/self/reviews")
     @Operation(summary = "工作人员获取自己的真实评价列表（小程序端）")
     public Result<List<Map<String, Object>>> getMyReviews(HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long adminId = (Long) request.getAttribute("adminId");
             if (adminId == null) {
                 return Result.error("未登录或Token无效");
@@ -1101,10 +1085,7 @@ public class AdminController {
                 result.add(item);
             }
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取评价列表失败", e);
-            return Result.error("获取评价列表失败，请稍后重试");
-        }
+        }, "获取评价列表失败，请稍后重试", log);
     }
     
     private Map<String, Object> toWorkOrderMap(String type, String typeName, String serviceProjectName, Object id,
@@ -1161,7 +1142,7 @@ public class AdminController {
     @Operation(summary = "工作人员更新工单状态（小程序端）")
     public Result<String> updateMyWorkOrderStatus(HttpServletRequest request,
             @RequestBody Map<String, Object> body) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long adminId = (Long) request.getAttribute("adminId");
             if (adminId == null) {
                 return Result.error("未登录或Token无效");
@@ -1212,10 +1193,7 @@ public class AdminController {
                 return Result.success("状态更新成功");
             }
             return Result.error("工单不存在或您无权操作");
-        } catch (Exception e) {
-            log.error("更新工单状态失败", e);
-            return Result.error("更新失败，请稍后重试");
-        }
+        }, "更新失败，请稍后重试", log);
     }
 
     /**
@@ -1227,7 +1205,7 @@ public class AdminController {
     @Operation(summary = "统一更新工单状态（支持自动识别服务类型）")
     public Result<String> updateWorkOrderStatus(HttpServletRequest request,
                                                 @RequestBody Map<String, Object> body) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long adminId = (Long) request.getAttribute("adminId");
             if (adminId == null) {
                 return Result.error("未登录或Token无效");
@@ -1287,10 +1265,7 @@ public class AdminController {
                 }
             }
             return Result.error("状态更新失败，记录不存在");
-        } catch (Exception e) {
-            log.error("更新工单状态失败", e);
-            return Result.error("更新失败，请稍后重试");
-        }
+        }, "更新失败，请稍后重试", log);
     }
 
     private List<String> buildServiceTypeCandidates(Object serviceTypeObj) {
@@ -1357,7 +1332,7 @@ public class AdminController {
     @GetMapping("/staff/{adminId}/appointments")
     @Operation(summary = "获取员工的预约任务列表")
     public Result<Map<String, Object>> getStaffAppointments(@PathVariable Long adminId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             ServiceMember sm = serviceMemberService.getMemberByUserId(adminId);
             if (sm == null) {
                 return Result.success(Map.of(
@@ -1420,10 +1395,7 @@ public class AdminController {
             });
             
             return Result.success(Map.of("projects", projects, "tasks", tasks));
-        } catch (Exception e) {
-            log.error("获取员工预约列表失败", e);
-            return Result.error("获取预约列表失败，请稍后重试");
-        }
+        }, "获取预约列表失败，请稍后重试", log);
     }
     
     private Map<String, Object> toTaskMap(String type, String typeName, Object id, Object date, Object timeSlot, Object status, Object contact) {
@@ -1444,16 +1416,13 @@ public class AdminController {
     @GetMapping("/test/encrypt")
     @Operation(summary = "密码加密测试接口")
     public Result<String> encryptPassword(@RequestParam String password) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (password == null || password.trim().isEmpty()) {
                 return Result.error("密码不能为空");
             }
             String encrypted = adminService.encodePassword(password);
             return Result.success(encrypted);
-        } catch (Exception e) {
-            log.error("加密失败", e);
-            return Result.error("加密失败，请稍后重试");
-        }
+        }, "加密失败，请稍后重试", log);
     }
 
     private String resolveDepartmentName(String serviceType) {

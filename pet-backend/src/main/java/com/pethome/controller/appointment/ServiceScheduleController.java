@@ -1,11 +1,14 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Admin;
 import com.pethome.entity.ServiceSchedule;
 import com.pethome.service.admin.AdminService;
 import com.pethome.service.appointment.ServiceScheduleService;
 import com.pethome.security.AdminContext;
+import com.pethome.security.RequestIdentity;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +48,7 @@ public class ServiceScheduleController {
             @RequestParam String date,
             @RequestParam(required = false) Long storeId,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
                 currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
@@ -54,10 +57,7 @@ public class ServiceScheduleController {
             LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
             List<Map<String, Object>> timeSlots = scheduleService.getAvailableTimeSlots(serviceType, localDate, effectiveStoreId);
             return Result.success(timeSlots);
-        } catch (Exception e) {
-            log.error("查询可预约时间段失败", e);
-            return Result.error("查询可预约时间段失败，请稍后重试");
-        }
+        }, "查询可预约时间段失败，请稍后重试", log);
     }
 
     @GetMapping("/member/{memberId}")
@@ -65,14 +65,11 @@ public class ServiceScheduleController {
     public Result<List<ServiceSchedule>> getMemberSchedule(
             @PathVariable Long memberId,
             @RequestParam String date) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
             List<ServiceSchedule> schedules = scheduleService.getMemberSchedule(memberId, localDate);
             return Result.success(schedules);
-        } catch (Exception e) {
-            log.error("查询服务人员日程失败", e);
-            return Result.error("查询服务人员日程失败，请稍后重试");
-        }
+        }, "查询服务人员日程失败，请稍后重试", log);
     }
 
     @PostMapping("/batch-create")
@@ -81,16 +78,18 @@ public class ServiceScheduleController {
             @RequestParam Long memberId,
             @RequestParam String startDate,
             @RequestParam String endDate,
-            @RequestBody List<String> timeSlots) {
-        try {
+            @RequestBody List<String> timeSlots,
+            HttpServletRequest request) {
+        // 安全修复：此前任意登录用户即可为任意服务人员批量创建排班
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权管理排班");
+        }
+        return com.pethome.common.SafeCall.of(() -> {
             LocalDate start = LocalDate.parse(startDate, DateTimeFormatter.ISO_DATE);
             LocalDate end = LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE);
             boolean success = scheduleService.batchCreateSchedules(memberId, start, end, timeSlots);
             return success ? Result.success(true) : Result.error("批量创建时间段失败");
-        } catch (Exception e) {
-            log.error("批量创建时间段失败", e);
-            return Result.error("批量创建时间段失败，请稍后重试");
-        }
+        }, "批量创建时间段失败，请稍后重试", log);
     }
     
     @GetMapping("/calendar")
@@ -102,7 +101,7 @@ public class ServiceScheduleController {
             @RequestParam(required = false) Long storeId,
             @RequestParam(required = false) Long memberId,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
                 currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
@@ -112,10 +111,7 @@ public class ServiceScheduleController {
             LocalDate end = LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE);
             Map<String, Integer> calendar = scheduleService.getScheduleCalendar(serviceType, start, end, effectiveStoreId, memberId);
             return Result.success(calendar);
-        } catch (Exception e) {
-            log.error("获取排班日历失败", e);
-            return Result.error("获取排班日历失败，请稍后重试");
-        }
+        }, "获取排班日历失败，请稍后重试", log);
     }
     
     @GetMapping("/day")
@@ -126,7 +122,7 @@ public class ServiceScheduleController {
             @RequestParam(required = false) Long storeId,
             @RequestParam(required = false) Long memberId,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long currentServiceStoreId = null;
             if (adminContext != null && token != null) {
                 currentServiceStoreId = adminContext.getCurrentServiceStoreId(token);
@@ -135,10 +131,7 @@ public class ServiceScheduleController {
             LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
             List<Map<String, Object>> schedules = scheduleService.getDaySchedule(serviceType, localDate, effectiveStoreId, memberId);
             return Result.success(schedules);
-        } catch (Exception e) {
-            log.error("获取日期排班失败", e);
-            return Result.error("获取日期排班失败，请稍后重试");
-        }
+        }, "获取日期排班失败，请稍后重试", log);
     }
 
     @GetMapping("/member-calendar")
@@ -163,7 +156,12 @@ public class ServiceScheduleController {
 
     @PostMapping("/member-day-attendance")
     @Operation(summary = "设置某服务人员某日上班或请假（删除当日排班）")
-    public Result<Boolean> setMemberDayAttendance(@RequestBody Map<String, Object> body) {
+    public Result<Boolean> setMemberDayAttendance(@RequestBody Map<String, Object> body,
+                                                HttpServletRequest request) {
+        // 安全修复：此前任意登录用户即可为他人生成/删除排班
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权管理排班");
+        }
         try {
             if (body == null || body.get("memberId") == null || body.get("date") == null || body.get("mode") == null) {
                 return Result.error("memberId、date、mode 不能为空");
@@ -185,6 +183,10 @@ public class ServiceScheduleController {
     @PutMapping("/{id}")
     @Operation(summary = "更新排班")
     public Result<Boolean> updateSchedule(@PathVariable Long id, @RequestBody ServiceSchedule schedule, HttpServletRequest request) {
+        // 安全修复：此前任意登录用户即可修改任意排班
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权管理排班");
+        }
         try {
             schedule.setId(id);
             Long adminId = (Long) request.getAttribute("adminId");
@@ -211,14 +213,15 @@ public class ServiceScheduleController {
     
     @DeleteMapping("/{id}")
     @Operation(summary = "删除排班")
-    public Result<Boolean> deleteSchedule(@PathVariable Long id) {
-        try {
+    public Result<Boolean> deleteSchedule(@PathVariable Long id, HttpServletRequest request) {
+        // 安全修复：此前任意登录用户即可删除任意排班
+        if (!RequestIdentity.isAdminOrStaff(request)) {
+            return Result.error(403, "无权管理排班");
+        }
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = scheduleService.deleteSchedule(id);
             return success ? Result.success(true) : Result.error("删除失败");
-        } catch (Exception e) {
-            log.error("删除排班失败", e);
-            return Result.error("删除排班失败，请稍后重试");
-        }
+        }, "删除排班失败，请稍后重试", log);
     }
 
     private String convertDepartmentToServiceType(String department) {

@@ -1,5 +1,7 @@
 package com.pethome.controller.community;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
@@ -12,6 +14,7 @@ import com.pethome.service.admin.*;
 import com.pethome.service.common.*;
 import com.pethome.entity.Admin;
 import com.pethome.security.JwtUtil;
+import com.pethome.security.RequestIdentity;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -298,7 +301,7 @@ public class MessageController {
     @Operation(summary = "标记消息为已读")
     public Result<String> markMessagesAsRead(@RequestBody Map<String, Object> request,
                                              HttpServletRequest httpRequest) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = Long.valueOf(request.get("userId").toString());
             String conversationId = request.get("conversationId").toString();
 
@@ -344,10 +347,7 @@ public class MessageController {
             }
             
             return Result.success("没有未读消息");
-        } catch (Exception e) {
-            log.error("标记已读失败", e);
-            return Result.error("标记已读失败，请稍后重试");
-        }
+        }, "标记已读失败，请稍后重试", log);
     }
     
     /**
@@ -418,7 +418,7 @@ public class MessageController {
     @Operation(summary = "隐藏会话")
     public Result<Void> hideUserConversation(@RequestBody Map<String, Object> body,
                                              HttpServletRequest httpRequest) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (body == null || body.get("userId") == null || body.get("conversationId") == null) {
                 return Result.error("参数不完整");
             }
@@ -441,10 +441,7 @@ public class MessageController {
             }
             messageService.hideConversation(userId, conversationId);
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("隐藏会话失败", e);
-            return Result.error("隐藏会话失败，请稍后重试");
-        }
+        }, "隐藏会话失败，请稍后重试", log);
     }
     
     /**
@@ -452,8 +449,16 @@ public class MessageController {
      */
     @PostMapping("/service")
     @Operation(summary = "发送客服消息")
-    public Result<Map<String, Object>> sendServiceMessage(@RequestBody Map<String, Object> request) {
-        try {
+    public Result<Map<String, Object>> sendServiceMessage(@RequestBody Map<String, Object> request,
+                                                         HttpServletRequest httpRequest) {
+        // 安全修复：此前任意登录用户即可指定 storeId 冒充店铺客服给任意用户发私信
+        if (!RequestIdentity.isAdmin(httpRequest)) {
+            return Result.error(403, "无权发送客服消息");
+        }
+        String authHeader = httpRequest.getHeader("Authorization");
+        Long ownStoreId = adminContext != null ? adminContext.getCurrentStoreId(authHeader) : null;
+        boolean platformAdmin = adminContext != null && adminContext.isPlatformAdmin(authHeader);
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = Long.valueOf(request.get("userId").toString());
             Long storeId = Long.valueOf(request.get("storeId").toString());
             String content = request.get("content").toString();
@@ -462,6 +467,11 @@ public class MessageController {
                 return Result.error("参数不完整");
             }
             
+            // 非平台管理员只能以自己店铺身份发消息，防止冒充其他店铺客服
+            if (!platformAdmin && (ownStoreId == null || !ownStoreId.equals(storeId))) {
+                return Result.error(403, "无权以该店铺身份发送消息");
+            }
+
             // 确保content不为空
             if (content == null) {
                 return Result.error("消息内容不能为空");
@@ -494,10 +504,7 @@ public class MessageController {
             } else {
                 return Result.error("发送失败");
             }
-        } catch (Exception e) {
-            log.error("发送客服消息失败", e);
-            return Result.error("发送客服消息失败，请稍后重试");
-        }
+        }, "发送客服消息失败，请稍后重试", log);
     }
 
     /**
@@ -505,14 +512,27 @@ public class MessageController {
      */
     @PostMapping("/outlet")
     @Operation(summary = "发送门店客服消息")
-    public Result<Map<String, Object>> sendOutletMessage(@RequestBody Map<String, Object> request) {
-        try {
+    public Result<Map<String, Object>> sendOutletMessage(@RequestBody Map<String, Object> request,
+                                                        HttpServletRequest httpRequest) {
+        // 安全修复：此前任意登录用户即可指定 serviceStoreId 冒充门店客服给任意用户发私信
+        if (!RequestIdentity.isAdminOrStaff(httpRequest)) {
+            return Result.error(403, "无权发送门店客服消息");
+        }
+        String authHeader = httpRequest.getHeader("Authorization");
+        Long ownServiceStoreId = adminContext != null ? adminContext.getCurrentServiceStoreId(authHeader) : null;
+        boolean platformAdmin = adminContext != null && adminContext.isPlatformAdmin(authHeader);
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = Long.valueOf(request.get("userId").toString());
             Long serviceStoreId = Long.valueOf(request.get("serviceStoreId").toString());
             String content = request.get("content").toString();
 
             if (userId == null || serviceStoreId == null || content == null || content.trim().isEmpty()) {
                 return Result.error("参数不完整");
+            }
+
+            // 非平台管理员只能以自己所属服务门店身份发消息
+            if (!platformAdmin && (ownServiceStoreId == null || !ownServiceStoreId.equals(serviceStoreId))) {
+                return Result.error(403, "无权以该门店身份发送消息");
             }
 
             String conversationId = "outlet_" + serviceStoreId + "_" + userId;
@@ -537,10 +557,7 @@ public class MessageController {
                 return Result.success(response);
             }
             return Result.error("发送失败");
-        } catch (Exception e) {
-            log.error("发送门店客服消息失败", e);
-            return Result.error("发送门店客服消息失败，请稍后重试");
-        }
+        }, "发送门店客服消息失败，请稍后重试", log);
     }
 
     /**
@@ -550,7 +567,7 @@ public class MessageController {
     @Operation(summary = "发送平台客服消息")
     public Result<Map<String, Object>> sendPlatformMessage(@RequestBody Map<String, Object> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Admin admin = adminContext != null && token != null ? adminContext.getCurrentAdmin(token) : null;
             if (admin == null) {
                 return Result.error("请先登录");
@@ -581,10 +598,7 @@ public class MessageController {
                 return Result.success(response);
             }
             return Result.error("发送失败");
-        } catch (Exception e) {
-            log.error("发送平台客服消息失败", e);
-            return Result.error("发送平台客服消息失败，请稍后重试");
-        }
+        }, "发送平台客服消息失败，请稍后重试", log);
     }
     
     /**
@@ -834,12 +848,14 @@ public class MessageController {
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Long lastSeenAt,
             HttpServletRequest httpRequest) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：关注通知属个人数据，非管理端强制以登录态为准
+            Long resolvedUserId = userId;
             if (!isStaffOrAdmin(httpRequest)) {
-                userId = loginUserId(httpRequest);
+                resolvedUserId = loginUserId(httpRequest);
             }
-            if (userId == null) {
+            final Long targetUserId = resolvedUserId;
+            if (targetUserId == null) {
                 Map<String, Object> empty = new HashMap<>();
                 empty.put("follows", new ArrayList<>());
                 empty.put("total", 0);
@@ -851,7 +867,7 @@ public class MessageController {
                     ? LocalDateTime.ofInstant(Instant.ofEpochMilli(lastSeenAt), ZoneId.systemDefault()) : null;
             // 查询关注该用户的记录（follower_id是关注者，following_id是被关注者）= 别人关注我
             QueryWrapper<UserFollow> wrapper = new QueryWrapper<>();
-            wrapper.eq("following_id", userId);
+            wrapper.eq("following_id", targetUserId);
             wrapper.orderByDesc("create_time");
             
             List<UserFollow> follows = userFollowService.list(wrapper);
@@ -878,7 +894,7 @@ public class MessageController {
                 }
                 
                 // 检查当前用户是否已关注该用户（回粉状态）
-                boolean isFollowed = userFollowService.isFollowing(userId, follow.getFollowerId());
+                boolean isFollowed = userFollowService.isFollowing(targetUserId, follow.getFollowerId());
                 item.put("isFollowed", isFollowed);
                 
                 followsList.add(item);
@@ -903,10 +919,7 @@ public class MessageController {
             result.put("size", size);
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取新增关注列表失败", e);
-            return Result.error("获取新增关注列表失败，请稍后重试");
-        }
+        }, "获取新增关注列表失败，请稍后重试", log);
     }
     
     /**
@@ -921,12 +934,14 @@ public class MessageController {
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Long lastSeenAt,
             HttpServletRequest httpRequest) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：评论通知属个人数据，非管理端强制以登录态为准
+            Long resolvedUserId = userId;
             if (!isStaffOrAdmin(httpRequest)) {
-                userId = loginUserId(httpRequest);
+                resolvedUserId = loginUserId(httpRequest);
             }
-            if (userId == null) {
+            final Long targetUserId = resolvedUserId;
+            if (targetUserId == null) {
                 Map<String, Object> empty = new HashMap<>();
                 empty.put("comments", new ArrayList<>());
                 empty.put("total", 0);
@@ -938,11 +953,11 @@ public class MessageController {
                     ? LocalDateTime.ofInstant(Instant.ofEpochMilli(lastSeenAt), ZoneId.systemDefault()) : null;
             // 获取该用户所有帖子的ID
             QueryWrapper<Post> postWrapper = new QueryWrapper<>();
-            postWrapper.eq("user_id", userId);
+            postWrapper.eq("user_id", targetUserId);
             postWrapper.eq("status", 1);
             List<Post> userPosts = postService.list(postWrapper);
             List<Long> postIds = userPosts.stream().map(Post::getId).collect(Collectors.toList());
-            
+
             if (postIds.isEmpty()) {
                 Map<String, Object> result = new HashMap<>();
                 result.put("comments", new ArrayList<>());
@@ -951,7 +966,7 @@ public class MessageController {
                 result.put("size", size);
                 return Result.success(result);
             }
-            
+
             // 获取评论记录
             QueryWrapper<Comment> commentWrapper = new QueryWrapper<>();
             commentWrapper.in("post_id", postIds);
@@ -963,7 +978,7 @@ public class MessageController {
             
             for (Comment comment : comments) {
                 // 只统计别人对我的：排除自己评论自己的帖子
-                if (userId.equals(comment.getUserId())) continue;
+                if (targetUserId.equals(comment.getUserId())) continue;
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", comment.getId());
                 item.put("type", "comment");
@@ -1021,10 +1036,7 @@ public class MessageController {
             result.put("size", size);
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取评论和@列表失败", e);
-            return Result.error("获取评论和@列表失败，请稍后重试");
-        }
+        }, "获取评论和@列表失败，请稍后重试", log);
     }
     
     /**

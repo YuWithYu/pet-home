@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -131,7 +133,7 @@ public class AdminCommunityController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) String category) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<Post> postPage = new Page<>(page, size);
             IPage<Post> result = postService.getAdminPostList(postPage, keyword, status, category);
 
@@ -143,10 +145,7 @@ public class AdminCommunityController {
             response.put("size", result.getSize());
 
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取帖子列表失败", e);
-            return Result.error("获取帖子列表失败，请稍后重试");
-        }
+        }, "获取帖子列表失败，请稍后重试", log);
     }
 
     /**
@@ -157,7 +156,7 @@ public class AdminCommunityController {
     public Result<Void> updatePostStatus(
             @PathVariable Long id,
             @RequestParam Integer status) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Post post = postService.getById(id);
             if (post == null) {
                 return Result.error("帖子不存在");
@@ -177,10 +176,7 @@ public class AdminCommunityController {
                 }
             }
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("更新帖子状态失败", e);
-            return Result.error("更新帖子状态失败，请稍后重试");
-        }
+        }, "更新帖子状态失败，请稍后重试", log);
     }
 
     /**
@@ -191,7 +187,7 @@ public class AdminCommunityController {
     public Result<Void> updatePostTop(
             @PathVariable Long id,
             @RequestParam Boolean isTop) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Post post = postService.getById(id);
             if (post == null) {
                 return Result.error("帖子不存在");
@@ -200,10 +196,7 @@ public class AdminCommunityController {
             post.setUpdateTime(LocalDateTime.now());
             postService.updateById(post);
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("设置置顶失败", e);
-            return Result.error("设置置顶失败，请稍后重试");
-        }
+        }, "设置置顶失败，请稍后重试", log);
     }
 
     /**
@@ -214,7 +207,7 @@ public class AdminCommunityController {
     public Result<Void> updatePostHot(
             @PathVariable Long id,
             @RequestParam Boolean isHot) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Post post = postService.getById(id);
             if (post == null) {
                 return Result.error("帖子不存在");
@@ -223,10 +216,7 @@ public class AdminCommunityController {
             post.setUpdateTime(LocalDateTime.now());
             postService.updateById(post);
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("设置热门失败", e);
-            return Result.error("设置热门失败，请稍后重试");
-        }
+        }, "设置热门失败，请稍后重试", log);
     }
 
     /**
@@ -235,17 +225,14 @@ public class AdminCommunityController {
     @DeleteMapping("/posts/{id}")
     @Operation(summary = "删除帖子（管理员，物理删除并级联清理关联数据）")
     public Result<Void> deletePost(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean removed = postService.deletePostPhysically(id);
             if (!removed) {
                 return Result.error("帖子不存在或已删除");
             }
             invalidateStatsCache();
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("删除帖子失败", e);
-            return Result.error("删除帖子失败，请稍后重试");
-        }
+        }, "删除帖子失败，请稍后重试", log);
     }
 
     /**
@@ -259,7 +246,7 @@ public class AdminCommunityController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long postId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<Comment> commentPage = new Page<>(page, size);
             IPage<Comment> result = commentService.getAdminCommentList(commentPage, keyword, status, postId);
 
@@ -275,10 +262,7 @@ public class AdminCommunityController {
             response.put("size", result.getSize());
 
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取评论列表失败", e);
-            return Result.error("获取评论列表失败，请稍后重试");
-        }
+        }, "获取评论列表失败，请稍后重试", log);
     }
 
     /**
@@ -289,7 +273,7 @@ public class AdminCommunityController {
     public Result<Void> updateCommentStatus(
             @PathVariable Long id,
             @RequestParam Integer status) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Comment comment = commentService.getById(id);
             if (comment == null) {
                 return Result.error("评论不存在");
@@ -298,10 +282,7 @@ public class AdminCommunityController {
             comment.setUpdateTime(LocalDateTime.now());
             commentService.updateById(comment);
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("更新评论状态失败", e);
-            return Result.error("更新评论状态失败，请稍后重试");
-        }
+        }, "更新评论状态失败，请稍后重试", log);
     }
 
     /**
@@ -310,7 +291,7 @@ public class AdminCommunityController {
     @DeleteMapping("/comments/{id}")
     @Operation(summary = "删除评论（管理员）")
     public Result<Void> deleteComment(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Comment comment = commentService.getById(id);
             if (comment == null) {
                 return Result.error("评论不存在");
@@ -320,10 +301,7 @@ public class AdminCommunityController {
             comment.setUpdateTime(LocalDateTime.now());
             commentService.updateById(comment);
             return Result.success(null);
-        } catch (Exception e) {
-            log.error("删除评论失败", e);
-            return Result.error("删除评论失败，请稍后重试");
-        }
+        }, "删除评论失败，请稍后重试", log);
     }
 
     /**
@@ -332,13 +310,10 @@ public class AdminCommunityController {
     @GetMapping("/users/{id}/posts")
     @Operation(summary = "获取用户的所有帖子")
     public Result<List<Post>> getUserPosts(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Post> posts = postService.getUserPosts(id);
             return Result.success(posts);
-        } catch (Exception e) {
-            log.error("获取用户帖子失败", e);
-            return Result.error("获取用户帖子失败，请稍后重试");
-        }
+        }, "获取用户帖子失败，请稍后重试", log);
     }
 
     /**
@@ -347,14 +322,11 @@ public class AdminCommunityController {
     @GetMapping("/users/{id}/comments")
     @Operation(summary = "获取用户的所有评论")
     public Result<List<Comment>> getUserComments(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Comment> comments = commentService.getUserComments(id);
             fillCommentUserInfo(comments);
             return Result.success(comments);
-        } catch (Exception e) {
-            log.error("获取用户评论失败", e);
-            return Result.error("获取用户评论失败，请稍后重试");
-        }
+        }, "获取用户评论失败，请稍后重试", log);
     }
 
     /**
@@ -416,7 +388,7 @@ public class AdminCommunityController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<Post> postPage = new Page<>(page, size);
             // 搜索包含"每日专题"标签的帖子
             QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
@@ -465,10 +437,7 @@ public class AdminCommunityController {
             response.put("size", result.getSize());
 
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取每日专题帖子失败", e);
-            return Result.error("获取每日专题帖子失败，请稍后重试");
-        }
+        }, "获取每日专题帖子失败，请稍后重试", log);
     }
 
     /**
@@ -477,14 +446,11 @@ public class AdminCommunityController {
     @GetMapping("/daily-topics/banners")
     @Operation(summary = "获取每日专题Banner列表")
     public Result<List<Banner>> getDailyTopicBanners() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Banner> allBanners = bannerService.getAllBannersForManagement();
             // 可以根据需要筛选，这里返回所有Banner
             return Result.success(allBanners != null ? allBanners : new ArrayList<>());
-        } catch (Exception e) {
-            log.error("获取每日专题Banner失败", e);
-            return Result.error("获取每日专题Banner失败，请稍后重试");
-        }
+        }, "获取每日专题Banner失败，请稍后重试", log);
     }
 
     /**
@@ -493,7 +459,7 @@ public class AdminCommunityController {
     @PostMapping("/daily-topics/banners")
     @Operation(summary = "创建或更新每日专题Banner")
     public Result<Banner> saveDailyTopicBanner(@RequestBody Banner banner) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (banner.getId() != null) {
                 banner.setUpdateTime(LocalDateTime.now());
                 Banner updated = bannerService.updateBanner(banner);
@@ -504,10 +470,7 @@ public class AdminCommunityController {
                 Banner created = bannerService.createBanner(banner);
                 return Result.success(created);
             }
-        } catch (Exception e) {
-            log.error("保存每日专题Banner失败", e);
-            return Result.error("保存每日专题Banner失败，请稍后重试");
-        }
+        }, "保存每日专题Banner失败，请稍后重试", log);
     }
 
     /**
@@ -516,16 +479,13 @@ public class AdminCommunityController {
     @DeleteMapping("/daily-topics/banners/{id}")
     @Operation(summary = "删除每日专题Banner")
     public Result<Void> deleteDailyTopicBanner(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = bannerService.deleteBanner(id);
             if (success) {
                 return Result.success(null);
             } else {
                 return Result.error("删除失败");
             }
-        } catch (Exception e) {
-            log.error("删除每日专题Banner失败", e);
-            return Result.error("删除每日专题Banner失败，请稍后重试");
-        }
+        }, "删除每日专题Banner失败，请稍后重试", log);
     }
 }

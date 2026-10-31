@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -81,7 +83,7 @@ public class HospitalServiceController {
     @PostMapping("/create")
     @Operation(summary = "创建宠物医院服务")
     public Result<HospitalService> createHospitalService(@RequestBody HospitalService service) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (service.getCreatedAt() == null) {
                 service.setCreatedAt(LocalDateTime.now());
             }
@@ -89,46 +91,37 @@ public class HospitalServiceController {
             HospitalService created = hospitalServiceService.createHospitalService(service);
             fillDerivedFields(created);
             return Result.success(created);
-        } catch (Exception e) {
-            log.error("服务创建失败", e);
-            return Result.error("服务创建失败，请稍后重试");
-        }
+        }, "服务创建失败，请稍后重试", log);
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新宠物医院服务")
     public Result<HospitalService> updateHospitalService(@RequestBody HospitalService service) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             service.setUpdatedAt(LocalDateTime.now());
             HospitalService updated = hospitalServiceService.updateHospitalService(service);
             fillDerivedFields(updated);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("服务更新失败", e);
-            return Result.error("服务更新失败，请稍后重试");
-        }
+        }, "服务更新失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除宠物医院服务")
     public Result<Boolean> deleteHospitalService(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = hospitalServiceService.deleteHospitalService(id);
             if (success) {
                 return Result.success("服务删除成功", true);
             } else {
                 return Result.error("服务删除失败");
             }
-        } catch (Exception e) {
-            log.error("服务删除失败", e);
-            return Result.error("服务删除失败，请稍后重试");
-        }
+        }, "服务删除失败，请稍后重试", log);
     }
 
     @PutMapping("/{id}/status")
     @Operation(summary = "更新宠物医院服务状态")
     public Result<HospitalService> updateHospitalServiceStatus(@PathVariable Long id, @RequestParam String status) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             HospitalService service = hospitalServiceService.getHospitalServiceById(id);
             if (service == null) {
                 return Result.error("服务不存在");
@@ -138,17 +131,14 @@ public class HospitalServiceController {
             HospitalService updated = hospitalServiceService.updateHospitalService(service);
             fillDerivedFields(updated);
             return Result.success(updated);
-        } catch (Exception e) {
-            log.error("状态更新失败", e);
-            return Result.error("状态更新失败，请稍后重试");
-        }
+        }, "状态更新失败，请稍后重试", log);
     }
 
     @PostMapping("/upload")
     @Operation(summary = "上传医院服务图片")
     public Result<String> uploadServiceImage(@RequestParam("file") MultipartFile file,
                                              @RequestParam(value = "id", required = false) Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             if (id != null) {
                 HospitalService service = hospitalServiceService.getHospitalServiceById(id);
@@ -159,16 +149,13 @@ public class HospitalServiceController {
                 }
             }
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 
     @PostMapping("/{id}/image")
     @Operation(summary = "更新医院服务图片")
     public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             HospitalService service = hospitalServiceService.getHospitalServiceById(id);
             if (service == null) {
@@ -178,10 +165,7 @@ public class HospitalServiceController {
             service.setUpdatedAt(LocalDateTime.now());
             hospitalServiceService.updateHospitalService(service);
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 
     private void fillDerivedFields(HospitalService service) {

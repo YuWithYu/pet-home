@@ -1,5 +1,7 @@
 package com.pethome.controller.user;
 
+
+import com.pethome.common.SafeCall;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -830,7 +832,7 @@ public class UserController {
     @PostMapping("/wxapp/login")
     @Operation(summary = "微信小程序登录")
     public Result<Map<String, Object>> wxappLogin(@RequestBody Map<String, String> loginData) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String code = loginData.get("code");
 
             if (code == null || code.trim().isEmpty()) {
@@ -893,25 +895,19 @@ public class UserController {
             data.put("userInfo", userInfo);
 
             return Result.success(data);
-        } catch (Exception e) {
-            log.error("微信登录失败", e);
-            return Result.error("微信登录失败，请稍后重试");
-        }
+        }, "微信登录失败，请稍后重试", log);
     }
 
     @PostMapping("/wxapp/authorize")
     @Operation(summary = "微信小程序授权")
     public Result<Map<String, Object>> wxappAuthorize(@RequestBody Map<String, String> authData) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 这里应该调用微信授权服务
             Map<String, Object> result = new HashMap<>();
             result.put("token", "dummy-token");
             result.put("userId", 1);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("微信授权失败", e);
-            return Result.error("微信授权失败，请稍后重试");
-        }
+        }, "微信授权失败，请稍后重试", log);
     }
 
     @GetMapping("/detail")
@@ -919,7 +915,7 @@ public class UserController {
     public Result<User> getUserDetail(@RequestParam(required = false) String token,
                                       @RequestParam(required = false) Long userId,
                                       HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：原实现匿名可达且支持任意 userId 查询，并回退 getUserById(1L)（泄露1号用户全部信息）。
             // 修复：本人可看完整资料；查他人仅返回脱敏公开字段；未登录拒绝。
             Long currentUserId = getUserIdFromToken(token);
@@ -941,25 +937,19 @@ public class UserController {
                 maskUserForPublic(user);
             }
             return Result.success(user);
-        } catch (Exception e) {
-            log.error("获取用户详情失败", e);
-            return Result.error("获取用户详情失败，请稍后重试");
-        }
+        }, "获取用户详情失败，请稍后重试", log);
     }
 
     @GetMapping("/amount")
     @Operation(summary = "获取用户资产")
     public Result<Map<String, Object>> getUserAmount(@RequestParam(required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 这里应该获取用户的资产信息
             Map<String, Object> amount = new HashMap<>();
             amount.put("balance", 0.0);
             amount.put("points", 0);
             return Result.success(amount);
-        } catch (Exception e) {
-            log.error("获取用户资产失败", e);
-            return Result.error("获取用户资产失败，请稍后重试");
-        }
+        }, "获取用户资产失败，请稍后重试", log);
     }
 
     @GetMapping("/list")
@@ -973,7 +963,7 @@ public class UserController {
         if (!isStaffOrAdmin(request)) {
             return Result.error(403, "无权获取用户列表");
         }
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 使用MyBatis-Plus分页查询（支持关键字跨页搜索：昵称/手机号/用户名）
             Page<User> userPage = new Page<>(page, size);
             IPage<User> result = userService.getUserList(userPage, keyword);
@@ -1010,10 +1000,7 @@ public class UserController {
             response.put("size", result.getSize());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取用户列表失败", e);
-            return Result.error("获取用户列表失败，请稍后重试");
-        }
+        }, "获取用户列表失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}")
@@ -1021,7 +1008,7 @@ public class UserController {
     public Result<User> getUserById(@PathVariable Long id, HttpServletRequest request) {
         // 安全修复：原实现向任意登录用户返回完整 User（含手机号/openid/积分）。
         // 修复：本人或 staff/admin 可看完整资料，查他人仅返回脱敏公开字段。
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             User user = userService.getUserById(id);
             if (user == null) {
                 return Result.error("用户不存在");
@@ -1034,10 +1021,7 @@ public class UserController {
                 maskUserForPublic(user);
             }
             return Result.success(user);
-        } catch (Exception e) {
-            log.error("获取用户信息失败", e);
-            return Result.error("获取用户信息失败，请稍后重试");
-        }
+        }, "获取用户信息失败，请稍后重试", log);
     }
 
     @PutMapping("/{id}")
@@ -1083,7 +1067,7 @@ public class UserController {
         if (!isStaffOrAdmin(request)) {
             return Result.error(403, "无权更新用户状态");
         }
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (status == null || (status != 0 && status != 1)) {
                 return Result.error("状态参数错误，仅支持0(禁用)/1(正常)");
             }
@@ -1097,10 +1081,7 @@ public class UserController {
                 return Result.error("更新用户状态失败");
             }
             return Result.success(true);
-        } catch (Exception e) {
-            log.error("更新用户状态失败", e);
-            return Result.error("更新用户状态失败，请稍后重试");
-        }
+        }, "更新用户状态失败，请稍后重试", log);
     }
 
     @GetMapping("/{userId}/following")
@@ -1110,7 +1091,7 @@ public class UserController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Long currentUserId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<UserFollow> allFollows = userFollowService.getFollowingList(userId);
             
             // 手动分页
@@ -1164,10 +1145,7 @@ public class UserController {
             response.put("hasMore", end < allFollows.size());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取关注列表失败", e);
-            return Result.error("获取关注列表失败，请稍后重试");
-        }
+        }, "获取关注列表失败，请稍后重试", log);
     }
 
     @GetMapping("/{userId}/fans")
@@ -1177,7 +1155,7 @@ public class UserController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) Long currentUserId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<UserFollow> allFans = userFollowService.getFollowerList(userId);
 
             // 手动分页
@@ -1243,10 +1221,7 @@ public class UserController {
             response.put("hasMore", allFans != null && end < allFans.size());
 
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取粉丝列表失败", e);
-            return Result.error("获取粉丝列表失败，请稍后重试");
-        }
+        }, "获取粉丝列表失败，请稍后重试", log);
     }
 
     @GetMapping("/{userId}/posts")
@@ -1255,7 +1230,7 @@ public class UserController {
             @PathVariable Long userId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 使用PostService的分页查询
             Page<Post> postPage = new Page<>(page, size);
             IPage<Post> result = postService.getPostList(postPage, null, userId);
@@ -1283,10 +1258,7 @@ public class UserController {
             response.put("hasMore", result.getCurrent() < result.getPages());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取动态列表失败", e);
-            return Result.error("获取动态列表失败，请稍后重试");
-        }
+        }, "获取动态列表失败，请稍后重试", log);
     }
     
     @PostMapping("/getPhoneNumber")
@@ -1372,7 +1344,7 @@ public class UserController {
     @Operation(summary = "绑定手机号（使用其它号码时需短信验证码，需登录）")
     public Result<String> bindPhone(@RequestHeader(value = "Authorization", required = false) String authHeader,
                                     @RequestBody Map<String, String> body) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return Result.error("请先登录");
             }
@@ -1415,16 +1387,13 @@ public class UserController {
                 return Result.success("绑定成功");
             }
             return Result.error("绑定失败");
-        } catch (Exception e) {
-            log.error("绑定手机号失败", e);
-            return Result.error("绑定失败，请稍后重试");
-        }
+        }, "绑定失败，请稍后重试", log);
     }
 
     @PostMapping("/unbind-phone")
     @Operation(summary = "解绑手机号（需登录）。解绑后该手机号可被其他账号绑定；当前账号可再绑定其他手机号。")
     public Result<String> unbindPhone(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return Result.error("请先登录");
             }
@@ -1450,18 +1419,14 @@ public class UserController {
                 return Result.success("解绑成功");
             }
             return Result.error("解绑失败");
-        } catch (Exception e) {
-            log.error("解绑手机号失败", e);
-            return Result.error("解绑失败，请稍后重试");
-        }
+        }, "解绑失败，请稍后重试", log);
     }
 
     @PostMapping("/verify-password")
     @Operation(summary = "验证当前账号登录密码（用于修改账号等敏感操作前）")
     public Result<String> verifyPassword(@RequestHeader(value = "Authorization", required = false) String authHeader,
                                           @RequestBody(required = false) Map<String, String> body) {
-        User currentUser = null;
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return Result.error("请先登录");
             }
@@ -1469,7 +1434,7 @@ public class UserController {
             if (token.isEmpty()) {
                 return Result.error("请先登录");
             }
-            currentUser = userService.getUserByToken(token);
+            User currentUser = userService.getUserByToken(token);
             if (currentUser == null) {
                 try {
                     String subject = jwtUtil.getUsernameFromToken(token);
@@ -1497,17 +1462,14 @@ public class UserController {
                 return Result.error("密码错误");
             }
             return Result.success("验证成功");
-        } catch (Exception e) {
-            log.error("verify-password 失败, userId={}", currentUser != null ? currentUser.getId() : null, e);
-            return Result.error("验证失败，请稍后重试");
-        }
+        }, "验证失败，请稍后重试", log);
     }
 
     @PostMapping("/change-username")
     @Operation(summary = "修改账号（格式：字母或下划线开头，6-20位，仅字母数字下划线减号）")
     public Result<String> changeUsername(@RequestHeader(value = "Authorization", required = false) String authHeader,
                                          @RequestBody Map<String, String> body) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return Result.error("请先登录");
             }
@@ -1531,10 +1493,7 @@ public class UserController {
                 return Result.error(err);
             }
             return Result.success("修改成功，请使用新账号登录");
-        } catch (Exception e) {
-            log.error("修改账号失败", e);
-            return Result.error("修改失败，请稍后重试");
-        }
+        }, "修改失败，请稍后重试", log);
     }
     
     /**
@@ -1653,7 +1612,7 @@ public class UserController {
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false, defaultValue = "earn") String type,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 从token获取用户ID
             Long currentUserId = getUserIdFromToken(token);
             if (currentUserId == null && userId == null) {
@@ -1700,10 +1659,7 @@ public class UserController {
             result.put("statistics", statistics);
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取积分记录失败", e);
-            return Result.error("获取积分记录失败，请稍后重试");
-        }
+        }, "获取积分记录失败，请稍后重试", log);
     }
     
     @GetMapping("/points/statistics")
@@ -1712,7 +1668,7 @@ public class UserController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(required = false) Long userId,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 从token获取用户ID
             Long currentUserId = getUserIdFromToken(token);
             if (currentUserId == null && userId == null) {
@@ -1746,10 +1702,7 @@ public class UserController {
             }
             
             return Result.success(statistics);
-        } catch (Exception e) {
-            log.error("获取积分统计失败", e);
-            return Result.error("获取积分统计失败，请稍后重试");
-        }
+        }, "获取积分统计失败，请稍后重试", log);
     }
     
     /**
@@ -1759,7 +1712,7 @@ public class UserController {
     @Operation(summary = "更新用户的魅力值和等级")
     public Result<Map<String, Object>> updateCharmAndLevel(
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = getUserIdFromToken(token);
 
             if (userId == null) {
@@ -1786,10 +1739,7 @@ public class UserController {
             result.put("totalSpent", statistics.get("totalSpent"));
 
             return Result.success("更新成功", result);
-        } catch (Exception e) {
-            log.error("更新用户的魅力值和等级失败", e);
-            return Result.error("更新失败，请稍后重试");
-        }
+        }, "更新失败，请稍后重试", log);
     }
 }
 

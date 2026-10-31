@@ -1,5 +1,7 @@
 package com.pethome.controller.user;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.User;
 import com.pethome.service.user.SignInService;
@@ -37,7 +39,7 @@ public class SignInController {
     @GetMapping("/data")
     @Operation(summary = "获取签到数据")
     public Result<Map<String, Object>> getSignInData(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = getUserIdFromToken(authHeader);
             
             if (userId == null) {
@@ -54,16 +56,13 @@ public class SignInController {
             Map<String, Object> data = signInService.getSignInData(userId);
             
             return Result.success("获取签到数据成功", data);
-        } catch (Exception e) {
-            log.error("获取签到数据失败", e);
-            return Result.error("获取签到数据失败，请稍后重试");
-        }
+        }, "获取签到数据失败，请稍后重试", log);
     }
 
     @PostMapping("/do")
     @Operation(summary = "执行签到")
     public Result<Map<String, Object>> doSignIn(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = getUserIdFromToken(authHeader);
             
             if (userId == null) {
@@ -74,10 +73,7 @@ public class SignInController {
             Map<String, Object> data = signInService.doSignIn(userId);
             
             return Result.success("签到成功", data);
-        } catch (Exception e) {
-            log.error("签到失败", e);
-            return Result.error("签到失败，请稍后重试");
-        }
+        }, "签到失败，请稍后重试", log);
     }
     
     /**

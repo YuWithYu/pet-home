@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.MedicalServiceBanner;
 import com.pethome.service.appointment.MedicalServiceBannerService;
@@ -53,7 +55,7 @@ public class HospitalServiceBannerController {
     @PostMapping("/upload")
     @Operation(summary = "上传医院服务展示图")
     public Result<String> uploadBanner(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             String filename = file.getOriginalFilename();
 
@@ -80,25 +82,19 @@ public class HospitalServiceBannerController {
             }
 
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除医院服务展示图")
     public Result<Boolean> deleteBanner(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = medicalServiceBannerService.deleteMedicalServiceBanner(id);
             if (success) {
                 return Result.success(true);
             } else {
                 return Result.error("删除展示图失败");
             }
-        } catch (Exception e) {
-            log.error("删除展示图失败", e);
-            return Result.error("删除展示图失败，请稍后重试");
-        }
+        }, "删除展示图失败，请稍后重试", log);
     }
 }

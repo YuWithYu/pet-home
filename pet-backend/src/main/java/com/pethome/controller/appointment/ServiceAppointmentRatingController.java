@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.ServiceAppointmentRating;
 import com.pethome.entity.ServiceMember;
@@ -154,7 +156,7 @@ public class ServiceAppointmentRatingController {
     @GetMapping("/rating/member/{memberId}")
     @Operation(summary = "获取服务人员的所有评价")
     public Result<List<Map<String, Object>>> getMemberRatings(@PathVariable Long memberId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<ServiceAppointmentRating> list = ratingService.listByMemberId(memberId);
             List<Map<String, Object>> result = new ArrayList<>();
             for (ServiceAppointmentRating r : list) {
@@ -184,10 +186,7 @@ public class ServiceAppointmentRatingController {
                 result.add(m);
             }
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取服务人员评价列表失败", e);
-            return Result.error("获取评价列表失败，请稍后重试");
-        }
+        }, "获取评价列表失败，请稍后重试", log);
     }
 
     @GetMapping("/rating/check")

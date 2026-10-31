@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -67,7 +69,7 @@ public class LitterServiceController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String status,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<LitterService> page = new Page<>(pageNo, pageSize);
             
             // 从 token 获取当前登录用户信息
@@ -105,10 +107,7 @@ public class LitterServiceController {
             
             IPage<LitterService> result = litterServiceService.getLitterServiceList(page, queryWrapper);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("查询铲屎服务列表失败", e);
-            return Result.error("查询服务列表失败，请稍后重试");
-        }
+        }, "查询服务列表失败，请稍后重试", log);
     }
 
     @PostMapping("/create")
@@ -144,7 +143,7 @@ public class LitterServiceController {
     @PutMapping("/{id}/image")
     @Operation(summary = "更新服务图片")
     public Result<String> updateServiceImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 使用FileUploadUtil上传文件
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             
@@ -157,9 +156,6 @@ public class LitterServiceController {
             } else {
                 return Result.error("服务不存在");
             }
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 }

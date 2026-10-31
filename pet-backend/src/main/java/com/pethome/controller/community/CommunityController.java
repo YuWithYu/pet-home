@@ -1,5 +1,7 @@
 package com.pethome.controller.community;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -70,7 +72,7 @@ public class CommunityController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Map<String, Object> resp = new HashMap<>();
             int pageNum = (page == null || page < 1) ? 1 : page;
             int pageSize = (size == null || size < 1) ? 10 : Math.min(size, 50);
@@ -101,10 +103,7 @@ public class CommunityController {
                 resp.put("algorithm", "hot-video");
             }
             return Result.success(resp);
-        } catch (Exception e) {
-            log.error("获取视频推荐流失败", e);
-            return Result.error("获取视频推荐流失败，请稍后重试");
-        }
+        }, "获取视频推荐流失败，请稍后重试", log);
     }
 
     @GetMapping("/posts")
@@ -115,7 +114,7 @@ public class CommunityController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) Long checkUserId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<Post> postPage = new Page<>(page, size);
             IPage<Post> result = postService.getPostList(postPage, category, userId);
             
@@ -135,10 +134,7 @@ public class CommunityController {
             response.put("size", result.getSize());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取帖子列表失败", e);
-            return Result.error("获取帖子列表失败，请稍后重试");
-        }
+        }, "获取帖子列表失败，请稍后重试", log);
     }
 
     @GetMapping("/posts/{id}/mention-users")
@@ -146,7 +142,7 @@ public class CommunityController {
     public Result<List<Map<String, Object>>> getMentionUsers(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             if (userId == null) {
                 return Result.error("用户ID不能为空");
             }
@@ -197,10 +193,7 @@ public class CommunityController {
                 }
             }
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取@用户列表失败", e);
-            return Result.error("获取@用户列表失败，请稍后重试");
-        }
+        }, "获取@用户列表失败，请稍后重试", log);
     }
 
     @GetMapping("/posts/{id}/comments")
@@ -208,45 +201,36 @@ public class CommunityController {
     public Result<List<com.pethome.entity.Comment>> getPostComments(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<com.pethome.entity.Comment> comments = commentService.getCommentsByPostId(id, userId);
             return Result.success(comments);
-        } catch (Exception e) {
-            log.error("获取评论失败", e);
-            return Result.error("获取评论失败，请稍后重试");
-        }
+        }, "获取评论失败，请稍后重试", log);
     }
 
     @PostMapping("/comments/{commentId}/like")
     @Operation(summary = "点赞评论")
     public Result<Boolean> likeComment(@PathVariable Long commentId, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = currentUserId(request);
             if (commentId == null || userId == null) {
                 return Result.error(401, "评论ID不能为空且需登录后操作");
             }
             boolean success = commentService.likeComment(commentId, userId);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("点赞评论失败", e);
-            return Result.error("点赞评论失败，请稍后重试");
-        }
+        }, "点赞评论失败，请稍后重试", log);
     }
 
     @DeleteMapping("/comments/{commentId}/like")
     @Operation(summary = "取消点赞评论")
     public Result<Boolean> unlikeComment(@PathVariable Long commentId, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = currentUserId(request);
             if (commentId == null || userId == null) {
                 return Result.error(401, "评论ID不能为空且需登录后操作");
             }
             boolean success = commentService.unlikeComment(commentId, userId);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("取消点赞评论失败", e);
-            return Result.error("取消点赞评论失败，请稍后重试");
-        }
+        }, "取消点赞评论失败，请稍后重试", log);
     }
 
     @GetMapping("/comments/{commentId}/replies")
@@ -254,19 +238,16 @@ public class CommunityController {
     public Result<List<com.pethome.entity.Comment>> getCommentReplies(
             @PathVariable Long commentId,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<com.pethome.entity.Comment> replies = commentService.getRepliesByCommentId(commentId, userId);
             return Result.success(replies);
-        } catch (Exception e) {
-            log.error("获取回复失败", e);
-            return Result.error("获取回复失败，请稍后重试");
-        }
+        }, "获取回复失败，请稍后重试", log);
     }
 
     @DeleteMapping("/comments/{commentId}")
     @Operation(summary = "删除评论（本人或帖子作者可删）")
     public Result<Boolean> deleteComment(@PathVariable Long commentId, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：userId 从登录态解析，防止伪造 userId 删除他人评论
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -287,17 +268,14 @@ public class CommunityController {
             }
             boolean success = commentService.deleteComment(commentId, userId);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("删除评论失败", e);
-            return Result.error("删除评论失败，请稍后重试");
-        }
+        }, "删除评论失败，请稍后重试", log);
     }
 
     @PostMapping("/posts/{id}/comments")
     @Operation(summary = "添加评论")
     public Result<com.pethome.entity.Comment> addComment(@PathVariable Long id, @RequestBody Map<String, Object> data,
                                                          HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：评论人以登录态为准，忽略请求体中的 userId（防止替他人发评论）
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -328,16 +306,13 @@ public class CommunityController {
             // CommentService已更新帖子评论数，无需重复调用
             
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("添加评论失败", e);
-            return Result.error("添加评论失败，请稍后重试");
-        }
+        }, "添加评论失败，请稍后重试", log);
     }
 
     @GetMapping("/posts/{id}")
     @Operation(summary = "获取帖子详情")
     public Result<Post> getPostDetail(@PathVariable Long id, @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Post post = postService.getPostDetail(id, userId);
             if (post == null) {
                 return Result.error("帖子不存在");
@@ -345,17 +320,14 @@ public class CommunityController {
             // 更新曝光分数（浏览）
             postService.updateExposureScoreOnInteraction(id, "view");
             return Result.success(post);
-        } catch (Exception e) {
-            log.error("获取帖子详情失败", e);
-            return Result.error("获取帖子详情失败，请稍后重试");
-        }
+        }, "获取帖子详情失败，请稍后重试", log);
     }
 
     
     @PostMapping("/posts")
     @Operation(summary = "发布帖子")
     public Result<Post> publishPost(@RequestBody Map<String, Object> requestData, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：发帖人以登录态为准，忽略请求体中的 userId（防止替他人发帖）
             Long userIdVal = currentUserId(request);
             if (userIdVal == null || userIdVal <= 0) {
@@ -474,16 +446,13 @@ public class CommunityController {
             }
             
             return Result.success(post);
-        } catch (Exception e) {
-            log.error("发布帖子失败", e);
-            return Result.error("发布帖子失败，请稍后重试");
-        }
+        }, "发布帖子失败，请稍后重试", log);
     }
 
     @PutMapping("/posts/{id}")
     @Operation(summary = "更新帖子")
     public Result<Post> updatePost(@PathVariable Long id, @RequestBody Post post, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：userId 从登录态解析，防止伪造 userId 修改他人帖子
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -512,16 +481,13 @@ public class CommunityController {
             post.setUpdateTime(LocalDateTime.now());
             boolean success = postService.updateById(post);
             return Result.success(success ? post : null);
-        } catch (Exception e) {
-            log.error("更新帖子失败", e);
-            return Result.error("更新帖子失败，请稍后重试");
-        }
+        }, "更新帖子失败，请稍后重试", log);
     }
 
     @DeleteMapping("/posts/{id}")
     @Operation(summary = "删除帖子")
     public Result<Boolean> deletePost(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：userId 从登录态解析，防止伪造 userId 删除他人帖子
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -539,16 +505,13 @@ public class CommunityController {
                 redisCacheService.clearUserStats(post.getUserId());
             }
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("删除帖子失败", e);
-            return Result.error("删除帖子失败，请稍后重试");
-        }
+        }, "删除帖子失败，请稍后重试", log);
     }
 
     @PostMapping("/posts/{id}/like")
     @Operation(summary = "点赞帖子")
     public Result<Boolean> likePost(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：点赞人以登录态为准，防止替他人点赞
             Long userId = currentUserId(request);
             if (id == null) {
@@ -564,16 +527,13 @@ public class CommunityController {
                 postService.updateExposureScoreOnInteraction(id, "like");
             }
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("点赞失败", e);
-            return Result.error("点赞失败，请稍后重试");
-        }
+        }, "点赞失败，请稍后重试", log);
     }
 
     @DeleteMapping("/posts/{id}/like")
     @Operation(summary = "取消点赞帖子")
     public Result<Boolean> unlikePost(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (id == null) {
@@ -585,16 +545,13 @@ public class CommunityController {
             
             boolean success = postLikeService.unlikePost(id, userId);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("取消点赞失败", e);
-            return Result.error("取消点赞失败，请稍后重试");
-        }
+        }, "取消点赞失败，请稍后重试", log);
     }
 
     @PostMapping("/posts/{id}/collect")
     @Operation(summary = "收藏帖子")
     public Result<Boolean> collectPost(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (id == null) {
@@ -610,16 +567,13 @@ public class CommunityController {
             } else {
                 return Result.error("已经收藏过了");
             }
-        } catch (Exception e) {
-            log.error("收藏帖子失败", e);
-            return Result.error("收藏失败，请稍后重试");
-        }
+        }, "收藏失败，请稍后重试", log);
     }
 
     @DeleteMapping("/posts/{id}/collect")
     @Operation(summary = "取消收藏帖子")
     public Result<Boolean> uncollectPost(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (id == null) {
@@ -631,17 +585,14 @@ public class CommunityController {
             
             boolean success = postCollectService.uncollectPost(id, userId);
             return Result.success(success);
-        } catch (Exception e) {
-            log.error("取消收藏失败", e);
-            return Result.error("取消收藏失败，请稍后重试");
-        }
+        }, "取消收藏失败，请稍后重试", log);
     }
 
     @GetMapping("/posts/{id}/collect/status")
     @Operation(summary = "检查收藏状态")
     public Result<Boolean> checkCollectStatus(@PathVariable Long id, @RequestParam(required = false) Long userId,
                                               HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：收藏状态属个人数据，以登录态为准（query userId 仅兼容旧前端）
             Long currentUserId = currentUserId(request);
             if (currentUserId == null) {
@@ -649,10 +600,7 @@ public class CommunityController {
             }
             boolean isCollected = postCollectService.isCollected(id, currentUserId);
             return Result.success(isCollected);
-        } catch (Exception e) {
-            log.error("检查收藏状态失败", e);
-            return Result.error("检查收藏状态失败，请稍后重试");
-        }
+        }, "检查收藏状态失败，请稍后重试", log);
     }
 
     @GetMapping("/posts/collected")
@@ -663,7 +611,7 @@ public class CommunityController {
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String type,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：收藏列表属个人数据，以登录态为准（query userId 仅兼容旧前端），防止越权查看他人收藏
             Long currentUserId = currentUserId(request);
             if (currentUserId == null) {
@@ -687,22 +635,16 @@ public class CommunityController {
             response.put("size", result.getSize());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取收藏列表失败", e);
-            return Result.error("获取收藏列表失败，请稍后重试");
-        }
+        }, "获取收藏列表失败，请稍后重试", log);
     }
 
     @GetMapping("/posts/hot")
     @Operation(summary = "获取热门帖子")
     public Result<List<Post>> getHotPosts(@RequestParam(defaultValue = "10") Integer limit) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Post> hotPosts = postService.getHotPosts(limit);
             return Result.success(hotPosts);
-        } catch (Exception e) {
-            log.error("获取热门帖子失败", e);
-            return Result.error("获取热门帖子失败，请稍后重试");
-        }
+        }, "获取热门帖子失败，请稍后重试", log);
     }
     
     @Autowired
@@ -717,7 +659,7 @@ public class CommunityController {
             @RequestParam(defaultValue = "20") Integer followLimit,
             @RequestParam(defaultValue = "20") Integer exploreLimit,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Map<String, List<Post>> feed = new HashMap<>();
             
             // 获取置顶帖
@@ -751,10 +693,7 @@ public class CommunityController {
             }
             
             return Result.success(feed);
-        } catch (Exception e) {
-            log.error("获取帖子Feed失败", e);
-            return Result.error("获取帖子Feed失败，请稍后重试");
-        }
+        }, "获取帖子Feed失败，请稍后重试", log);
     }
 
     /**
@@ -768,7 +707,7 @@ public class CommunityController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) String tag) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<Post> posts = postRecommendationService.getRecommendPosts(userId, page, size, tag);
             Map<String, Object> response = new HashMap<>();
             response.put("posts", posts);
@@ -776,10 +715,7 @@ public class CommunityController {
             response.put("size", size);
             response.put("tag", tag);
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取推荐帖子失败", e);
-            return Result.error("获取推荐帖子失败，请稍后重试");
-        }
+        }, "获取推荐帖子失败，请稍后重试", log);
     }
 
     @GetMapping("/posts/following")
@@ -788,7 +724,7 @@ public class CommunityController {
             @RequestParam Long userId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<Post> postPage = new Page<>(page, size);
             IPage<Post> result = postService.getFollowingPosts(userId, postPage);
             
@@ -798,16 +734,13 @@ public class CommunityController {
             response.put("pages", result.getPages());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取关注用户帖子失败", e);
-            return Result.error("获取关注用户帖子失败，请稍后重试");
-        }
+        }, "获取关注用户帖子失败，请稍后重试", log);
     }
 
     @GetMapping("/daily-topics")
     @Operation(summary = "获取每日专题")
     public Result<Map<String, Object>> getDailyTopics() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 获取Banner作为轮播图（最多5个）
             List<com.pethome.entity.Banner> allBanners = bannerService.getAllBanners();
             List<com.pethome.entity.Banner> banners = allBanners != null && allBanners.size() > 5 
@@ -833,10 +766,7 @@ public class CommunityController {
             response.put("date", java.time.LocalDate.now().toString());
             
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取每日专题失败", e);
-            return Result.error("获取每日专题失败，请稍后重试");
-        }
+        }, "获取每日专题失败，请稍后重试", log);
     }
 
 }

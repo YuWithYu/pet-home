@@ -313,8 +313,12 @@ public class PointsExchangeServiceImpl implements PointsExchangeService {
         if (requestData.containsKey("addressId") && requestData.get("addressId") != null) {
             try {
                 Long addressId = parseLongParam(requestData.get("addressId"));
-                if (addressId != null) {
+                // 安全修复：addressId 必须归属当前用户，否则可把他人地址设为默认
+                Address owned = addressId != null ? addressService.getAddressById(addressId) : null;
+                if (owned != null && userId != null && userId.equals(owned.getUserId())) {
                     addressService.setDefaultAddress(userId, addressId);
+                } else if (addressId != null) {
+                    log.warn("忽略非本人地址: userId={}, addressId={}", userId, addressId);
                 }
             } catch (Exception e) {
                 log.warn("设置默认地址失败: {}", e.getMessage());
@@ -399,8 +403,12 @@ public class PointsExchangeServiceImpl implements PointsExchangeService {
         Long addressId = parseLongParam(request.get("addressId"));
         if (addressId != null) {
             Address fromDb = addressService.getAddressById(addressId);
-            if (fromDb != null) {
+            // 安全修复：只接受归属当前用户的收货地址，避免读取他人姓名/电话/住址
+            if (fromDb != null && userId != null && userId.equals(fromDb.getUserId())) {
                 return fromDb;
+            }
+            if (fromDb != null) {
+                log.warn("收货地址归属不符，已忽略: userId={}, addressId={}", userId, addressId);
             }
         }
         Object addrObj = request.get("address");

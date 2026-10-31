@@ -1,5 +1,7 @@
 package com.pethome.controller.admin;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.User;
 import com.pethome.service.admin.TaskService;
@@ -38,7 +40,7 @@ public class TaskController {
     @GetMapping("/progress")
     @Operation(summary = "获取任务进度")
     public Result<Map<String, Object>> getTaskProgress(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = getUserIdFromToken(authHeader);
             log.debug("从Token解析出的用户ID: {}", userId);
             
@@ -59,16 +61,13 @@ public class TaskController {
             log.debug("任务列表大小: {}", data.get("tasks") != null ? ((List<?>) data.get("tasks")).size() : 0);
             
             return Result.success("获取任务进度成功", data);
-        } catch (Exception e) {
-            log.error("获取任务进度失败", e);
-            return Result.error("获取任务进度失败，请稍后重试");
-        }
+        }, "获取任务进度失败，请稍后重试", log);
     }
 
     @GetMapping("/daily")
     @Operation(summary = "获取每日任务")
     public Result<List<Map<String, Object>>> getDailyTasks(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Long userId = getUserIdFromToken(authHeader);
             
             if (userId == null) {
@@ -79,10 +78,7 @@ public class TaskController {
             List<Map<String, Object>> tasks = taskService.getDailyTasks(userId);
             
             return Result.success("获取每日任务成功", tasks);
-        } catch (Exception e) {
-            log.error("获取每日任务失败", e);
-            return Result.error("获取每日任务失败，请稍后重试");
-        }
+        }, "获取每日任务失败，请稍后重试", log);
     }
 
     @PostMapping("/claim")
@@ -90,7 +86,7 @@ public class TaskController {
     public Result<Map<String, Object>> claimTaskReward(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             String taskId = request.get("taskId");
             if (taskId == null || taskId.isEmpty()) {
                 return Result.error("任务ID不能为空");
@@ -106,10 +102,7 @@ public class TaskController {
             Map<String, Object> data = taskService.claimTaskReward(userId, taskId);
             
             return Result.success("领取奖励成功", data);
-        } catch (Exception e) {
-            log.error("领取奖励失败", e);
-            return Result.error("领取奖励失败，请稍后重试");
-        }
+        }, "领取奖励失败，请稍后重试", log);
     }
     
     /**

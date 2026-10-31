@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +47,7 @@ public class GroomingServiceBannerController {
     @PostMapping("/upload")
     @Operation(summary = "上传洗护服务展示图")
     public Result<String> uploadGroomingServiceBanner(@RequestParam("file") MultipartFile file) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 使用FileUploadUtil上传文件，自动返回HTTPS URL
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             String originalFilename = file.getOriginalFilename();
@@ -76,53 +78,41 @@ public class GroomingServiceBannerController {
             }
             
             return Result.success(imageUrl);
-        } catch (Exception e) {
-            log.error("图片上传失败", e);
-            return Result.error("图片上传失败，请稍后重试");
-        }
+        }, "图片上传失败，请稍后重试", log);
     }
 
     @PostMapping("/create")
     @Operation(summary = "创建洗护服务横幅")
     public Result<GroomingServiceBanner> createGroomingServiceBanner(@RequestBody GroomingServiceBanner banner) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             banner.setCreatedAt(java.time.LocalDateTime.now());
             banner.setUpdatedAt(java.time.LocalDateTime.now());
             banner.setIsDeleted(false);
             GroomingServiceBanner createdBanner = groomingServiceBannerService.createGroomingServiceBanner(banner);
             return Result.success(createdBanner);
-        } catch (Exception e) {
-            log.error("创建展示图失败", e);
-            return Result.error("创建展示图失败，请稍后重试");
-        }
+        }, "创建展示图失败，请稍后重试", log);
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新洗护服务横幅")
     public Result<GroomingServiceBanner> updateGroomingServiceBanner(@RequestBody GroomingServiceBanner banner) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             banner.setUpdatedAt(java.time.LocalDateTime.now());
             GroomingServiceBanner updatedBanner = groomingServiceBannerService.updateGroomingServiceBanner(banner);
             return Result.success(updatedBanner);
-        } catch (Exception e) {
-            log.error("更新展示图失败", e);
-            return Result.error("更新展示图失败，请稍后重试");
-        }
+        }, "更新展示图失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除洗护服务横幅")
     public Result<Boolean> deleteGroomingServiceBanner(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean success = groomingServiceBannerService.deleteGroomingServiceBanner(id);
             if (success) {
                 return Result.success(true);
             } else {
                 return Result.error("删除展示图失败");
             }
-        } catch (Exception e) {
-            log.error("删除展示图失败", e);
-            return Result.error("删除展示图失败，请稍后重试");
-        }
+        }, "删除展示图失败，请稍后重试", log);
     }
 }

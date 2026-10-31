@@ -2,6 +2,7 @@ package com.pethome.controller.appointment;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.pethome.entity.TimeSlot;
+import com.pethome.security.RequestIdentity;
 import com.pethome.service.appointment.TimeSlotService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,16 @@ public class TimeSlotController {
 
     @Autowired
     private TimeSlotService timeSlotService;
+
+    /** 时间段属门店运营配置，仅 staff/admin 可维护（只读接口仍按公开白名单放行） */
+    private boolean denyIfNotAdminOrStaff(HttpServletRequest request, Map<String, Object> result) {
+        if (RequestIdentity.isAdminOrStaff(request)) {
+            return false;
+        }
+        result.put("code", 403);
+        result.put("msg", "无权操作时间段配置");
+        return true;
+    }
 
     @GetMapping("/list")
     @Operation(summary = "获取时间段列表")
@@ -56,8 +68,12 @@ public class TimeSlotController {
 
     @PostMapping("/create")
     @Operation(summary = "创建时间段")
-    public Map<String, Object> createTimeSlot(@RequestBody TimeSlot timeSlot) {
+    public Map<String, Object> createTimeSlot(@RequestBody TimeSlot timeSlot,
+                                              HttpServletRequest request) {
         Map<String, Object> result = new HashMap<>();
+        if (denyIfNotAdminOrStaff(request, result)) {
+            return result;
+        }
         
         try {
             // 检查是否已存在
@@ -97,8 +113,12 @@ public class TimeSlotController {
 
     @PostMapping("/update")
     @Operation(summary = "更新时间段")
-    public Map<String, Object> updateTimeSlot(@RequestBody TimeSlot timeSlot) {
+    public Map<String, Object> updateTimeSlot(@RequestBody TimeSlot timeSlot,
+                                             HttpServletRequest request) {
         Map<String, Object> result = new HashMap<>();
+        if (denyIfNotAdminOrStaff(request, result)) {
+            return result;
+        }
         
         try {
             boolean success = timeSlotService.updateById(timeSlot);
@@ -124,8 +144,12 @@ public class TimeSlotController {
     @Operation(summary = "更新时间段状态")
     public Map<String, Object> updateTimeSlotStatus(
             @PathVariable Long id,
-            @RequestParam Boolean isActive) {
+            @RequestParam Boolean isActive,
+            HttpServletRequest request) {
         Map<String, Object> result = new HashMap<>();
+        if (denyIfNotAdminOrStaff(request, result)) {
+            return result;
+        }
         
         try {
             TimeSlot timeSlot = timeSlotService.getById(id);
@@ -156,8 +180,11 @@ public class TimeSlotController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除时间段")
-    public Map<String, Object> deleteTimeSlot(@PathVariable Long id) {
+    public Map<String, Object> deleteTimeSlot(@PathVariable Long id, HttpServletRequest request) {
         Map<String, Object> result = new HashMap<>();
+        if (denyIfNotAdminOrStaff(request, result)) {
+            return result;
+        }
         
         try {
             boolean success = timeSlotService.removeById(id);

@@ -1,5 +1,7 @@
 package com.pethome.controller.appointment;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -25,14 +27,11 @@ public class MedicalServiceController {
     @GetMapping
     @Operation(summary = "获取医疗服务列表")
     public Result<java.util.List<MedicalService>> getMedicalServices() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<MedicalService> page = new Page<>(1, 100); // 获取前100条记录
             IPage<MedicalService> result = medicalServiceService.getMedicalServiceList(page);
             return Result.success(result.getRecords());
-        } catch (Exception e) {
-            log.error("获取医疗服务列表失败", e);
-            return Result.error("获取医疗服务列表失败，请稍后重试");
-        }
+        }, "获取医疗服务列表失败，请稍后重试", log);
     }
 
     @GetMapping("/page")
@@ -48,48 +47,36 @@ public class MedicalServiceController {
     @PostMapping("/create")
     @Operation(summary = "创建医疗服务")
     public Result<MedicalService> createMedicalService(@RequestBody MedicalService medicalService) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             MedicalService result = medicalServiceService.createMedicalService(medicalService);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("创建医疗服务失败", e);
-            return Result.error("创建医疗服务失败，请稍后重试");
-        }
+        }, "创建医疗服务失败，请稍后重试", log);
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新医疗服务")
     public Result<MedicalService> updateMedicalService(@RequestBody MedicalService medicalService) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             MedicalService result = medicalServiceService.updateMedicalService(medicalService);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("更新医疗服务失败", e);
-            return Result.error("更新医疗服务失败，请稍后重试");
-        }
+        }, "更新医疗服务失败，请稍后重试", log);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除医疗服务")
     public Result<Boolean> deleteMedicalService(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean result = medicalServiceService.deleteMedicalService(id);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("删除医疗服务失败", e);
-            return Result.error("删除医疗服务失败，请稍后重试");
-        }
+        }, "删除医疗服务失败，请稍后重试", log);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "获取医疗服务详情")
     public Result<MedicalService> getMedicalServiceDetail(@PathVariable Long id) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             MedicalService result = medicalServiceService.getMedicalServiceById(id);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("获取医疗服务详情失败", e);
-            return Result.error("获取医疗服务详情失败，请稍后重试");
-        }
+        }, "获取医疗服务详情失败，请稍后重试", log);
     }
 }

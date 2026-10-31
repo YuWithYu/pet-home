@@ -1,5 +1,7 @@
 package com.pethome.controller.order;
 
+
+import com.pethome.common.SafeCall;
 import com.pethome.common.Result;
 import com.pethome.entity.Address;
 import com.pethome.service.order.AddressService;
@@ -62,7 +64,7 @@ public class AddressController {
             @RequestBody Address address,
             @RequestParam(required = false) Long userId,
             HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             log.debug("[AddressController] createAddress - 接收到的地址数据: {}", address);
             // 安全修复 #49：userId 必须取自 token，body 与 query 中的 userId 仅做兼容校验
             Long finalUserId = getUserIdFromToken(request);
@@ -84,10 +86,7 @@ public class AddressController {
             Address savedAddress = addressService.createAddress(address);
             log.debug("[AddressController] createAddress - 保存成功，地址ID: {}", savedAddress.getId());
             return Result.success(savedAddress);
-        } catch (Exception e) {
-            log.error("[AddressController] createAddress - 异常: {}", e.getMessage(), e);
-            return Result.error("创建地址失败，请稍后重试");
-        }
+        }, "创建地址失败，请稍后重试", log);
     }
 
     @PutMapping("/update")

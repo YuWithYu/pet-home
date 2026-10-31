@@ -1,5 +1,7 @@
 package com.pethome.controller.community;
 
+
+import com.pethome.common.SafeCall;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
@@ -68,13 +70,10 @@ public class DailyTopicController {
     @GetMapping("/themes")
     @Operation(summary = "获取专题主题分类列表")
     public Result<List<DailyTopicTheme>> getThemes() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             List<DailyTopicTheme> list = dailyTopicThemeService.listEnabled();
             return Result.success(list);
-        } catch (Exception e) {
-            log.error("获取主题分类失败", e);
-            return Result.error("获取主题分类失败，请稍后重试");
-        }
+        }, "获取主题分类失败，请稍后重试", log);
     }
 
     /**
@@ -83,17 +82,14 @@ public class DailyTopicController {
     @GetMapping("/today")
     @Operation(summary = "获取今日专题")
     public Result<DailyTopic> getTodayTopic() {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             DailyTopic topic = dailyTopicService.getTodayTopic();
             if (topic != null) {
                 // 增加浏览量
                 dailyTopicService.incrementViewCount(topic.getId());
             }
             return Result.success(topic);
-        } catch (Exception e) {
-            log.error("获取今日专题失败", e);
-            return Result.error("获取今日专题失败，请稍后重试");
-        }
+        }, "获取今日专题失败，请稍后重试", log);
     }
 
     /**
@@ -102,7 +98,7 @@ public class DailyTopicController {
     @GetMapping("/date/{date}")
     @Operation(summary = "根据日期获取专题")
     public Result<DailyTopic> getTopicByDate(@PathVariable String date) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             LocalDate localDate = LocalDate.parse(date);
             DailyTopic topic = dailyTopicService.getTopicByDate(localDate);
             if (topic != null) {
@@ -110,10 +106,7 @@ public class DailyTopicController {
                 dailyTopicService.incrementViewCount(topic.getId());
             }
             return Result.success(topic);
-        } catch (Exception e) {
-            log.error("获取专题失败", e);
-            return Result.error("获取专题失败，请稍后重试");
-        }
+        }, "获取专题失败，请稍后重试", log);
     }
 
     /**
@@ -125,7 +118,7 @@ public class DailyTopicController {
             @RequestParam Long userId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             Page<DailyTopic> topicPage = new Page<>(page, size);
             Page<DailyTopic> result = topicCollectService.getCollectedTopics(userId, topicPage);
             Map<String, Object> response = new HashMap<>();
@@ -135,10 +128,7 @@ public class DailyTopicController {
             response.put("current", result.getCurrent());
             response.put("size", result.getSize());
             return Result.success(response);
-        } catch (Exception e) {
-            log.error("获取收藏列表失败", e);
-            return Result.error("获取收藏列表失败，请稍后重试");
-        }
+        }, "获取收藏列表失败，请稍后重试", log);
     }
 
     /**
@@ -147,7 +137,7 @@ public class DailyTopicController {
     @GetMapping("/{id}")
     @Operation(summary = "获取专题详情")
     public Result<DailyTopic> getTopicDetail(@PathVariable Long id, @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             DailyTopic topic = dailyTopicService.getById(id);
             if (topic == null || topic.getStatus() != 1) {
                 return Result.success(null);
@@ -161,10 +151,7 @@ public class DailyTopicController {
                 topic.setIsCollected(topicCollectService.isCollected(id, userId));
             }
             return Result.success(topic);
-        } catch (Exception e) {
-            log.error("获取专题详情失败", e);
-            return Result.error("获取专题详情失败，请稍后重试");
-        }
+        }, "获取专题详情失败，请稍后重试", log);
     }
 
     /**
@@ -173,7 +160,7 @@ public class DailyTopicController {
     @PostMapping("/{id}/like")
     @Operation(summary = "点赞专题")
     public Result<Boolean> likeTopic(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：点赞人以登录态为准，防止替他人点赞
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -184,10 +171,7 @@ public class DailyTopicController {
                 return Result.error("已经点赞过了");
             }
             return Result.success(true);
-        } catch (Exception e) {
-            log.error("点赞专题失败", e);
-            return Result.error("点赞失败，请稍后重试");
-        }
+        }, "点赞失败，请稍后重试", log);
     }
 
     /**
@@ -196,7 +180,7 @@ public class DailyTopicController {
     @DeleteMapping("/{id}/like")
     @Operation(summary = "取消点赞专题")
     public Result<Boolean> unlikeTopic(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -204,10 +188,7 @@ public class DailyTopicController {
             }
             topicLikeService.unlikeTopic(id, userId);
             return Result.success(true);
-        } catch (Exception e) {
-            log.error("取消点赞专题失败", e);
-            return Result.error("取消点赞失败，请稍后重试");
-        }
+        }, "取消点赞失败，请稍后重试", log);
     }
 
     /**
@@ -216,7 +197,7 @@ public class DailyTopicController {
     @PostMapping("/{id}/collect")
     @Operation(summary = "收藏专题")
     public Result<Boolean> collectTopic(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -227,10 +208,7 @@ public class DailyTopicController {
                 return Result.error("已经收藏过了");
             }
             return Result.success(true);
-        } catch (Exception e) {
-            log.error("收藏专题失败", e);
-            return Result.error("收藏失败，请稍后重试");
-        }
+        }, "收藏失败，请稍后重试", log);
     }
 
     /**
@@ -239,7 +217,7 @@ public class DailyTopicController {
     @DeleteMapping("/{id}/collect")
     @Operation(summary = "取消收藏专题")
     public Result<Boolean> uncollectTopic(@PathVariable Long id, HttpServletRequest request) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             // 安全修复：操作人以登录态为准
             Long userId = currentUserId(request);
             if (userId == null) {
@@ -247,10 +225,7 @@ public class DailyTopicController {
             }
             topicCollectService.uncollectTopic(id, userId);
             return Result.success(true);
-        } catch (Exception e) {
-            log.error("取消收藏专题失败", e);
-            return Result.error("取消收藏失败，请稍后重试");
-        }
+        }, "取消收藏失败，请稍后重试", log);
     }
 
     /**
@@ -259,13 +234,10 @@ public class DailyTopicController {
     @GetMapping("/{id}/collect/status")
     @Operation(summary = "检查专题收藏状态")
     public Result<Boolean> getTopicCollectStatus(@PathVariable Long id, @RequestParam Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             boolean isCollected = topicCollectService.isCollected(id, userId);
             return Result.success(isCollected);
-        } catch (Exception e) {
-            log.error("检查收藏状态失败", e);
-            return Result.error("检查收藏状态失败，请稍后重试");
-        }
+        }, "检查收藏状态失败，请稍后重试", log);
     }
 
 
@@ -334,13 +306,10 @@ public class DailyTopicController {
     public Result<java.util.List<Comment>> getTopicComments(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
-        try {
+        return com.pethome.common.SafeCall.of(() -> {
             java.util.List<Comment> comments = commentService.getCommentsByTopicId(id, userId);
             return Result.success(comments != null ? comments : new java.util.ArrayList<>());
-        } catch (Exception e) {
-            log.error("获取专题评论失败", e);
-            return Result.error("获取评论失败，请稍后重试");
-        }
+        }, "获取评论失败，请稍后重试", log);
     }
 
     /**
@@ -348,11 +317,17 @@ public class DailyTopicController {
      */
     @PostMapping("/{id}/comments")
     @Operation(summary = "添加专题评论")
-    public Result<Comment> addTopicComment(@PathVariable Long id, @RequestBody java.util.Map<String, Object> data) {
-        try {
+    public Result<Comment> addTopicComment(@PathVariable Long id, @RequestBody java.util.Map<String, Object> data,
+                                          HttpServletRequest request) {
+        return com.pethome.common.SafeCall.of(() -> {
+            // 安全修复：评论人以登录态为准，禁止按前端传入 userId 冒充他人发言
+            Long userId = currentUserId(request);
+            if (userId == null) {
+                return Result.error(401, "用户未登录或token无效");
+            }
             Comment comment = new Comment();
             comment.setTopicId(id);
-            comment.setUserId(((Number) data.get("userId")).longValue());
+            comment.setUserId(userId);
             comment.setContent((String) data.get("content"));
             Object parentIdObj = data.get("parentId");
             if (parentIdObj != null) {
@@ -364,10 +339,7 @@ public class DailyTopicController {
             if (loc != null) comment.setLocation(loc.toString());
             Comment result = commentService.addComment(comment);
             return Result.success(result);
-        } catch (Exception e) {
-            log.error("添加专题评论失败", e);
-            return Result.error("添加评论失败，请稍后重试");
-        }
+        }, "添加评论失败，请稍后重试", log);
     }
 }
 
