@@ -1,6 +1,8 @@
 package com.pethome.controller;
 
 import com.pethome.common.Result;
+import com.pethome.concurrent.TranscodeGate;
+import com.pethome.config.AsyncConfig;
 import com.pethome.util.FileUploadUtil;
 import com.pethome.util.VideoTranscodeUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,7 +10,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,7 +21,7 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 通用文件上传控制器
@@ -56,12 +60,51 @@ public class CommonUploadController {
     @Autowired(required = false)
     private VideoTranscodeUtil videoTranscodeUtil;
 
+    /** 媒体专用线程池（与业务池隔离） */
+    @Autowired
+    @Qualifier(AsyncConfig.MEDIA_EXECUTOR)
+    private ThreadPoolTaskExecutor mediaExecutor;
+
+    /** 转码并发闸门（Semaphore/AQS 限流） */
+    @Autowired
+    private TranscodeGate transcodeGate;
+
+    /**
+     * 提交后台转码：线程池排队 + 信号量限流，拿不到许可则放弃转码保留原视频。
+     */
+    private void submitTranscode(File dir, String name, File targetFile) {
+        mediaExecutor.execute(() -> {
+            if (!transcodeGate.tryEnter(5, TimeUnit.SECONDS)) {
+                log.warn("转码并发已达上限，跳过转码保留原视频: {}", name);
+                return;
+            }
+            try {
+                String tempName = name.substring(0, name.lastIndexOf('.')) + "_transcode_temp.mp4";
+                File tempFile = new File(dir, tempName);
+                File transcoded = videoTranscodeUtil.transcodeVideo(targetFile, tempFile);
+                if (transcoded != null && transcoded.exists() && transcoded.length() > 0) {
+                    if (targetFile.delete()) {
+                        transcoded.renameTo(targetFile);
+                    } else {
+                        transcoded.delete();
+                    }
+                } else if (tempFile.exists()) {
+                    tempFile.delete();
+                }
+            } catch (Exception e) {
+                log.error("视频上传后转码异常，保留原视频", e);
+            } finally {
+                transcodeGate.exit();
+            }
+        });
+    }
+
     /**
      * 视频物理存储目录与访问域名
-     * 生产环境在 application-prod.yml 中配置：
+     * 如需自定义视频存储目录/域名，在配置中指定（项目默认全部走本机 upload 目录）：
      *   video.upload-path: /data/videos
-     *   video.base-url: https://video.situationship.icu
-     * 开发环境未配置时使用默认值，仍然走原来的 upload 目录和域名
+     *   video.base-url: https://your-domain.com
+     * 未配置时使用默认值，仍然走原来的 upload 目录和域名
      */
     @Value("${video.upload-path:${upload.path:./upload/}}")
     private String videoUploadPath;
@@ -196,26 +239,7 @@ public class CommonUploadController {
 
             // 与通用上传一致：先返回 URL，后台异步转码（H.264 + faststart），转码完成后替换原文件，同一 URL 再播更快
             if (videoTranscodeUtil != null) {
-                File dir = filesDir;
-                String name = finalName;
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        String tempName = name.substring(0, name.lastIndexOf('.')) + "_transcode_temp.mp4";
-                        File tempFile = new File(dir, tempName);
-                        File transcoded = videoTranscodeUtil.transcodeVideo(targetFile, tempFile);
-                        if (transcoded != null && transcoded.exists() && transcoded.length() > 0) {
-                            if (targetFile.delete()) {
-                                transcoded.renameTo(targetFile);
-                            } else {
-                                transcoded.delete();
-                            }
-                        } else if (tempFile.exists()) {
-                            tempFile.delete();
-                        }
-                    } catch (Exception e) {
-                        log.error("视频上传后转码异常，保留原视频", e);
-                    }
-                });
+                submitTranscode(filesDir, finalName, targetFile);
             }
 
             String videoUrl = videoBaseUrl.endsWith("/")
@@ -320,27 +344,7 @@ public class CommonUploadController {
 
             // 分片合并后同样异步转码，转码完成后替换原文件，播放更流畅
             if (videoTranscodeUtil != null) {
-                File dir = filesDir;
-                String name = finalName;
-                File targetFile = outFile;
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        String tempName = name.substring(0, name.lastIndexOf('.')) + "_transcode_temp.mp4";
-                        File tempFile = new File(dir, tempName);
-                        File transcoded = videoTranscodeUtil.transcodeVideo(targetFile, tempFile);
-                        if (transcoded != null && transcoded.exists() && transcoded.length() > 0) {
-                            if (targetFile.delete()) {
-                                transcoded.renameTo(targetFile);
-                            } else {
-                                transcoded.delete();
-                            }
-                        } else if (tempFile.exists()) {
-                            tempFile.delete();
-                        }
-                    } catch (Exception e) {
-                        log.error("视频合并后转码异常，保留原视频", e);
-                    }
-                });
+                submitTranscode(filesDir, finalName, outFile);
             }
 
             String videoUrl = videoBaseUrl.endsWith("/")

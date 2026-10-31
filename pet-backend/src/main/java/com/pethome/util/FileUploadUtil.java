@@ -1,9 +1,13 @@
 package com.pethome.util;
 
+import com.pethome.concurrent.TranscodeGate;
+import com.pethome.config.AsyncConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,7 +20,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 文件上传工具类
@@ -82,6 +86,15 @@ public class FileUploadUtil {
 
     @Autowired(required = false)
     private VideoTranscodeUtil videoTranscodeUtil;
+
+    /** 媒体专用线程池：转码属于长耗时任务，与业务池物理隔离，队列打满时由调用线程执行形成背压 */
+    @Autowired
+    @Qualifier(AsyncConfig.MEDIA_EXECUTOR)
+    private ThreadPoolTaskExecutor mediaExecutor;
+
+    /** 转码信号量闸门：线程池负责排队，Semaphore(AQS) 负责真正的并发度限流 */
+    @Autowired
+    private TranscodeGate transcodeGate;
 
     /**
      * 校验文件类型与扩展名，返回规范化后的扩展名（不含点，小写）
@@ -153,32 +166,44 @@ public class FileUploadUtil {
         // 先返回 URL，视频转码放到后台异步执行，避免上传接口超时
         String finalUrl = uploadUrl + subDir + "/" + filename;
         if (contentType != null && contentType.startsWith("video/") && videoTranscodeUtil != null) {
-            File dirFinal = dir;
-            String filenameFinal = filename;
-            CompletableFuture.runAsync(() -> {
-                try {
-                    String tempTranscodeName = filenameFinal.substring(0, filenameFinal.lastIndexOf('.')) + "_transcode_temp.mp4";
-                    File tempTranscodeFile = new File(dirFinal, tempTranscodeName);
-                    File transcodedFile = videoTranscodeUtil.transcodeVideo(targetFile, tempTranscodeFile);
-                    if (transcodedFile != null && transcodedFile.exists() && transcodedFile.length() > 0) {
-                        if (targetFile.delete()) {
-                            if (!transcodedFile.renameTo(targetFile)) {
-                                if (tempTranscodeFile.exists()) tempTranscodeFile.delete();
-                            }
-                        } else {
-                            transcodedFile.delete();
-                        }
-                    } else {
-                        if (tempTranscodeFile.exists()) tempTranscodeFile.delete();
-                    }
-                } catch (Exception e) {
-                    log.error("视频后台转码异常，保留原视频: {}", e.getMessage(), e);
-                }
-            });
+            submitTranscode(dir, filename, targetFile);
         }
 
         log.info("文件上传成功: subDir={}, filename={}", subDir, filename);
         return finalUrl;
+    }
+
+    /**
+     * 提交后台转码任务：媒体线程池负责排队，TranscodeGate 负责并发限流。
+     * 拿不到转码许可（说明并发已满）时直接放弃转码、保留原视频，避免异步任务无限堆积。
+     */
+    private void submitTranscode(File dir, String filename, File targetFile) {
+        mediaExecutor.execute(() -> {
+            if (!transcodeGate.tryEnter(5, TimeUnit.SECONDS)) {
+                log.warn("转码并发已达上限，跳过转码保留原视频: {}", filename);
+                return;
+            }
+            try {
+                String tempTranscodeName = filename.substring(0, filename.lastIndexOf('.')) + "_transcode_temp.mp4";
+                File tempTranscodeFile = new File(dir, tempTranscodeName);
+                File transcodedFile = videoTranscodeUtil.transcodeVideo(targetFile, tempTranscodeFile);
+                if (transcodedFile != null && transcodedFile.exists() && transcodedFile.length() > 0) {
+                    if (targetFile.delete()) {
+                        if (!transcodedFile.renameTo(targetFile)) {
+                            if (tempTranscodeFile.exists()) tempTranscodeFile.delete();
+                        }
+                    } else {
+                        transcodedFile.delete();
+                    }
+                } else {
+                    if (tempTranscodeFile.exists()) tempTranscodeFile.delete();
+                }
+            } catch (Exception e) {
+                log.error("视频后台转码异常，保留原视频: {}", e.getMessage(), e);
+            } finally {
+                transcodeGate.exit();
+            }
+        });
     }
 
     /**

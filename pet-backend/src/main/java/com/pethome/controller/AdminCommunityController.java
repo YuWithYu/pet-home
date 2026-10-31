@@ -3,6 +3,7 @@ package com.pethome.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.pethome.common.Result;
 import com.pethome.entity.Banner;
 import com.pethome.entity.Comment;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -57,32 +59,21 @@ public class AdminCommunityController {
     @Autowired(required = false)
     private TaskService taskService;
 
-    /** 社区统计缓存时长（毫秒）：统计数据为全表聚合结果，短缓存避免每次页面刷新重复压库 */
-    private static final long STATS_CACHE_TTL_MS = 60_000L;
-
-    private volatile Map<String, Object> cachedStats;
-    private volatile long cachedStatsAt = 0L;
+    /** 社区统计本地缓存：Caffeine 单飞 + 60 秒过期，写操作显式失效 */
+    @Autowired
+    @Qualifier("communityStatisticsCache")
+    private Cache<String, Map<String, Object>> communityStatisticsCache;
 
     /**
      * 获取社区统计数据
      * 性能：帖子三类计数（总数/已通过/待审核）合并为一条 GROUP BY，替代三次全表 COUNT；
-     * 结果加 60 秒缓存，审核/删帖等写操作主动失效
+     * 结果走本地缓存，审核/删帖等写操作主动失效
      */
     @GetMapping("/statistics")
     @Operation(summary = "获取社区统计数据")
     public Result<Map<String, Object>> getStatistics() {
-        Map<String, Object> statistics = cachedStats;
-        if (statistics != null && System.currentTimeMillis() - cachedStatsAt < STATS_CACHE_TTL_MS) {
-            return Result.success(statistics);
-        }
-        synchronized (this) {
-            if (cachedStats != null && System.currentTimeMillis() - cachedStatsAt < STATS_CACHE_TTL_MS) {
-                return Result.success(cachedStats);
-            }
-            cachedStats = buildStatistics();
-            cachedStatsAt = System.currentTimeMillis();
-            return Result.success(cachedStats);
-        }
+        Map<String, Object> statistics = communityStatisticsCache.get("statistics", key -> buildStatistics());
+        return Result.success(statistics);
     }
 
     private Map<String, Object> buildStatistics() {
@@ -126,8 +117,7 @@ public class AdminCommunityController {
 
     /** 写操作后失效统计缓存，保证管理员看到的待审数实时准确 */
     private void invalidateStatsCache() {
-        cachedStats = null;
-        cachedStatsAt = 0L;
+        communityStatisticsCache.invalidateAll();
     }
 
     /**

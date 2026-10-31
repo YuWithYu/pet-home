@@ -2,6 +2,7 @@ package com.pethome.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.pethome.common.Result;
 import com.pethome.entity.Order;
 import com.pethome.mapper.DoorCleaningAppointmentMapper;
@@ -14,6 +15,7 @@ import com.pethome.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,8 +44,10 @@ import java.util.TreeMap;
 @Tag(name = "仪表盘统计")
 public class DashboardController {
 
-    /** 仪表盘统计缓存时长（毫秒） */
-    private static final long CACHE_TTL_MS = 60_000L;
+    /** 本地一级缓存：Caffeine 自带单飞与统计，替代旧的 volatile + synchronized 双检锁 */
+    @Autowired
+    @Qualifier("dashboardStatisticsCache")
+    private Cache<String, Map<String, Object>> dashboardStatisticsCache;
 
     @Autowired
     private PetMapper petMapper;
@@ -61,24 +65,12 @@ public class DashboardController {
     @Autowired(required = false)
     private DoorCleaningAppointmentMapper doorCleaningAppointmentMapper;
 
-    private volatile Map<String, Object> cachedData;
-    private volatile long cachedAt = 0L;
-
     @GetMapping("/statistics")
     @Operation(summary = "获取仪表盘统计数据")
     public Result<Map<String, Object>> getStatistics() {
-        Map<String, Object> data = cachedData;
-        if (data != null && System.currentTimeMillis() - cachedAt < CACHE_TTL_MS) {
-            return Result.success(data);
-        }
-        synchronized (this) {
-            if (cachedData != null && System.currentTimeMillis() - cachedAt < CACHE_TTL_MS) {
-                return Result.success(cachedData);
-            }
-            cachedData = buildStatistics();
-            cachedAt = System.currentTimeMillis();
-            return Result.success(cachedData);
-        }
+        // Caffeine.get(key, loader)：同一 key 并发请求只会有一次回源，其余等待结果
+        Map<String, Object> data = dashboardStatisticsCache.get("statistics", key -> buildStatistics());
+        return Result.success(data);
     }
 
     private Map<String, Object> buildStatistics() {

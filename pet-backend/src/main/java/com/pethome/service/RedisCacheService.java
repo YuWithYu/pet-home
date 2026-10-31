@@ -16,6 +16,18 @@ public class RedisCacheService {
 
     private static final Logger log = LoggerFactory.getLogger(RedisCacheService.class);
 
+    /** 空值缓存标记：命中后直接返回 null，防止缓存穿透 */
+    private static final String NULL_CACHE_MARK = "@@@NULL@@@";
+
+    private static final String REBUILD_LOCK_PREFIX = "cache:rebuild:";
+
+    /** 重建锁 TTL（秒）与等待时间（毫秒） */
+    private static final long REBUILD_LOCK_SECONDS = 5L;
+    private static final long REBUILD_WAIT_MILLIS = 100L;
+
+    /** 空值缓存最长保留时长（分钟） */
+    private static final long NULL_CACHE_MAX_MINUTES = 5L;
+
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -386,20 +398,76 @@ public class RedisCacheService {
      * 设置缓存值（带过期时间，单位：分钟）
      */
     public void setCache(String key, Object value, long minutes) {
-        try {
-            redisTemplate.opsForValue().set(key, value, minutes, TimeUnit.MINUTES);
-        } catch (Exception e) {
-        }
+        setCache(key, value, minutes, TimeUnit.MINUTES);
     }
     
     /**
-     * 设置缓存值（带过期时间，自定义时间单位）
+     * 设置缓存值（带过期时间，自定义时间单位）。
+     * 过期时间附加 ±10% 随机抖动：避免同一批 key 在同一秒集中失效，
+     * 大量请求同时回源压垮数据库（缓存雪崩）。
      */
     public void setCache(String key, Object value, long timeout, TimeUnit unit) {
         try {
-            redisTemplate.opsForValue().set(key, value, timeout, unit);
+            redisTemplate.opsForValue().set(key, value, jitteredMillis(timeout, unit), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
         }
+    }
+
+    /**
+     * 缓存穿透 / 击穿防护的读取模板：
+     * 1. 命中空值标记直接返回 null，不再回源（穿透防护）；
+     * 2. 未命中时用 SETNX 短锁互斥重建，同一 key 仅一个请求回源（击穿防护）；
+     * 3. 回源结果为空写入短期空值缓存，避免恶意 ID 反复打库。
+     *
+     * @param key      缓存 key
+     * @param minutes  正常数据缓存时长（分钟）
+     * @param type     返回类型
+     * @param loader   回源函数
+     */
+    public <T> T getOrLoad(String key, long minutes, Class<T> type, java.util.function.Supplier<T> loader) {
+        try {
+            Object cached = redisTemplate.opsForValue().get(key);
+            if (cached != null) {
+                return NULL_CACHE_MARK.equals(cached) ? null : type.cast(cached);
+            }
+
+            Boolean locked = setIfAbsent(REBUILD_LOCK_PREFIX + key, "1", REBUILD_LOCK_SECONDS, TimeUnit.SECONDS);
+            if (Boolean.FALSE.equals(locked)) {
+                // 已有线程在重建：短暂等待后读缓存，仍未命中则直接返回 null（宁可降级不做击穿）
+                Thread.sleep(REBUILD_WAIT_MILLIS);
+                Object again = redisTemplate.opsForValue().get(key);
+                if (again == null) {
+                    return null;
+                }
+                return NULL_CACHE_MARK.equals(again) ? null : type.cast(again);
+            }
+
+            T value = loader.get();
+            if (value == null) {
+                setCache(key, NULL_CACHE_MARK, Math.min(minutes, NULL_CACHE_MAX_MINUTES), TimeUnit.MINUTES);
+            } else {
+                setCache(key, value, minutes, TimeUnit.MINUTES);
+            }
+            // 重建锁不主动删除：TTL 极短且重建幂等，避免引入跨线程误删风险
+            return value;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception e) {
+            log.warn("缓存读取异常，降级回源: key={}", key);
+            return loader.get();
+        }
+    }
+
+    /** 计算带随机抖动的过期毫秒数 */
+    private long jitteredMillis(long timeout, TimeUnit unit) {
+        long base = unit.toMillis(timeout);
+        if (base <= 1) {
+            return Math.max(base, 1);
+        }
+        long range = Math.max(base / 10, 1);
+        long jitter = java.util.concurrent.ThreadLocalRandom.current().nextLong(-range, range + 1);
+        return Math.max(base + jitter, 1);
     }
     
     /**
