@@ -1,7 +1,7 @@
 package com.pethome.mq;
 
 import com.pethome.config.RabbitMqConfig;
-import com.pethome.service.OrderService;
+import com.pethome.service.order.OrderService;
 import com.rabbitmq.client.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

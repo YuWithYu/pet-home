@@ -3,7 +3,7 @@ package com.pethome.security;
 import com.pethome.security.JwtUtil;
 
 import com.pethome.entity.Admin;
-import com.pethome.service.AdminService;
+import com.pethome.service.admin.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

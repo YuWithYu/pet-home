@@ -1,6 +1,6 @@
 package com.pethome.task;
 
-import com.pethome.service.UserCouponService;
+import com.pethome.service.order.UserCouponService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

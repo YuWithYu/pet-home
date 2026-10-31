@@ -1,7 +1,7 @@
 package com.pethome.bootstrap;
 
 import com.pethome.entity.HospitalService;
-import com.pethome.service.HospitalServiceService;
+import com.pethome.service.appointment.HospitalServiceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

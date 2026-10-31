@@ -1,7 +1,7 @@
 package com.pethome.interceptor;
 
-import com.pethome.service.AdminService;
-import com.pethome.service.UserService;
+import com.pethome.service.admin.AdminService;
+import com.pethome.service.user.UserService;
 import com.pethome.entity.Admin;
 import com.pethome.entity.User;
 import com.pethome.security.JwtUtil;

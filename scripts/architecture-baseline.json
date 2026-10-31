@@ -6,6 +6,7 @@
     "config-to-domain":  0,
     "service-to-controller":  0,
     "controller-to-serviceimpl":  0,
+    "controller-handwritten-catch":  55,
     "entity-to-domain":  0,
     "mapper-to-domain":  0,
     "package-cycle":  0

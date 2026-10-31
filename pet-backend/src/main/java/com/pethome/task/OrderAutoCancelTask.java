@@ -1,8 +1,8 @@
 package com.pethome.task;
 
 import com.pethome.common.lock.RedisDistributedLock;
-import com.pethome.service.OrderMaintenanceService;
-import com.pethome.service.OrderService;
+import com.pethome.service.order.OrderMaintenanceService;
+import com.pethome.service.order.OrderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

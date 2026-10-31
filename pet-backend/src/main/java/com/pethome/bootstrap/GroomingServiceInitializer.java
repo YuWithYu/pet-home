@@ -1,7 +1,7 @@
 package com.pethome.bootstrap;
 
 import com.pethome.entity.GroomingService;
-import com.pethome.service.GroomingServiceService;
+import com.pethome.service.appointment.GroomingServiceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

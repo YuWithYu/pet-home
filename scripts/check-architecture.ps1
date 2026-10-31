@@ -42,7 +42,8 @@ $rules = @(
     @{ Id = 'infra-to-domain';            Desc = '工具/通用包反向依赖 service（破坏依赖倒置）';       Scope = 'util|utils|common'; Test = { param($pkg, $text) $text -match 'import com\.pethome\.(service|controller)\.' } },
     @{ Id = 'config-to-domain';           Desc = '配置包承担业务装配（启动期数据初始化未隔离）';       Scope = 'config';       Test = { param($pkg, $text) $text -match 'import com\.pethome\.(service|mapper)\.' } },
     @{ Id = 'service-to-controller';      Desc = '服务层反向依赖表现层（依赖倒置）';                   Scope = 'service';      Test = { param($pkg, $text) $text -match 'import com\.pethome\.controller\.' } },
-    @{ Id = 'controller-to-serviceimpl';  Desc = 'Controller 直接依赖 Service 实现类（破坏接口边界）';   Scope = 'controller';   Test = { param($pkg, $text) $text -match 'import com\.pethome\.service\.impl\.' } },
+    @{ Id = 'controller-to-serviceimpl';  Desc = 'Controller 直接依赖 Service 实现类（破坏接口边界）';   Scope = 'controller';   Test = { param($pkg, $text) $text -match 'import com\.pethome\.service\.(?:[a-z]+\.)?impl\.' } },
+    @{ Id = 'controller-handwritten-catch'; Desc = 'Controller 手写异常捕获（绕过全局异常出口）'; Scope = 'controller'; Test = { param($pkg, $text) $text -match 'catch \(Exception' } },
     @{ Id = 'entity-to-domain';           Desc = '实体反向依赖服务/持久化/表现层';                     Scope = 'entity';       Test = { param($pkg, $text) $text -match 'import com\.pethome\.(service|mapper|controller)\.' } },
     @{ Id = 'mapper-to-domain';           Desc = 'Mapper 反向依赖服务/表现层';                         Scope = 'mapper';       Test = { param($pkg, $text) $text -match 'import com\.pethome\.(service|controller)\.' } },
     @{ Id = 'package-cycle';              Desc = '包级双向依赖（循环依赖）';                           Scope = '*';            Test = { param($pkg, $text) $false } }

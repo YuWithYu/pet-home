@@ -1,6 +1,6 @@
 package com.pethome.task;
 
-import com.pethome.service.OrderMaintenanceService;
+import com.pethome.service.order.OrderMaintenanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

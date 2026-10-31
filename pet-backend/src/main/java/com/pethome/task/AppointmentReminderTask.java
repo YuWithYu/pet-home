@@ -1,6 +1,6 @@
 package com.pethome.task;
 
-import com.pethome.service.AppointmentReminderService;
+import com.pethome.service.appointment.AppointmentReminderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

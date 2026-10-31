@@ -1,6 +1,6 @@
 package com.pethome.task;
 
-import com.pethome.service.PostExposureService;
+import com.pethome.service.community.PostExposureService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
