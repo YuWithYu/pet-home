@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 部门管理Controller
@@ -17,6 +19,8 @@ import java.util.List;
 @RequestMapping("/api/department")
 @Tag(name = "部门管理")
 public class DepartmentController {
+
+    private static final Logger log = LoggerFactory.getLogger(DepartmentController.class);
     
     @Autowired
     private DepartmentService departmentService;
@@ -35,7 +39,8 @@ public class DepartmentController {
             }
             return Result.success(departments);
         } catch (Exception e) {
-            return Result.error("查询部门列表失败: " + e.getMessage());
+            log.error("查询部门列表失败", e);
+            return Result.error("查询部门列表失败，请稍后重试");
         }
     }
     
@@ -50,7 +55,8 @@ public class DepartmentController {
                 return Result.error("部门不存在");
             }
         } catch (Exception e) {
-            return Result.error("查询部门失败: " + e.getMessage());
+            log.error("查询部门失败", e);
+            return Result.error("查询部门失败，请稍后重试");
         }
     }
     
@@ -61,7 +67,8 @@ public class DepartmentController {
             Department created = departmentService.createDepartment(department);
             return Result.success(created);
         } catch (Exception e) {
-            return Result.error("创建部门失败: " + e.getMessage());
+            log.error("创建部门失败", e);
+            return Result.error("创建部门失败，请稍后重试");
         }
     }
     
@@ -72,7 +79,8 @@ public class DepartmentController {
             boolean success = departmentService.updateDepartment(department);
             return success ? Result.success(true) : Result.error("更新失败");
         } catch (Exception e) {
-            return Result.error("更新部门失败: " + e.getMessage());
+            log.error("更新部门失败", e);
+            return Result.error("更新部门失败，请稍后重试");
         }
     }
     
@@ -85,9 +93,11 @@ public class DepartmentController {
             boolean success = departmentService.deleteDepartment(id, false, storeId);
             return success ? Result.success(true) : Result.error("删除失败");
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            return Result.error("删除部门失败: " + e.getMessage());
+            log.error("删除部门失败", e);
+            return Result.error("删除部门失败，请稍后重试");
         }
     }
 }

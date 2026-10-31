@@ -25,6 +25,7 @@ import com.pethome.mapper.UserPostInteractionMapper;
 import com.pethome.mq.BehaviorEventPublisher;
 import com.pethome.service.PostService;
 import com.pethome.service.RedisCacheService;
+import com.pethome.service.TagService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +85,35 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Autowired
     private UserPostInteractionMapper userPostInteractionMapper;
+
+    @Autowired
+    private TagService tagService;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void savePostTags(Post post, List<String> tagNames) {
+        if (post == null || post.getId() == null || tagNames == null || tagNames.isEmpty()) {
+            return;
+        }
+        List<com.pethome.entity.Tag> tags = tagService.batchGetOrCreateTags(tagNames);
+        if (tags == null || tags.isEmpty()) {
+            return;
+        }
+        List<com.pethome.entity.PostTag> postTags = new ArrayList<>();
+        for (com.pethome.entity.Tag tag : tags) {
+            // 增加标签热度（Redis）
+            tagService.incrementTagHotness(tag.getName());
+            com.pethome.entity.PostTag postTag = new com.pethome.entity.PostTag();
+            postTag.setPostId(post.getId());
+            postTag.setTagId(tag.getId());
+            postTags.add(postTag);
+        }
+        postTagMapper.batchInsert(postTags);
+
+        // 同步到 post.tags，便于快速检索/推荐筛选
+        post.setTags(String.join(",", tagNames));
+        updateById(post);
+    }
     
     @Override
     public Page<Post> getPostList(Page<Post> page, String category, Long userId) {

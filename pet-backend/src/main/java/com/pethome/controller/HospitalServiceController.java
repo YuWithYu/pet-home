@@ -16,11 +16,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/hospital-services")
 @Tag(name = "宠物医院服务管理")
 public class HospitalServiceController {
+
+    private static final Logger log = LoggerFactory.getLogger(HospitalServiceController.class);
 
     @Autowired
     private HospitalServiceService hospitalServiceService;
@@ -86,7 +90,8 @@ public class HospitalServiceController {
             fillDerivedFields(created);
             return Result.success(created);
         } catch (Exception e) {
-            return Result.error("服务创建失败: " + e.getMessage());
+            log.error("服务创建失败", e);
+            return Result.error("服务创建失败，请稍后重试");
         }
     }
 
@@ -99,7 +104,8 @@ public class HospitalServiceController {
             fillDerivedFields(updated);
             return Result.success(updated);
         } catch (Exception e) {
-            return Result.error("服务更新失败: " + e.getMessage());
+            log.error("服务更新失败", e);
+            return Result.error("服务更新失败，请稍后重试");
         }
     }
 
@@ -114,7 +120,8 @@ public class HospitalServiceController {
                 return Result.error("服务删除失败");
             }
         } catch (Exception e) {
-            return Result.error("服务删除失败: " + e.getMessage());
+            log.error("服务删除失败", e);
+            return Result.error("服务删除失败，请稍后重试");
         }
     }
 
@@ -132,7 +139,8 @@ public class HospitalServiceController {
             fillDerivedFields(updated);
             return Result.success(updated);
         } catch (Exception e) {
-            return Result.error("状态更新失败: " + e.getMessage());
+            log.error("状态更新失败", e);
+            return Result.error("状态更新失败，请稍后重试");
         }
     }
 
@@ -152,7 +160,8 @@ public class HospitalServiceController {
             }
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 
@@ -170,7 +179,8 @@ public class HospitalServiceController {
             hospitalServiceService.updateHospitalService(service);
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 

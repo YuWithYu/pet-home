@@ -22,8 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -835,6 +838,37 @@ public class UserServiceImpl implements UserService {
         }
     }
     
+    @Override
+    public User getUserByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+        QueryWrapper<User> qw = new QueryWrapper<>();
+        qw.eq("email", email).last("limit 1");
+        return mpUserMapper.selectOne(qw);
+    }
+
+    @Override
+    public List<User> getUsersByIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return mpUserMapper.selectBatchIds(ids);
+    }
+
+    @Override
+    public List<User> getRecentUsers(Long excludeUserId, boolean onlyActive, int limit) {
+        QueryWrapper<User> qw = new QueryWrapper<>();
+        if (onlyActive) {
+            qw.eq("status", 1);
+        }
+        if (excludeUserId != null) {
+            qw.ne("id", excludeUserId);
+        }
+        qw.orderByDesc("id").last("LIMIT " + limit);
+        return mpUserMapper.selectList(qw);
+    }
+
     @Override
     public User getUserByOpenid(String openid) {
         if (openid == null || openid.trim().isEmpty()) {

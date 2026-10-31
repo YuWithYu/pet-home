@@ -79,6 +79,21 @@ public interface UserService {
      */
     User getUserByOpenid(String openid);
 
+    /** 根据邮箱查询用户（历史 token 可能以 email 作为 subject） */
+    User getUserByEmail(String email);
+
+    /** 批量查询用户（替代 Controller 层直连 Mapper，避免 N+1） */
+    java.util.List<User> getUsersByIds(java.util.Collection<Long> ids);
+
+    /**
+     * 近期活跃用户（用于"推荐关注"类场景）
+     *
+     * @param excludeUserId 需要排除的用户（通常为当前登录用户），可为 null
+     * @param onlyActive    是否仅取 status=1 的用户
+     * @param limit         返回上限
+     */
+    java.util.List<User> getRecentUsers(Long excludeUserId, boolean onlyActive, int limit);
+
     /**
      * 忘记密码：根据手机号重置密码（需先通过短信验证码校验）
      * @param phone 手机号

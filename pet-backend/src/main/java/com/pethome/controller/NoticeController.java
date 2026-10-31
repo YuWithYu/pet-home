@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 公告控制器
@@ -21,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/api/notice")
 @Tag(name = "公告管理")
 public class NoticeController {
+
+    private static final Logger log = LoggerFactory.getLogger(NoticeController.class);
 
     @Autowired
     private NoticeService noticeService;
@@ -41,7 +45,8 @@ public class NoticeController {
             IPage<Notice> result = noticeService.getNoticePage(page, keyword, type, status);
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("查询公告列表失败: " + e.getMessage());
+            log.error("查询公告列表失败", e);
+            return Result.error("查询公告列表失败，请稍后重试");
         }
     }
 
@@ -58,7 +63,8 @@ public class NoticeController {
             List<Notice> list = noticeService.getNoticeList(type, status, limit);
             return Result.success(list);
         } catch (Exception e) {
-            return Result.error("获取公告列表失败: " + e.getMessage());
+            log.error("获取公告列表失败", e);
+            return Result.error("获取公告列表失败，请稍后重试");
         }
     }
 
@@ -88,7 +94,8 @@ public class NoticeController {
 
             return Result.success(notice);
         } catch (Exception e) {
-            return Result.error("获取公告失败: " + e.getMessage());
+            log.error("获取公告失败", e);
+            return Result.error("获取公告失败，请稍后重试");
         }
     }
 
@@ -111,7 +118,8 @@ public class NoticeController {
             Notice created = noticeService.createNotice(notice);
             return Result.success(created);
         } catch (Exception e) {
-            return Result.error("创建公告失败: " + e.getMessage());
+            log.error("创建公告失败", e);
+            return Result.error("创建公告失败，请稍后重试");
         }
     }
 
@@ -159,7 +167,8 @@ public class NoticeController {
             Notice updated = noticeService.updateNotice(existing);
             return Result.success(updated);
         } catch (Exception e) {
-            return Result.error("更新公告失败: " + e.getMessage());
+            log.error("更新公告失败", e);
+            return Result.error("更新公告失败，请稍后重试");
         }
     }
 
@@ -177,7 +186,8 @@ public class NoticeController {
             boolean success = noticeService.deleteNotice(id);
             return success ? Result.success(true) : Result.error("删除公告失败");
         } catch (Exception e) {
-            return Result.error("删除公告失败: " + e.getMessage());
+            log.error("删除公告失败", e);
+            return Result.error("删除公告失败，请稍后重试");
         }
     }
 
@@ -194,7 +204,8 @@ public class NoticeController {
             }
             return Result.success(notice);
         } catch (Exception e) {
-            return Result.error("获取公告详情失败: " + e.getMessage());
+            log.error("获取公告详情失败", e);
+            return Result.error("获取公告详情失败，请稍后重试");
         }
     }
 }

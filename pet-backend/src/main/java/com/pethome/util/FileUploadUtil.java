@@ -1,7 +1,6 @@
 package com.pethome.util;
 
 import com.pethome.concurrent.TranscodeGate;
-import com.pethome.config.AsyncConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +88,7 @@ public class FileUploadUtil {
 
     /** 媒体专用线程池：转码属于长耗时任务，与业务池物理隔离，队列打满时由调用线程执行形成背压 */
     @Autowired
-    @Qualifier(AsyncConfig.MEDIA_EXECUTOR)
+    @Qualifier("mediaExecutor")
     private ThreadPoolTaskExecutor mediaExecutor;
 
     /** 转码信号量闸门：线程池负责排队，Semaphore(AQS) 负责真正的并发度限流 */

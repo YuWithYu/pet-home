@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 服务人员管理Controller
@@ -21,6 +23,8 @@ import java.util.List;
 @RequestMapping("/api/service-member")
 @Tag(name = "服务人员管理")
 public class ServiceMemberController {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceMemberController.class);
 
     @Autowired
     private ServiceMemberService memberService;
@@ -38,7 +42,8 @@ public class ServiceMemberController {
                     : memberService.getMembersByServiceTypeAndStore(serviceType, storeId);
             return Result.success(members);
         } catch (Exception e) {
-            return Result.error("查询服务人员列表失败: " + e.getMessage());
+            log.error("查询服务人员列表失败", e);
+            return Result.error("查询服务人员列表失败，请稍后重试");
         }
     }
 
@@ -49,7 +54,8 @@ public class ServiceMemberController {
             List<ServiceMember> members = memberService.getAllMembers();
             return Result.success(members);
         } catch (Exception e) {
-            return Result.error("查询所有服务人员失败: " + e.getMessage());
+            log.error("查询所有服务人员失败", e);
+            return Result.error("查询所有服务人员失败，请稍后重试");
         }
     }
 
@@ -69,7 +75,8 @@ public class ServiceMemberController {
                 return Result.error("没有可用的服务人员");
             }
         } catch (Exception e) {
-            return Result.error("自动分配服务人员失败: " + e.getMessage());
+            log.error("自动分配服务人员失败", e);
+            return Result.error("自动分配服务人员失败，请稍后重试");
         }
     }
 
@@ -83,7 +90,8 @@ public class ServiceMemberController {
             int workload = memberService.getMemberWorkload(memberId, localDate);
             return Result.success(workload);
         } catch (Exception e) {
-            return Result.error("查询工作量失败: " + e.getMessage());
+            log.error("查询工作量失败", e);
+            return Result.error("查询工作量失败，请稍后重试");
         }
     }
 
@@ -94,7 +102,8 @@ public class ServiceMemberController {
             ServiceMember created = memberService.createMember(member);
             return Result.success(created);
         } catch (Exception e) {
-            return Result.error("创建服务人员失败: " + e.getMessage());
+            log.error("创建服务人员失败", e);
+            return Result.error("创建服务人员失败，请稍后重试");
         }
     }
 
@@ -105,7 +114,8 @@ public class ServiceMemberController {
             boolean success = memberService.updateMember(member);
             return success ? Result.success(true) : Result.error("更新失败");
         } catch (Exception e) {
-            return Result.error("更新服务人员信息失败: " + e.getMessage());
+            log.error("更新服务人员信息失败", e);
+            return Result.error("更新服务人员信息失败，请稍后重试");
         }
     }
 
@@ -120,7 +130,8 @@ public class ServiceMemberController {
                 return Result.error("服务人员不存在");
             }
         } catch (Exception e) {
-            return Result.error("查询服务人员失败: " + e.getMessage());
+            log.error("查询服务人员失败", e);
+            return Result.error("查询服务人员失败，请稍后重试");
         }
     }
 
@@ -146,7 +157,8 @@ public class ServiceMemberController {
             }
             return Result.error("未找到对应的服务人员");
         } catch (Exception e) {
-            return Result.error("查询服务人员失败: " + e.getMessage());
+            log.error("查询服务人员失败", e);
+            return Result.error("查询服务人员失败，请稍后重试");
         }
     }
 
@@ -157,7 +169,8 @@ public class ServiceMemberController {
             boolean success = memberService.deleteMember(id);
             return success ? Result.success(true) : Result.error("删除失败");
         } catch (Exception e) {
-            return Result.error("删除服务人员失败: " + e.getMessage());
+            log.error("删除服务人员失败", e);
+            return Result.error("删除服务人员失败，请稍后重试");
         }
     }
 }

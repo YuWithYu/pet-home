@@ -80,6 +80,19 @@ public class ServiceStoreService {
     }
 
     /**
+     * 批量获取门店（未删除），供列表场景一次性填充门店信息
+     */
+    public List<ServiceStore> getStoresByIds(java.util.Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new java.util.ArrayList<>();
+        }
+        QueryWrapper<ServiceStore> wrapper = new QueryWrapper<>();
+        wrapper.in("id", ids);
+        wrapper.eq("is_deleted", 0);
+        return serviceStoreMapper.selectList(wrapper);
+    }
+
+    /**
      * 创建门店
      */
     public ServiceStore createStore(ServiceStore store) {

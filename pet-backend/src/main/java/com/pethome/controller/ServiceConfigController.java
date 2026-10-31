@@ -11,11 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/service-config")
 @Tag(name = "服务配置管理")
 public class ServiceConfigController {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceConfigController.class);
 
     @Autowired
     private ServiceConfigService serviceConfigService;
@@ -64,7 +68,8 @@ public class ServiceConfigController {
             ServiceConfig created = serviceConfigService.createServiceConfig(serviceConfig);
             return Result.success(created);
         } catch (Exception e) {
-            return Result.error("创建服务配置失败: " + e.getMessage());
+            log.error("创建服务配置失败", e);
+            return Result.error("创建服务配置失败，请稍后重试");
         }
     }
 
@@ -75,7 +80,8 @@ public class ServiceConfigController {
             ServiceConfig updated = serviceConfigService.updateServiceConfig(serviceConfig);
             return Result.success(updated);
         } catch (Exception e) {
-            return Result.error("更新服务配置失败: " + e.getMessage());
+            log.error("更新服务配置失败", e);
+            return Result.error("更新服务配置失败，请稍后重试");
         }
     }
 
@@ -86,7 +92,8 @@ public class ServiceConfigController {
             boolean success = serviceConfigService.deleteServiceConfig(id);
             return Result.success(success);
         } catch (Exception e) {
-            return Result.error("删除服务配置失败: " + e.getMessage());
+            log.error("删除服务配置失败", e);
+            return Result.error("删除服务配置失败，请稍后重试");
         }
     }
 
@@ -99,7 +106,8 @@ public class ServiceConfigController {
             boolean success = serviceConfigService.updateServiceStatus(id, status);
             return Result.success(success);
         } catch (Exception e) {
-            return Result.error("更新状态失败: " + e.getMessage());
+            log.error("更新状态失败", e);
+            return Result.error("更新状态失败，请稍后重试");
         }
     }
 }

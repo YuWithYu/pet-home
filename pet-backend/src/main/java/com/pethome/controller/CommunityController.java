@@ -103,7 +103,7 @@ public class CommunityController {
             return Result.success(resp);
         } catch (Exception e) {
             log.error("获取视频推荐流失败", e);
-            return Result.error("获取视频推荐流失败: " + e.getMessage());
+            return Result.error("获取视频推荐流失败，请稍后重试");
         }
     }
 
@@ -136,7 +136,8 @@ public class CommunityController {
             
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取帖子列表失败: " + e.getMessage());
+            log.error("获取帖子列表失败", e);
+            return Result.error("获取帖子列表失败，请稍后重试");
         }
     }
 
@@ -198,7 +199,7 @@ public class CommunityController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取@用户列表失败", e);
-            return Result.error("获取@用户列表失败: " + e.getMessage());
+            return Result.error("获取@用户列表失败，请稍后重试");
         }
     }
 
@@ -211,7 +212,8 @@ public class CommunityController {
             List<com.pethome.entity.Comment> comments = commentService.getCommentsByPostId(id, userId);
             return Result.success(comments);
         } catch (Exception e) {
-            return Result.error("获取评论失败: " + e.getMessage());
+            log.error("获取评论失败", e);
+            return Result.error("获取评论失败，请稍后重试");
         }
     }
 
@@ -226,7 +228,8 @@ public class CommunityController {
             boolean success = commentService.likeComment(commentId, userId);
             return Result.success(success);
         } catch (Exception e) {
-            return Result.error("点赞评论失败: " + e.getMessage());
+            log.error("点赞评论失败", e);
+            return Result.error("点赞评论失败，请稍后重试");
         }
     }
 
@@ -241,7 +244,8 @@ public class CommunityController {
             boolean success = commentService.unlikeComment(commentId, userId);
             return Result.success(success);
         } catch (Exception e) {
-            return Result.error("取消点赞评论失败: " + e.getMessage());
+            log.error("取消点赞评论失败", e);
+            return Result.error("取消点赞评论失败，请稍后重试");
         }
     }
 
@@ -254,7 +258,8 @@ public class CommunityController {
             List<com.pethome.entity.Comment> replies = commentService.getRepliesByCommentId(commentId, userId);
             return Result.success(replies);
         } catch (Exception e) {
-            return Result.error("获取回复失败: " + e.getMessage());
+            log.error("获取回复失败", e);
+            return Result.error("获取回复失败，请稍后重试");
         }
     }
 
@@ -283,7 +288,8 @@ public class CommunityController {
             boolean success = commentService.deleteComment(commentId, userId);
             return Result.success(success);
         } catch (Exception e) {
-            return Result.error("删除评论失败: " + e.getMessage());
+            log.error("删除评论失败", e);
+            return Result.error("删除评论失败，请稍后重试");
         }
     }
 
@@ -324,7 +330,7 @@ public class CommunityController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("添加评论失败", e);
-            return Result.error("添加评论失败: " + e.getMessage());
+            return Result.error("添加评论失败，请稍后重试");
         }
     }
 
@@ -340,15 +346,11 @@ public class CommunityController {
             postService.updateExposureScoreOnInteraction(id, "view");
             return Result.success(post);
         } catch (Exception e) {
-            return Result.error("获取帖子详情失败: " + e.getMessage());
+            log.error("获取帖子详情失败", e);
+            return Result.error("获取帖子详情失败，请稍后重试");
         }
     }
 
-    @Autowired
-    private com.pethome.service.TagService tagService;
-    
-    @Autowired
-    private com.pethome.mapper.PostTagMapper postTagMapper;
     
     @PostMapping("/posts")
     @Operation(summary = "发布帖子")
@@ -467,37 +469,14 @@ public class CommunityController {
                     }
                 }
                 
-                // 批量获取或创建标签
-                List<com.pethome.entity.Tag> tags = tagService.batchGetOrCreateTags(tagNames);
-                
-                // 建立帖子与标签的关联
-                List<com.pethome.entity.PostTag> postTags = new ArrayList<>();
-                for (com.pethome.entity.Tag tag : tags) {
-                    // 增加标签热度（Redis）
-                    tagService.incrementTagHotness(tag.getName());
-                    
-                    // 创建关联
-                    com.pethome.entity.PostTag postTag = new com.pethome.entity.PostTag();
-                    postTag.setPostId(post.getId());
-                    postTag.setTagId(tag.getId());
-                    postTags.add(postTag);
-                }
-                
-                if (!postTags.isEmpty()) {
-                    postTagMapper.batchInsert(postTags);
-                }
-
-                // 同步到 post.tags，便于快速检索/推荐筛选
-                if (!tagNames.isEmpty()) {
-                    post.setTags(String.join(",", tagNames));
-                    postService.updateById(post);
-                }
+                // 标签创建、热度累加、关联写入、post.tags 回写统一由服务层完成
+                postService.savePostTags(post, tagNames);
             }
             
             return Result.success(post);
         } catch (Exception e) {
             log.error("发布帖子失败", e);
-            return Result.error("发布帖子失败: " + e.getMessage());
+            return Result.error("发布帖子失败，请稍后重试");
         }
     }
 
@@ -534,7 +513,8 @@ public class CommunityController {
             boolean success = postService.updateById(post);
             return Result.success(success ? post : null);
         } catch (Exception e) {
-            return Result.error("更新帖子失败: " + e.getMessage());
+            log.error("更新帖子失败", e);
+            return Result.error("更新帖子失败，请稍后重试");
         }
     }
 
@@ -560,7 +540,8 @@ public class CommunityController {
             }
             return Result.success(success);
         } catch (Exception e) {
-            return Result.error("删除帖子失败: " + e.getMessage());
+            log.error("删除帖子失败", e);
+            return Result.error("删除帖子失败，请稍后重试");
         }
     }
 
@@ -585,7 +566,7 @@ public class CommunityController {
             return Result.success(success);
         } catch (Exception e) {
             log.error("点赞失败", e);
-            return Result.error("点赞失败: " + e.getMessage());
+            return Result.error("点赞失败，请稍后重试");
         }
     }
 
@@ -606,7 +587,7 @@ public class CommunityController {
             return Result.success(success);
         } catch (Exception e) {
             log.error("取消点赞失败", e);
-            return Result.error("取消点赞失败: " + e.getMessage());
+            return Result.error("取消点赞失败，请稍后重试");
         }
     }
 
@@ -631,7 +612,7 @@ public class CommunityController {
             }
         } catch (Exception e) {
             log.error("收藏帖子失败", e);
-            return Result.error("收藏失败: " + e.getMessage());
+            return Result.error("收藏失败，请稍后重试");
         }
     }
 
@@ -652,7 +633,7 @@ public class CommunityController {
             return Result.success(success);
         } catch (Exception e) {
             log.error("取消收藏失败", e);
-            return Result.error("取消收藏失败: " + e.getMessage());
+            return Result.error("取消收藏失败，请稍后重试");
         }
     }
 
@@ -669,7 +650,8 @@ public class CommunityController {
             boolean isCollected = postCollectService.isCollected(id, currentUserId);
             return Result.success(isCollected);
         } catch (Exception e) {
-            return Result.error("检查收藏状态失败: " + e.getMessage());
+            log.error("检查收藏状态失败", e);
+            return Result.error("检查收藏状态失败，请稍后重试");
         }
     }
 
@@ -707,7 +689,7 @@ public class CommunityController {
             return Result.success(response);
         } catch (Exception e) {
             log.error("获取收藏列表失败", e);
-            return Result.error("获取收藏列表失败: " + e.getMessage());
+            return Result.error("获取收藏列表失败，请稍后重试");
         }
     }
 
@@ -718,7 +700,8 @@ public class CommunityController {
             List<Post> hotPosts = postService.getHotPosts(limit);
             return Result.success(hotPosts);
         } catch (Exception e) {
-            return Result.error("获取热门帖子失败: " + e.getMessage());
+            log.error("获取热门帖子失败", e);
+            return Result.error("获取热门帖子失败，请稍后重试");
         }
     }
     
@@ -769,7 +752,8 @@ public class CommunityController {
             
             return Result.success(feed);
         } catch (Exception e) {
-            return Result.error("获取帖子Feed失败: " + e.getMessage());
+            log.error("获取帖子Feed失败", e);
+            return Result.error("获取帖子Feed失败，请稍后重试");
         }
     }
 
@@ -793,7 +777,8 @@ public class CommunityController {
             response.put("tag", tag);
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取推荐帖子失败: " + e.getMessage());
+            log.error("获取推荐帖子失败", e);
+            return Result.error("获取推荐帖子失败，请稍后重试");
         }
     }
 
@@ -814,7 +799,8 @@ public class CommunityController {
             
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取关注用户帖子失败: " + e.getMessage());
+            log.error("获取关注用户帖子失败", e);
+            return Result.error("获取关注用户帖子失败，请稍后重试");
         }
     }
 
@@ -849,7 +835,7 @@ public class CommunityController {
             return Result.success(response);
         } catch (Exception e) {
             log.error("获取每日专题失败", e);
-            return Result.error("获取每日专题失败: " + e.getMessage());
+            return Result.error("获取每日专题失败，请稍后重试");
         }
     }
 

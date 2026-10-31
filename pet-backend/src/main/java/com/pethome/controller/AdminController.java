@@ -15,7 +15,7 @@ import com.pethome.service.AdminService;
 import com.pethome.service.ServiceMemberService;
 import com.pethome.service.UserService;
 import com.pethome.service.PetService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -89,10 +89,7 @@ public class AdminController {
     private PetService petService;
 
     @Autowired(required = false)
-    private com.pethome.mapper.AdminMapper adminMapper;
-    
-    @Autowired(required = false)
-    private com.pethome.mapper.ServiceAppointmentRatingMapper serviceAppointmentRatingMapper;
+    private com.pethome.service.ServiceAppointmentRatingService serviceAppointmentRatingService;
     @Autowired(required = false)
     private com.pethome.service.DoorCleaningAppointmentService doorCleaningAppointmentService;
     @Autowired(required = false)
@@ -104,7 +101,7 @@ public class AdminController {
     private com.pethome.service.AdminPermissionService adminPermissionService;
     
     @Autowired(required = false)
-    private com.pethome.util.AdminContext adminContext;
+    private com.pethome.security.AdminContext adminContext;
     
     @Autowired(required = false)
     private com.pethome.service.ComplaintService complaintService;
@@ -211,6 +208,7 @@ public class AdminController {
             return Result.success(loginInfo);
         } catch (IllegalArgumentException e) {
             // 参数/业务校验失败：返回具体提示
+            log.error("管理员登录失败", e);
             return Result.error(400, e.getMessage());
         } catch (Exception e) {
             // 其他异常：不向前端泄露内部细节，仅记录日志
@@ -481,35 +479,21 @@ public class AdminController {
             return Result.success(staffList);
         } catch (Exception e) {
             log.error("查询员工列表失败", e);
-            return Result.error("查询员工列表失败: " + e.getMessage());
+            return Result.error("查询员工列表失败，请稍后重试");
         }
     }
 
     /** 批量查询成员平均评分（一条 GROUP BY 替代逐人 AVG 查询） */
     private Map<Long, BigDecimal> batchAvgRating(List<Long> memberIds) {
-        Map<Long, BigDecimal> result = new HashMap<>();
-        if (serviceAppointmentRatingMapper == null || memberIds == null || memberIds.isEmpty()) {
-            return result;
+        if (serviceAppointmentRatingService == null || memberIds == null || memberIds.isEmpty()) {
+            return new HashMap<>();
         }
         try {
-            QueryWrapper<ServiceAppointmentRating> wrapper = new QueryWrapper<>();
-            wrapper.select("member_id", "AVG(rating) AS avg_rating")
-                    .in("member_id", memberIds)
-                    .groupBy("member_id");
-            List<Map<String, Object>> rows = serviceAppointmentRatingMapper.selectMaps(wrapper);
-            if (rows != null) {
-                for (Map<String, Object> row : rows) {
-                    Object memberId = row.get("member_id");
-                    Object avg = row.get("avg_rating");
-                    if (memberId instanceof Number && avg instanceof Number) {
-                        result.put(((Number) memberId).longValue(), new BigDecimal(((Number) avg).toString()));
-                    }
-                }
-            }
+            return serviceAppointmentRatingService.avgRatingByMemberIds(memberIds);
         } catch (Exception e) {
             log.warn("批量查询成员评分失败", e);
+            return new HashMap<>();
         }
-        return result;
     }
 
     /** 批量统计成员总任务数（三张预约表各一条 GROUP BY，过滤条件与单查版一致：status != 'cancelled'） */
@@ -651,7 +635,7 @@ public class AdminController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("更新头像失败", e);
-            return Result.error("更新头像失败: " + e.getMessage());
+            return Result.error("更新头像失败，请稍后重试");
         }
     }
     
@@ -713,7 +697,7 @@ public class AdminController {
             if (errorMsg != null && errorMsg.contains("用户名已存在")) {
                 return Result.error("用户名已存在，请使用其他用户名");
             }
-            return Result.error("添加账号失败: " + errorMsg);
+            return Result.error("添加账号失败，请稍后重试");
         }
     }
     
@@ -771,7 +755,7 @@ public class AdminController {
             return success ? Result.success(true) : Result.error("更新失败");
         } catch (Exception e) {
             log.error("更新账号信息失败", e);
-            return Result.error("更新账号信息失败: " + e.getMessage());
+            return Result.error("更新账号信息失败，请稍后重试");
         }
     }
     
@@ -800,10 +784,11 @@ public class AdminController {
             data.put("userId", created != null ? created.getId() : null);
             return Result.success(data);
         } catch (IllegalArgumentException e) {
+            log.error("管理员创建用户失败", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
             log.error("管理员创建用户失败", e);
-            return Result.error("创建用户失败: " + e.getMessage());
+            return Result.error("创建用户失败，请稍后重试");
         }
     }
 
@@ -825,7 +810,7 @@ public class AdminController {
             return Result.error("用户不存在或删除失败");
         } catch (Exception e) {
             log.error("删除用户失败", e);
-            return Result.error("删除用户失败: " + e.getMessage());
+            return Result.error("删除用户失败，请稍后重试");
         }
     }
     
@@ -871,7 +856,8 @@ public class AdminController {
             boolean success = adminService.deleteAdmin(id);
             return success ? Result.success(true) : Result.error("删除失败");
         } catch (Exception e) {
-            return Result.error("删除员工失败: " + e.getMessage());
+            log.error("删除员工失败", e);
+            return Result.error("删除员工失败，请稍后重试");
         }
     }
 
@@ -916,8 +902,8 @@ public class AdminController {
             if (admin.isStaff()) {
                 ServiceMember sm = serviceMemberService.getMemberByUserId(admin.getId());
                 if (sm != null) {
-                    if (serviceAppointmentRatingMapper != null) {
-                        BigDecimal avgFromRatings = serviceAppointmentRatingMapper.avgRatingByMemberId(sm.getId());
+                    if (serviceAppointmentRatingService != null) {
+                        BigDecimal avgFromRatings = serviceAppointmentRatingService.avgRatingByMemberId(sm.getId());
                         admin.setRating(avgFromRatings != null ? avgFromRatings : sm.getRating());
                     } else {
                         admin.setRating(sm.getRating());
@@ -930,7 +916,8 @@ public class AdminController {
             }
             return Result.success(admin);
         } catch (Exception e) {
-            return Result.error("查询员工失败: " + e.getMessage());
+            log.error("查询员工失败", e);
+            return Result.error("查询员工失败，请稍后重试");
         }
     }
     
@@ -1056,7 +1043,7 @@ public class AdminController {
             return Result.success(orders);
         } catch (Exception e) {
             log.error("获取工单列表失败", e);
-            return Result.error("获取工单列表失败: " + e.getMessage());
+            return Result.error("获取工单列表失败，请稍后重试");
         }
     }
 
@@ -1071,7 +1058,7 @@ public class AdminController {
             if (adminId == null) {
                 return Result.error("未登录或Token无效");
             }
-            if (serviceAppointmentRatingMapper == null) {
+            if (serviceAppointmentRatingService == null) {
                 return Result.success(Collections.emptyList());
             }
             ServiceMember sm = serviceMemberService.getMemberByUserId(adminId);
@@ -1079,33 +1066,25 @@ public class AdminController {
                 return Result.success(Collections.emptyList());
             }
 
-            QueryWrapper<ServiceAppointmentRating> q = new QueryWrapper<>();
-            q.eq("member_id", sm.getId()).orderByDesc("create_time");
-            List<Map<String, Object>> ratings = serviceAppointmentRatingMapper.selectMaps(q);
+            List<ServiceAppointmentRating> ratings = serviceAppointmentRatingService.listByMemberId(sm.getId());
             if (ratings == null || ratings.isEmpty()) {
                 return Result.success(Collections.emptyList());
             }
 
             List<Map<String, Object>> result = new ArrayList<>();
-            for (Map<String, Object> rating : ratings) {
-                String appointmentType = rating.get("appointment_type") != null ? String.valueOf(rating.get("appointment_type")) : null;
-                Object userIdObj = rating.get("user_id");
-                Long userId = null;
-                if (userIdObj != null) {
-                    try {
-                        userId = Long.valueOf(String.valueOf(userIdObj));
-                    } catch (Exception ignored) {}
-                }
+            for (ServiceAppointmentRating rating : ratings) {
+                String appointmentType = rating.getAppointmentType();
+                Long userId = rating.getUserId();
                 Map<String, Object> item = new HashMap<>();
-                item.put("id", rating.get("id"));
+                item.put("id", rating.getId());
                 item.put("appointmentType", appointmentType);
                 item.put("appointmentTypeName", "door-cleaning".equals(appointmentType) ? "上门铲屎"
                     : "grooming".equals(appointmentType) ? "宠物洗护"
                     : "hospital".equals(appointmentType) ? "宠物医院" : appointmentType);
-                item.put("appointmentId", rating.get("appointment_id"));
-                item.put("rating", rating.get("rating"));
-                item.put("comment", rating.get("comment"));
-                item.put("createTime", rating.get("create_time"));
+                item.put("appointmentId", rating.getAppointmentId());
+                item.put("rating", rating.getRating());
+                item.put("comment", rating.getComment());
+                item.put("createTime", rating.getCreateTime());
 
                 if (userId != null && userService != null) {
                     try {
@@ -1124,7 +1103,7 @@ public class AdminController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取评价列表失败", e);
-            return Result.error("获取评价列表失败: " + e.getMessage());
+            return Result.error("获取评价列表失败，请稍后重试");
         }
     }
     
@@ -1235,7 +1214,7 @@ public class AdminController {
             return Result.error("工单不存在或您无权操作");
         } catch (Exception e) {
             log.error("更新工单状态失败", e);
-            return Result.error("更新失败: " + e.getMessage());
+            return Result.error("更新失败，请稍后重试");
         }
     }
 
@@ -1310,7 +1289,7 @@ public class AdminController {
             return Result.error("状态更新失败，记录不存在");
         } catch (Exception e) {
             log.error("更新工单状态失败", e);
-            return Result.error("更新失败: " + e.getMessage());
+            return Result.error("更新失败，请稍后重试");
         }
     }
 
@@ -1443,7 +1422,7 @@ public class AdminController {
             return Result.success(Map.of("projects", projects, "tasks", tasks));
         } catch (Exception e) {
             log.error("获取员工预约列表失败", e);
-            return Result.error("获取预约列表失败: " + e.getMessage());
+            return Result.error("获取预约列表失败，请稍后重试");
         }
     }
     
@@ -1472,7 +1451,8 @@ public class AdminController {
             String encrypted = adminService.encodePassword(password);
             return Result.success(encrypted);
         } catch (Exception e) {
-            return Result.error("加密失败: " + e.getMessage());
+            log.error("加密失败", e);
+            return Result.error("加密失败，请稍后重试");
         }
     }
 
@@ -1492,4 +1472,5 @@ public class AdminController {
         }
     }
 }
+
 

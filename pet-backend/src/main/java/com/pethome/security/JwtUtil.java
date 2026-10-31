@@ -1,7 +1,7 @@
-package com.pethome.util;
+package com.pethome.security;
 
 import com.pethome.common.BusinessException;
-import com.pethome.config.JwtConfig;
+import com.pethome.security.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

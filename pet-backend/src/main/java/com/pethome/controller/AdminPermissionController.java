@@ -82,7 +82,7 @@ public class AdminPermissionController {
             return Result.success(permissions);
         } catch (Exception e) {
             log.error("获取权限列表失败", e);
-            return Result.error("获取权限列表失败: " + e.getMessage());
+            return Result.error("获取权限列表失败，请稍后重试");
         }
     }
     
@@ -101,7 +101,7 @@ public class AdminPermissionController {
             return Result.success(permissions);
         } catch (Exception e) {
             log.error("获取可用权限列表失败", e);
-            return Result.error("获取可用权限列表失败: " + e.getMessage());
+            return Result.error("获取可用权限列表失败，请稍后重试");
         }
     }
     
@@ -172,7 +172,7 @@ public class AdminPermissionController {
             return Result.success(permissions.isEmpty() ? "权限已清空" : "权限设置成功");
         } catch (Exception e) {
             log.error("设置权限失败", e);
-            return Result.error("设置权限失败: " + e.getMessage());
+            return Result.error("设置权限失败，请稍后重试");
         }
     }
     
@@ -280,7 +280,7 @@ public class AdminPermissionController {
             return Result.success(hasPermission);
         } catch (Exception e) {
             log.error("检查权限失败", e);
-            return Result.error("检查权限失败: " + e.getMessage());
+            return Result.error("检查权限失败，请稍后重试");
         }
     }
 }

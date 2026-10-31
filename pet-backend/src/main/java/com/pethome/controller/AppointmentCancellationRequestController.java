@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 取消预约申请：用户提交取消原因，工作人员同意/拒绝；同意后执行取消并应用 0-2 小时违约金规则
@@ -19,6 +21,8 @@ import java.util.Map;
 @RequestMapping("/api/appointment-cancellation-request")
 @Tag(name = "取消预约申请")
 public class AppointmentCancellationRequestController {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentCancellationRequestController.class);
 
     @Autowired
     private AppointmentCancellationRequestService cancellationRequestService;
@@ -55,6 +59,7 @@ public class AppointmentCancellationRequestController {
             AppointmentCancellationRequest req = cancellationRequestService.submit(userId, appointmentType, appointmentId, reason);
             return Result.success(req);
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         }
     }
@@ -105,6 +110,7 @@ public class AppointmentCancellationRequestController {
             boolean ok = cancellationRequestService.reject(id, rejectReason);
             return ok ? Result.success(null) : Result.error("操作失败或该申请已处理");
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         }
     }

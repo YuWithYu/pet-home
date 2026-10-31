@@ -5,7 +5,7 @@ import com.pethome.entity.Admin;
 import com.pethome.entity.Appointment;
 import com.pethome.service.AdminService;
 import com.pethome.service.AppointmentService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -92,7 +92,7 @@ public class AppointmentController {
             return Result.success(created);
         } catch (Exception e) {
             log.error("添加预约失败", e);
-            return Result.error("添加预约失败: " + e.getMessage());
+            return Result.error("添加预约失败，请稍后重试");
         }
     }
     
@@ -118,7 +118,8 @@ public class AppointmentController {
             
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("检查失败: " + e.getMessage());
+            log.error("检查失败", e);
+            return Result.error("检查失败，请稍后重试");
         }
     }
     
@@ -172,7 +173,7 @@ public class AppointmentController {
             return Result.success(appointments);
         } catch (Exception e) {
             log.error("获取预约列表失败", e);
-            return Result.error("获取预约列表失败: " + e.getMessage());
+            return Result.error("获取预约列表失败，请稍后重试");
         }
     }
 
@@ -200,7 +201,7 @@ public class AppointmentController {
             return Result.success(appointments);
         } catch (Exception e) {
             log.error("获取服务人员预约列表失败", e);
-            return Result.error("获取预约列表失败: " + e.getMessage());
+            return Result.error("获取预约列表失败，请稍后重试");
         }
     }
     
@@ -232,7 +233,7 @@ public class AppointmentController {
             return Result.success(appointment);
         } catch (Exception e) {
             log.error("分配工单失败", e);
-            return Result.error("分配工单失败: " + e.getMessage());
+            return Result.error("分配工单失败，请稍后重试");
         }
     }
     
@@ -268,7 +269,7 @@ public class AppointmentController {
             return Result.success(updated);
         } catch (Exception e) {
             log.error("更新预约失败", e);
-            return Result.error("更新预约失败: " + e.getMessage());
+            return Result.error("更新预约失败，请稍后重试");
         }
     }
     
@@ -302,7 +303,7 @@ public class AppointmentController {
             return Result.success(updated);
         } catch (Exception e) {
             log.error("更新预约状态失败", e);
-            return Result.error("更新状态失败: " + e.getMessage());
+            return Result.error("更新状态失败，请稍后重试");
         }
     }
     
@@ -334,7 +335,7 @@ public class AppointmentController {
             return Result.success(appointment);
         } catch (Exception e) {
             log.error("获取预约详情失败", e);
-            return Result.error("获取预约详情失败: " + e.getMessage());
+            return Result.error("获取预约详情失败，请稍后重试");
         }
     }
     

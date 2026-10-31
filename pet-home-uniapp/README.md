@@ -15,7 +15,7 @@
 | 构建 | 后端地址 | 定义位置 |
 |---|---|---|
 | 开发（HBuilderX 运行 / `dev:mp-weixin`） | `http://localhost:8080` | `main.js` 的 `API_BASE` |
-| 发行（`build:mp-weixin`） | `https://situationship.icu` | 同上，按 `NODE_ENV` 分流 |
+| 发行（`build:mp-weixin`） | `http://localhost:8080` | 同上，统一连本地后端 |
 
 运行时覆盖（联调连测试机后端时用）：
 
@@ -30,7 +30,7 @@
 |---|---|---|
 | DCloud appid | `manifest.json` 基础配置 | 当前为占位符 `__UNI__12345678`，发布前替换为你自己的 |
 | 微信小程序 appid | `manifest.json` → `mp-weixin` → `appid` | 当前为 `wxcf8868d6bfdc0d6f`，按需替换 |
-| request 合法域名 | 微信公众平台 | 正式包要求 HTTPS 备案域名（当前 `situationship.icu`）；开发阶段在开发者工具勾选「不校验合法域名」 |
+| request 合法域名 | 微信公众平台 | 仅本地运行时无需配置；若真机调试，需在开发者工具勾选「不校验合法域名」 |
 
 ## 支付联调
 

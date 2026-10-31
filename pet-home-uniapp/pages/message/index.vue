@@ -81,7 +81,7 @@
               :class="{ 'conversation-item-pinned': isPinned(conv) }"
               :data-index="index"
             >
-              <image class="avatar" :src="getAvatarUrl(conv.isPlatform ? '/static/images/宠物之家.png' : conv.otherUserAvatar)" mode="aspectFill" />
+              <image class="avatar" :src="getAvatarUrl(conv.isPlatform ? '/static/images/宠物之家.png' : conv.otherUserAvatar)" mode="aspectFill" @error="onAvatarError(conv)" />
               <view class="conversation-info">
                 <view class="conversation-header">
                   <view class="conversation-name-row">
@@ -958,6 +958,13 @@ export default {
         avatar = '/' + avatar
       }
       return util.getImageUrl ? util.getImageUrl(avatar) : avatar
+    },
+
+    // 头像加载失败（文件已被清理/网络异常）时回退到本地默认头像，避免出现破图
+    onAvatarError(conv) {
+      if (!conv || conv.isPlatform) return
+      if (conv.otherUserAvatar === '/static/images/login-dog.png') return
+      conv.otherUserAvatar = '/static/images/login-dog.png'
     },
     
     // 处理消息发送事件

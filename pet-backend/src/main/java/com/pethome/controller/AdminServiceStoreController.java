@@ -3,7 +3,7 @@ package com.pethome.controller;
 import com.pethome.common.Result;
 import com.pethome.entity.ServiceStore;
 import com.pethome.service.ServiceStoreService;
-import com.pethome.util.AdminContext;
+import com.pethome.security.AdminContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -51,7 +51,8 @@ public class AdminServiceStoreController {
             return Result.success(list);
         } catch (Exception e) {
             log.error("获取服务门店列表失败", e);
-            return Result.error("获取服务门店列表失败: " + e.getMessage());
+            return Result.error("获取服务门店列表失败，请稍后重试");
         }
     }
 }
+

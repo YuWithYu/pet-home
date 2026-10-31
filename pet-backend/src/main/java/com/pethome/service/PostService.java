@@ -94,4 +94,13 @@ public interface PostService extends IService<Post> {
      * @return 是否删除成功（帖子存在且已删除）
      */
     boolean deletePostPhysically(Long postId);
+
+    /**
+     * 绑定标签到帖子：批量获取/创建标签、累加标签热度、写入关联表，
+     * 并回写 post.tags 便于检索与推荐筛选。
+     *
+     * @param post      已保存的帖子（需有 id）
+     * @param tagNames  标签名列表
+     */
+    void savePostTags(Post post, List<String> tagNames);
 }

@@ -36,7 +36,7 @@ import com.pethome.service.PostService;
 import com.pethome.service.AdminService;
 import com.pethome.service.PointsRecordService;
 import com.pethome.entity.PointsRecord;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.jsonwebtoken.Claims;
 
 import java.util.ArrayList;
@@ -327,11 +327,11 @@ public class UserController {
                 exceptionMessage.contains("unauthorized") ||
                 e.getClass().getName().contains("JwtException") ||
                 e.getClass().getName().contains("Token")) {
-                return Result.error(401, "认证失败，请重新登录: " + e.getMessage());
+                return Result.error(401, "认证失败，请重新登录");
             }
             
             // 其他异常返回 500
-            return Result.error(500, "获取用户信息失败: " + e.getMessage());
+            return Result.error(500, "获取用户信息失败，请稍后重试");
         }
     }
 
@@ -506,6 +506,7 @@ public class UserController {
             result.put("avatar", registeredUser.getAvatar());
             return Result.success(result);
         } catch (IllegalArgumentException e) {
+            log.error("注册失败", e);
             // 昵称重复等业务异常
             log.warn("注册失败（业务异常）: {}", e.getMessage());
             return Result.error(e.getMessage());
@@ -546,10 +547,11 @@ public class UserController {
             }
             return Result.error("该手机号未注册，无法重置密码");
         } catch (IllegalArgumentException e) {
+            log.error("忘记密码重置失败", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
             log.error("忘记密码重置失败", e);
-            return Result.error("重置失败: " + e.getMessage());
+            return Result.error("重置失败，请稍后重试");
         }
     }
 
@@ -628,10 +630,11 @@ public class UserController {
             }
             return Result.error("修改失败");
         } catch (IllegalArgumentException e) {
+            log.error("修改密码失败", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
             log.error("修改密码失败", e);
-            return Result.error("修改失败: " + e.getMessage());
+            return Result.error("修改失败，请稍后重试");
         }
     }
 
@@ -693,7 +696,7 @@ public class UserController {
             }
         } catch (Exception e) {
             log.error("注销账号失败", e);
-            return Result.error("注销失败: " + e.getMessage());
+            return Result.error("注销失败，请稍后重试");
         }
     }
 
@@ -764,11 +767,12 @@ public class UserController {
             }
             return Result.success(updatedUser);
         } catch (IllegalArgumentException e) {
+            log.error("更新用户信息失败", e);
             // 昵称重复等业务异常
             return Result.error(e.getMessage());
         } catch (Exception e) {
             log.error("更新用户信息失败", e);
-            return Result.error("更新用户信息失败: " + e.getMessage());
+            return Result.error("更新用户信息失败，请稍后重试");
         }
     }
 
@@ -817,8 +821,9 @@ public class UserController {
 
             return Result.success(result);
         } catch (Exception e) {
+            log.error("获取用户统计失败", e);
             log.error("获取用户统计失败: {}", e.getMessage());
-            return Result.error("获取用户统计失败: " + e.getMessage());
+            return Result.error("获取用户统计失败，请稍后重试");
         }
     }
 
@@ -842,15 +847,11 @@ public class UserController {
                     return Result.error(1, "微信登录失败：服务返回null，请查看后端日志");
                 }
             } catch (RuntimeException e) {
-                // 捕获详细的错误信息并返回给前端
-                String errorMsg = e.getMessage();
                 log.error("微信登录异常", e);
-                return Result.error(1, errorMsg != null ? errorMsg : "微信登录失败，请查看后端日志");
+                return Result.error(1, "微信登录失败，请稍后重试");
             } catch (Exception e) {
-                // 捕获其他异常
-                String errorMsg = "微信登录失败: " + e.getMessage();
                 log.error("微信登录异常", e);
-                return Result.error(1, errorMsg);
+                return Result.error(1, "微信登录失败，请稍后重试");
             }
 
             // 从token中提取用户ID（格式：token_userId_timestamp）
@@ -894,7 +895,7 @@ public class UserController {
             return Result.success(data);
         } catch (Exception e) {
             log.error("微信登录失败", e);
-            return Result.error("微信登录失败: " + e.getMessage());
+            return Result.error("微信登录失败，请稍后重试");
         }
     }
 
@@ -908,7 +909,8 @@ public class UserController {
             result.put("userId", 1);
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("微信授权失败: " + e.getMessage());
+            log.error("微信授权失败", e);
+            return Result.error("微信授权失败，请稍后重试");
         }
     }
 
@@ -940,7 +942,8 @@ public class UserController {
             }
             return Result.success(user);
         } catch (Exception e) {
-            return Result.error("获取用户详情失败: " + e.getMessage());
+            log.error("获取用户详情失败", e);
+            return Result.error("获取用户详情失败，请稍后重试");
         }
     }
 
@@ -954,7 +957,8 @@ public class UserController {
             amount.put("points", 0);
             return Result.success(amount);
         } catch (Exception e) {
-            return Result.error("获取用户资产失败: " + e.getMessage());
+            log.error("获取用户资产失败", e);
+            return Result.error("获取用户资产失败，请稍后重试");
         }
     }
 
@@ -1007,7 +1011,8 @@ public class UserController {
             
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取用户列表失败: " + e.getMessage());
+            log.error("获取用户列表失败", e);
+            return Result.error("获取用户列表失败，请稍后重试");
         }
     }
 
@@ -1030,7 +1035,8 @@ public class UserController {
             }
             return Result.success(user);
         } catch (Exception e) {
-            return Result.error("获取用户信息失败: " + e.getMessage());
+            log.error("获取用户信息失败", e);
+            return Result.error("获取用户信息失败，请稍后重试");
         }
     }
 
@@ -1060,10 +1066,12 @@ public class UserController {
             }
             return Result.success(updatedUser);
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             // 昵称重复等业务异常
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            return Result.error("更新用户信息失败: " + e.getMessage());
+            log.error("更新用户信息失败", e);
+            return Result.error("更新用户信息失败，请稍后重试");
         }
     }
 
@@ -1090,7 +1098,8 @@ public class UserController {
             }
             return Result.success(true);
         } catch (Exception e) {
-            return Result.error("更新用户状态失败: " + e.getMessage());
+            log.error("更新用户状态失败", e);
+            return Result.error("更新用户状态失败，请稍后重试");
         }
     }
 
@@ -1156,7 +1165,8 @@ public class UserController {
             
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取关注列表失败: " + e.getMessage());
+            log.error("获取关注列表失败", e);
+            return Result.error("获取关注列表失败，请稍后重试");
         }
     }
 
@@ -1234,7 +1244,8 @@ public class UserController {
 
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取粉丝列表失败: " + e.getMessage());
+            log.error("获取粉丝列表失败", e);
+            return Result.error("获取粉丝列表失败，请稍后重试");
         }
     }
 
@@ -1273,7 +1284,8 @@ public class UserController {
             
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取动态列表失败: " + e.getMessage());
+            log.error("获取动态列表失败", e);
+            return Result.error("获取动态列表失败，请稍后重试");
         }
     }
     
@@ -1352,7 +1364,7 @@ public class UserController {
             }
         } catch (Exception e) {
             log.error("获取微信手机号异常", e);
-            return Result.error("获取手机号失败: " + e.getMessage());
+            return Result.error("获取手机号失败，请稍后重试");
         }
     }
 
@@ -1405,7 +1417,7 @@ public class UserController {
             return Result.error("绑定失败");
         } catch (Exception e) {
             log.error("绑定手机号失败", e);
-            return Result.error("绑定失败: " + e.getMessage());
+            return Result.error("绑定失败，请稍后重试");
         }
     }
 
@@ -1440,7 +1452,7 @@ public class UserController {
             return Result.error("解绑失败");
         } catch (Exception e) {
             log.error("解绑手机号失败", e);
-            return Result.error("解绑失败: " + e.getMessage());
+            return Result.error("解绑失败，请稍后重试");
         }
     }
 
@@ -1521,7 +1533,7 @@ public class UserController {
             return Result.success("修改成功，请使用新账号登录");
         } catch (Exception e) {
             log.error("修改账号失败", e);
-            return Result.error("修改失败: " + e.getMessage());
+            return Result.error("修改失败，请稍后重试");
         }
     }
     
@@ -1690,7 +1702,7 @@ public class UserController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取积分记录失败", e);
-            return Result.error("获取积分记录失败: " + e.getMessage());
+            return Result.error("获取积分记录失败，请稍后重试");
         }
     }
     
@@ -1736,7 +1748,7 @@ public class UserController {
             return Result.success(statistics);
         } catch (Exception e) {
             log.error("获取积分统计失败", e);
-            return Result.error("获取积分统计失败: " + e.getMessage());
+            return Result.error("获取积分统计失败，请稍后重试");
         }
     }
     
@@ -1776,7 +1788,7 @@ public class UserController {
             return Result.success("更新成功", result);
         } catch (Exception e) {
             log.error("更新用户的魅力值和等级失败", e);
-            return Result.error("更新失败: " + e.getMessage());
+            return Result.error("更新失败，请稍后重试");
         }
     }
 }

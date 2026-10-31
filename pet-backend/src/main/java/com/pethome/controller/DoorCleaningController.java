@@ -70,7 +70,7 @@ public class DoorCleaningController {
             return Result.error("创建预约失败");
         } catch (Exception e) {
             logger.error("创建上门铲屎预约失败", e);
-            return Result.error("创建预约失败: " + e.getMessage());
+            return Result.error("创建预约失败，请稍后重试");
         }
     }
 
@@ -119,7 +119,7 @@ public class DoorCleaningController {
             return Result.success(appointment);
         } catch (Exception e) {
             logger.error("获取预约详情失败", e);
-            return Result.error("获取预约详情失败: " + e.getMessage());
+            return Result.error("获取预约详情失败，请稍后重试");
         }
     }
 
@@ -161,7 +161,7 @@ public class DoorCleaningController {
             return Result.success(appointments);
         } catch (Exception e) {
             logger.error("获取服务人员预约列表失败", e);
-            return Result.error("获取预约列表失败: " + e.getMessage());
+            return Result.error("获取预约列表失败，请稍后重试");
         }
     }
 
@@ -200,7 +200,7 @@ public class DoorCleaningController {
             return Result.success(result);
         } catch (Exception e) {
             logger.error("分页查询预约列表失败", e);
-            return Result.error("获取预约列表失败: " + e.getMessage());
+            return Result.error("获取预约列表失败，请稍后重试");
         }
     }
 
@@ -229,7 +229,7 @@ public class DoorCleaningController {
             return Result.error("状态更新失败，记录不存在");
         } catch (Exception e) {
             logger.error("更新预约状态失败", e);
-            return Result.error("更新预约状态失败: " + e.getMessage());
+            return Result.error("更新预约状态失败，请稍后重试");
         }
     }
 }

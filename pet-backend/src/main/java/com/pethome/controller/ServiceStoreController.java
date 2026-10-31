@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 服务门店控制器
@@ -21,6 +23,8 @@ import java.util.List;
 @RequestMapping("/api/stores")
 @Tag(name = "服务门店管理")
 public class ServiceStoreController {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceStoreController.class);
 
     @Autowired
     private ServiceStoreService serviceStoreService;
@@ -81,7 +85,8 @@ public class ServiceStoreController {
             ServiceStore created = serviceStoreService.createStore(store);
             return Result.success(created);
         } catch (Exception e) {
-            return Result.error("创建门店失败: " + e.getMessage());
+            log.error("创建门店失败", e);
+            return Result.error("创建门店失败，请稍后重试");
         }
     }
 
@@ -109,7 +114,8 @@ public class ServiceStoreController {
             ServiceStore updated = serviceStoreService.updateStore(store);
             return Result.success(updated);
         } catch (Exception e) {
-            return Result.error("更新门店失败: " + e.getMessage());
+            log.error("更新门店失败", e);
+            return Result.error("更新门店失败，请稍后重试");
         }
     }
 
@@ -120,7 +126,8 @@ public class ServiceStoreController {
             boolean success = serviceStoreService.deleteStore(id);
             return Result.success(success);
         } catch (Exception e) {
-            return Result.error("删除门店失败: " + e.getMessage());
+            log.error("删除门店失败", e);
+            return Result.error("删除门店失败，请稍后重试");
         }
     }
 
@@ -131,7 +138,8 @@ public class ServiceStoreController {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 }

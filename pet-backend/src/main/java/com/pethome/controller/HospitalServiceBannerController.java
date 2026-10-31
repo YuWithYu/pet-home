@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 宠物医院服务展示图管理
@@ -26,6 +28,8 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/hospital-banners")
 @Tag(name = "宠物医院服务展示图管理")
 public class HospitalServiceBannerController {
+
+    private static final Logger log = LoggerFactory.getLogger(HospitalServiceBannerController.class);
 
     private static final String DEFAULT_POSITION = "hospital-page-top";
 
@@ -77,7 +81,8 @@ public class HospitalServiceBannerController {
 
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 
@@ -92,7 +97,8 @@ public class HospitalServiceBannerController {
                 return Result.error("删除展示图失败");
             }
         } catch (Exception e) {
-            return Result.error("删除展示图失败: " + e.getMessage());
+            log.error("删除展示图失败", e);
+            return Result.error("删除展示图失败，请稍后重试");
         }
     }
 }

@@ -13,11 +13,15 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/grooming-appointments")
 @Tag(name = "宠物洗护预约管理")
 public class GroomingAppointmentController {
+
+    private static final Logger log = LoggerFactory.getLogger(GroomingAppointmentController.class);
 
     @Autowired
     private GroomingAppointmentService groomingAppointmentService;
@@ -109,7 +113,8 @@ public class GroomingAppointmentController {
                 return Result.error("预约创建失败");
             }
         } catch (Exception e) {
-            return Result.error("预约创建失败: " + e.getMessage());
+            log.error("预约创建失败", e);
+            return Result.error("预约创建失败，请稍后重试");
         }
     }
 
@@ -156,7 +161,8 @@ public class GroomingAppointmentController {
                 return Result.error("状态更新失败");
             }
         } catch (Exception e) {
-            return Result.error("状态更新失败: " + e.getMessage());
+            log.error("状态更新失败", e);
+            return Result.error("状态更新失败，请稍后重试");
         }
     }
 
@@ -206,7 +212,8 @@ public class GroomingAppointmentController {
                 return Result.error("预约更新失败");
             }
         } catch (Exception e) {
-            return Result.error("预约更新失败: " + e.getMessage());
+            log.error("预约更新失败", e);
+            return Result.error("预约更新失败，请稍后重试");
         }
     }
 
@@ -225,7 +232,8 @@ public class GroomingAppointmentController {
                 return Result.error("预约删除失败");
             }
         } catch (Exception e) {
-            return Result.error("预约删除失败: " + e.getMessage());
+            log.error("预约删除失败", e);
+            return Result.error("预约删除失败，请稍后重试");
         }
     }
 }

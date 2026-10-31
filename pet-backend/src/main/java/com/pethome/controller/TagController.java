@@ -14,10 +14,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/tag")
 public class TagController {
+
+    private static final Logger log = LoggerFactory.getLogger(TagController.class);
     
     @Autowired
     private TagService tagService;
@@ -32,7 +36,8 @@ public class TagController {
             List<String> hotTags = tagService.getHotTags(limit);
             return Result.success(hotTags);
         } catch (Exception e) {
-            return Result.error("获取热门标签失败: " + e.getMessage());
+            log.error("获取热门标签失败", e);
+            return Result.error("获取热门标签失败，请稍后重试");
         }
     }
 
@@ -42,7 +47,8 @@ public class TagController {
         try {
             return Result.success(tagService.getAllTagNames());
         } catch (Exception e) {
-            return Result.error("获取标签列表失败: " + e.getMessage());
+            log.error("获取标签列表失败", e);
+            return Result.error("获取标签列表失败，请稍后重试");
         }
     }
     
@@ -53,7 +59,8 @@ public class TagController {
             List<Tag> tags = tagService.getTagsByPostId(postId);
             return Result.success(tags);
         } catch (Exception e) {
-            return Result.error("获取帖子标签失败: " + e.getMessage());
+            log.error("获取帖子标签失败", e);
+            return Result.error("获取帖子标签失败，请稍后重试");
         }
     }
     
@@ -100,7 +107,8 @@ public class TagController {
             
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("根据标签查询帖子失败: " + e.getMessage());
+            log.error("根据标签查询帖子失败", e);
+            return Result.error("根据标签查询帖子失败，请稍后重试");
         }
     }
     
@@ -149,7 +157,8 @@ public class TagController {
             
             return Result.success(posts);
         } catch (Exception e) {
-            return Result.error("获取推荐帖子失败: " + e.getMessage());
+            log.error("获取推荐帖子失败", e);
+            return Result.error("获取推荐帖子失败，请稍后重试");
         }
     }
 
@@ -164,7 +173,8 @@ public class TagController {
             }
             return Result.success(tag);
         } catch (Exception e) {
-            return Result.error("新增标签失败: " + e.getMessage());
+            log.error("新增标签失败", e);
+            return Result.error("新增标签失败，请稍后重试");
         }
     }
 
@@ -178,7 +188,8 @@ public class TagController {
             }
             return Result.success(true);
         } catch (Exception e) {
-            return Result.error("删除标签失败: " + e.getMessage());
+            log.error("删除标签失败", e);
+            return Result.error("删除标签失败，请稍后重试");
         }
     }
 }

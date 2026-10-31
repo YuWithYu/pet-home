@@ -18,11 +18,8 @@ Vue.component('CustomNavbar', CustomNavbar)
 
 
 
-// 环境自动切换：开发构建（dev:mp-weixin / HBuilderX 运行）连本地后端，
-// 发行构建（build:mp-weixin）统一走线上备案域名 https://situationship.icu
-const API_BASE = process.env.NODE_ENV === 'development'
-  ? 'http://localhost:8080'
-  : 'https://situationship.icu'
+// 本项目仅本地运行，不再区分线上环境：所有构建统一连本地后端
+const API_BASE = 'http://localhost:8080'
 util.setApiBaseUrl(API_BASE)
 
 // 挂载 Vue 原型

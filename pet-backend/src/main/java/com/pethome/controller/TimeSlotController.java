@@ -46,8 +46,9 @@ public class TimeSlotController {
             result.put("msg", "success");
             result.put("data", timeSlots);
         } catch (Exception e) {
+            log.error("查询失败", e);
             result.put("code", -1);
-            result.put("msg", "查询失败: " + e.getMessage());
+            result.put("msg", "查询失败，请稍后重试");
         }
         
         return result;
@@ -87,7 +88,7 @@ public class TimeSlotController {
             }
         } catch (Exception e) {
             result.put("code", -1);
-            result.put("msg", "添加失败: " + e.getMessage());
+            result.put("msg", "添加失败，请稍后重试");
             log.error("添加时间段失败", e);
         }
         
@@ -111,8 +112,9 @@ public class TimeSlotController {
                 result.put("msg", "更新失败");
             }
         } catch (Exception e) {
+            log.error("更新失败", e);
             result.put("code", -1);
-            result.put("msg", "更新失败: " + e.getMessage());
+            result.put("msg", "更新失败，请稍后重试");
         }
         
         return result;
@@ -144,8 +146,9 @@ public class TimeSlotController {
                 result.put("msg", "更新失败");
             }
         } catch (Exception e) {
+            log.error("更新失败", e);
             result.put("code", -1);
-            result.put("msg", "更新失败: " + e.getMessage());
+            result.put("msg", "更新失败，请稍后重试");
         }
         
         return result;
@@ -167,8 +170,9 @@ public class TimeSlotController {
                 result.put("msg", "删除失败");
             }
         } catch (Exception e) {
+            log.error("删除失败", e);
             result.put("code", -1);
-            result.put("msg", "删除失败: " + e.getMessage());
+            result.put("msg", "删除失败，请稍后重试");
         }
         
         return result;

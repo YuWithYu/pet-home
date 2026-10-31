@@ -36,4 +36,19 @@ public interface IMessageService {
     /** 用户侧隐藏会话（多端同步，列表不再返回该会话） */
     void hideConversation(Long userId, String conversationId);
 
+    /* ===== 会话聚合查询：客服/网点/平台三类会话，供消息中心列表使用 ===== */
+
+    List<Message> findServiceConversationsByStoreId(Long storeId);
+
+    List<Message> findAllServiceConversations();
+
+    List<Message> findOutletConversationsByServiceStoreId(Long serviceStoreId);
+
+    List<Message> findAllOutletConversations();
+
+    List<Message> findAllPlatformConversations();
+
+    /** 批量未读数：每行包含 conversationId / toId / cnt */
+    List<java.util.Map<String, Object>> findUnreadCounts(List<String> conversationIds);
+
 }

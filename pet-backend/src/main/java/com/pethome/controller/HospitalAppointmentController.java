@@ -13,11 +13,15 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/hospital-appointments")
 @Tag(name = "宠物医院预约管理")
 public class HospitalAppointmentController {
+
+    private static final Logger log = LoggerFactory.getLogger(HospitalAppointmentController.class);
 
     @Autowired
     private HospitalAppointmentService hospitalAppointmentService;
@@ -122,7 +126,8 @@ public class HospitalAppointmentController {
                 return Result.error("预约创建失败");
             }
         } catch (Exception e) {
-            return Result.error("预约创建失败: " + e.getMessage());
+            log.error("预约创建失败", e);
+            return Result.error("预约创建失败，请稍后重试");
         }
     }
 
@@ -193,7 +198,8 @@ public class HospitalAppointmentController {
                 return Result.error("分配失败，请确认服务人员存在且类型为医院");
             }
         } catch (Exception e) {
-            return Result.error("分配失败: " + e.getMessage());
+            log.error("分配失败", e);
+            return Result.error("分配失败，请稍后重试");
         }
     }
 
@@ -224,7 +230,8 @@ public class HospitalAppointmentController {
                 return Result.error("状态更新失败");
             }
         } catch (Exception e) {
-            return Result.error("状态更新失败: " + e.getMessage());
+            log.error("状态更新失败", e);
+            return Result.error("状态更新失败，请稍后重试");
         }
     }
 }

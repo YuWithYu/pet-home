@@ -73,7 +73,7 @@ public class DailyTopicController {
             return Result.success(list);
         } catch (Exception e) {
             log.error("获取主题分类失败", e);
-            return Result.error("获取主题分类失败: " + e.getMessage());
+            return Result.error("获取主题分类失败，请稍后重试");
         }
     }
 
@@ -92,7 +92,7 @@ public class DailyTopicController {
             return Result.success(topic);
         } catch (Exception e) {
             log.error("获取今日专题失败", e);
-            return Result.error("获取今日专题失败: " + e.getMessage());
+            return Result.error("获取今日专题失败，请稍后重试");
         }
     }
 
@@ -112,7 +112,7 @@ public class DailyTopicController {
             return Result.success(topic);
         } catch (Exception e) {
             log.error("获取专题失败", e);
-            return Result.error("获取专题失败: " + e.getMessage());
+            return Result.error("获取专题失败，请稍后重试");
         }
     }
 
@@ -137,7 +137,7 @@ public class DailyTopicController {
             return Result.success(response);
         } catch (Exception e) {
             log.error("获取收藏列表失败", e);
-            return Result.error("获取收藏列表失败: " + e.getMessage());
+            return Result.error("获取收藏列表失败，请稍后重试");
         }
     }
 
@@ -163,7 +163,7 @@ public class DailyTopicController {
             return Result.success(topic);
         } catch (Exception e) {
             log.error("获取专题详情失败", e);
-            return Result.error("获取专题详情失败: " + e.getMessage());
+            return Result.error("获取专题详情失败，请稍后重试");
         }
     }
 
@@ -186,7 +186,7 @@ public class DailyTopicController {
             return Result.success(true);
         } catch (Exception e) {
             log.error("点赞专题失败", e);
-            return Result.error("点赞失败: " + e.getMessage());
+            return Result.error("点赞失败，请稍后重试");
         }
     }
 
@@ -206,7 +206,7 @@ public class DailyTopicController {
             return Result.success(true);
         } catch (Exception e) {
             log.error("取消点赞专题失败", e);
-            return Result.error("取消点赞失败: " + e.getMessage());
+            return Result.error("取消点赞失败，请稍后重试");
         }
     }
 
@@ -229,7 +229,7 @@ public class DailyTopicController {
             return Result.success(true);
         } catch (Exception e) {
             log.error("收藏专题失败", e);
-            return Result.error("收藏失败: " + e.getMessage());
+            return Result.error("收藏失败，请稍后重试");
         }
     }
 
@@ -249,7 +249,7 @@ public class DailyTopicController {
             return Result.success(true);
         } catch (Exception e) {
             log.error("取消收藏专题失败", e);
-            return Result.error("取消收藏失败: " + e.getMessage());
+            return Result.error("取消收藏失败，请稍后重试");
         }
     }
 
@@ -264,7 +264,7 @@ public class DailyTopicController {
             return Result.success(isCollected);
         } catch (Exception e) {
             log.error("检查收藏状态失败", e);
-            return Result.error("检查收藏状态失败: " + e.getMessage());
+            return Result.error("检查收藏状态失败，请稍后重试");
         }
     }
 
@@ -339,7 +339,7 @@ public class DailyTopicController {
             return Result.success(comments != null ? comments : new java.util.ArrayList<>());
         } catch (Exception e) {
             log.error("获取专题评论失败", e);
-            return Result.error("获取评论失败: " + e.getMessage());
+            return Result.error("获取评论失败，请稍后重试");
         }
     }
 
@@ -366,7 +366,7 @@ public class DailyTopicController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("添加专题评论失败", e);
-            return Result.error("添加评论失败: " + e.getMessage());
+            return Result.error("添加评论失败，请稍后重试");
         }
     }
 }

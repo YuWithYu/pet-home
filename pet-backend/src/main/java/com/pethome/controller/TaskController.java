@@ -4,7 +4,7 @@ import com.pethome.common.Result;
 import com.pethome.entity.User;
 import com.pethome.service.TaskService;
 import com.pethome.service.UserService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,7 +61,7 @@ public class TaskController {
             return Result.success("获取任务进度成功", data);
         } catch (Exception e) {
             log.error("获取任务进度失败", e);
-            return Result.error("获取任务进度失败：" + e.getMessage());
+            return Result.error("获取任务进度失败，请稍后重试");
         }
     }
 
@@ -81,7 +81,7 @@ public class TaskController {
             return Result.success("获取每日任务成功", tasks);
         } catch (Exception e) {
             log.error("获取每日任务失败", e);
-            return Result.error("获取每日任务失败：" + e.getMessage());
+            return Result.error("获取每日任务失败，请稍后重试");
         }
     }
 
@@ -108,7 +108,7 @@ public class TaskController {
             return Result.success("领取奖励成功", data);
         } catch (Exception e) {
             log.error("领取奖励失败", e);
-            return Result.error("领取奖励失败：" + e.getMessage());
+            return Result.error("领取奖励失败，请稍后重试");
         }
     }
     

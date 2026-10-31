@@ -10,7 +10,7 @@ import com.pethome.service.NotificationService;
 import com.pethome.service.NoticeService;
 import com.pethome.service.UserNoticeReadService;
 import com.pethome.service.UserService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;

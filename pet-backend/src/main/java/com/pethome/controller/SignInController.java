@@ -4,7 +4,7 @@ import com.pethome.common.Result;
 import com.pethome.entity.User;
 import com.pethome.service.SignInService;
 import com.pethome.service.UserService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,7 +56,7 @@ public class SignInController {
             return Result.success("获取签到数据成功", data);
         } catch (Exception e) {
             log.error("获取签到数据失败", e);
-            return Result.error("获取签到数据失败：" + e.getMessage());
+            return Result.error("获取签到数据失败，请稍后重试");
         }
     }
 
@@ -76,7 +76,7 @@ public class SignInController {
             return Result.success("签到成功", data);
         } catch (Exception e) {
             log.error("签到失败", e);
-            return Result.error("签到失败：" + e.getMessage());
+            return Result.error("签到失败，请稍后重试");
         }
     }
     

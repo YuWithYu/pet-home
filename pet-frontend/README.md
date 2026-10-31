@@ -16,7 +16,7 @@ npm run build:zip  # 构建并打包 zip
 
 ## 开发联调
 
-- 后端地址：`src/config/net.config.js`。开发环境**直连** `http://localhost:8080/api`；生产为 `https://situationship.icu/api`。
+- 后端地址：`src/config/net.config.js`。本项目仅本地运行，统一直连 `http://localhost:8080/api`。
 - `rspack.config.js` 的 `devServer.proxy`（`/api` → `http://localhost:8080`）为代理兜底，日常无需修改。
 - 前提：后端（8080）与 MySQL/Redis 已启动，见 [../pet-backend/README.md](../pet-backend/README.md)。
 - 默认登录账号：`admin / 123456`（见仓库根 [../README.md](../README.md)）。

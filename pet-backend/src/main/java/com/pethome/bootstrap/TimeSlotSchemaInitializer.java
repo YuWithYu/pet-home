@@ -1,4 +1,4 @@
-package com.pethome.config;
+package com.pethome.bootstrap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,3 +114,4 @@ public class TimeSlotSchemaInitializer implements ApplicationRunner {
         return false;
     }
 }
+

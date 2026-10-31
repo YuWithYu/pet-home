@@ -1,4 +1,6 @@
-package com.pethome.util;
+package com.pethome.security;
+
+import com.pethome.security.JwtUtil;
 
 import com.pethome.entity.User;
 import com.pethome.service.UserService;
@@ -80,6 +82,10 @@ public class UserTokenResolver {
                     if (user == null) {
                         user = userService.getUserByPhone(subject);
                     }
+                    if (user == null) {
+                        // 历史 token 存在以 email 作为 subject 的签发方式
+                        user = userService.getUserByEmail(subject);
+                    }
                     if (user == null && subject.length() >= 20) {
                         user = userService.getUserByOpenid(subject);
                     }
@@ -97,3 +103,5 @@ public class UserTokenResolver {
         return null;
     }
 }
+
+

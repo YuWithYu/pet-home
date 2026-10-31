@@ -9,7 +9,7 @@ import com.pethome.entity.LitterService;
 import com.pethome.service.AdminService;
 import com.pethome.service.LitterServiceService;
 import com.pethome.util.FileUploadUtil;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -107,7 +107,7 @@ public class LitterServiceController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("查询铲屎服务列表失败", e);
-            return Result.error("查询服务列表失败: " + e.getMessage());
+            return Result.error("查询服务列表失败，请稍后重试");
         }
     }
 
@@ -158,7 +158,8 @@ public class LitterServiceController {
                 return Result.error("服务不存在");
             }
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 }

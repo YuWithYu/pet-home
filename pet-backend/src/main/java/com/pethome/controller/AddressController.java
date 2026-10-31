@@ -1,12 +1,9 @@
 package com.pethome.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.pethome.common.Result;
 import com.pethome.entity.Address;
-import com.pethome.entity.User;
-import com.pethome.mapper.UserMapper;
 import com.pethome.service.AddressService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.UserTokenResolver;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,69 +23,14 @@ public class AddressController {
     private AddressService addressService;
 
     @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserMapper userMapper;
+    private UserTokenResolver userTokenResolver;
 
     /**
      * 从请求头中获取token并解析userId
      */
     private Long getUserIdFromToken(HttpServletRequest request) {
-        try {
-            String authHeader = request.getHeader("Authorization");
-            log.debug("[AddressController] getUserIdFromToken - Authorization header存在: {}", authHeader != null);
-
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                log.debug("[AddressController] getUserIdFromToken - token长度: {}", token.length());
-
-                // 直接尝试解析username（getUsernameFromToken内部会验证token）
-                // 注意：token中可能存储的是username、email或phone
-                String tokenSubject = jwtUtil.getUsernameFromToken(token);
-                log.debug("[AddressController] getUserIdFromToken - 从token解析的subject: {}", tokenSubject);
-                if (tokenSubject != null && !tokenSubject.isEmpty()) {
-                    User user = null;
-
-                    // 1. 先尝试通过username查找
-                    user = userMapper.selectOne(new QueryWrapper<User>()
-                            .eq("username", tokenSubject)
-                            .last("LIMIT 1"));
-                    if (user != null) {
-                        log.debug("[AddressController] getUserIdFromToken - 通过username找到用户，userId: {}", user.getId());
-                        return user.getId();
-                    }
-
-                    // 2. 如果username找不到，尝试通过email查找
-                    user = userMapper.selectOne(new QueryWrapper<User>()
-                            .eq("email", tokenSubject)
-                            .last("LIMIT 1"));
-                    if (user != null) {
-                        log.debug("[AddressController] getUserIdFromToken - 通过email找到用户，userId: {}", user.getId());
-                        return user.getId();
-                    }
-
-                    // 3. 如果email也找不到，尝试通过phone查找（因为登录时token可能是用phone生成的）
-                    user = userMapper.selectOne(new QueryWrapper<User>()
-                            .eq("phone", tokenSubject)
-                            .last("LIMIT 1"));
-                    if (user != null) {
-                        log.debug("[AddressController] getUserIdFromToken - 通过phone找到用户，userId: {}", user.getId());
-                        return user.getId();
-                    }
-
-                    // 如果都找不到
-                    log.warn("[AddressController] getUserIdFromToken - 未找到用户，tokenSubject: {} (已尝试username、email、phone)", tokenSubject);
-                } else {
-                    log.warn("[AddressController] getUserIdFromToken - 无法从token解析subject（token可能无效或已过期）");
-                }
-            } else {
-                log.debug("[AddressController] getUserIdFromToken - Authorization header不存在或格式不正确");
-            }
-        } catch (Exception e) {
-            log.error("[AddressController] getUserIdFromToken - 异常: {}", e.getMessage(), e);
-        }
-        return null;
+        // 统一走 UserTokenResolver（本项目 token 解析的唯一入口），避免各 Controller 自行实现造成口径漂移
+        return userTokenResolver.resolveUserId(request.getHeader("Authorization"));
     }
 
     @GetMapping("/list")
@@ -144,7 +86,7 @@ public class AddressController {
             return Result.success(savedAddress);
         } catch (Exception e) {
             log.error("[AddressController] createAddress - 异常: {}", e.getMessage(), e);
-            return Result.error("创建地址失败: " + e.getMessage());
+            return Result.error("创建地址失败，请稍后重试");
         }
     }
 

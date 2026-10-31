@@ -16,11 +16,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/grooming-services")
 @Tag(name = "洗护服务管理")
 public class GroomingServiceController {
+
+    private static final Logger log = LoggerFactory.getLogger(GroomingServiceController.class);
 
     @Autowired
     private GroomingServiceService groomingServiceService;
@@ -91,7 +95,8 @@ public class GroomingServiceController {
             GroomingService created = groomingServiceService.createGroomingService(service);
             return Result.success(created);
         } catch (Exception e) {
-            return Result.error("服务创建失败: " + e.getMessage());
+            log.error("服务创建失败", e);
+            return Result.error("服务创建失败，请稍后重试");
         }
     }
 
@@ -105,7 +110,8 @@ public class GroomingServiceController {
             GroomingService updated = groomingServiceService.updateGroomingService(service);
             return Result.success(updated);
         } catch (Exception e) {
-            return Result.error("服务更新失败: " + e.getMessage());
+            log.error("服务更新失败", e);
+            return Result.error("服务更新失败，请稍后重试");
         }
     }
 
@@ -119,7 +125,8 @@ public class GroomingServiceController {
             }
             return Result.error("删除失败");
         } catch (Exception e) {
-            return Result.error("删除失败: " + e.getMessage());
+            log.error("删除失败", e);
+            return Result.error("删除失败，请稍后重试");
         }
     }
 
@@ -150,7 +157,8 @@ public class GroomingServiceController {
             }
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 
@@ -167,7 +175,8 @@ public class GroomingServiceController {
             groomingServiceService.updateGroomingService(service);
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 }

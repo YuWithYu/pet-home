@@ -5,7 +5,7 @@ import com.pethome.entity.Complaint;
 import com.pethome.entity.User;
 import com.pethome.service.ComplaintService;
 import com.pethome.service.UserService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;

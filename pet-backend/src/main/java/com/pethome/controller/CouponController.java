@@ -7,7 +7,7 @@ import com.pethome.entity.UserCoupon;
 import com.pethome.service.CouponService;
 import com.pethome.service.UserCouponService;
 import com.pethome.service.UserService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

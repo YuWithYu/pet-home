@@ -6,7 +6,7 @@ import com.pethome.entity.User;
 import com.pethome.service.OrderService;
 import com.pethome.service.UserService;
 import com.pethome.service.WechatPayService;
-import com.pethome.util.UserTokenResolver;
+import com.pethome.security.UserTokenResolver;
 import com.pethome.util.WechatPayV2Util;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -153,6 +153,7 @@ public class PaymentController {
             data.put("totalFee", totalFeeFen);
             return Result.success(data);
         } catch (com.pethome.common.BusinessException e) {
+            log.error("统一下单失败", e);
             return Result.error(e.getCode(), e.getMessage());
         } catch (Exception e) {
             log.error("统一下单失败", e);
@@ -231,6 +232,7 @@ public class PaymentController {
             data.put("orderNo", order.getOrderNo());
             return Result.success(data);
         } catch (com.pethome.common.BusinessException e) {
+            log.error("查询支付结果失败", e);
             return Result.error(e.getCode(), e.getMessage());
         } catch (Exception e) {
             log.error("查询支付结果失败", e);
@@ -304,6 +306,7 @@ public class PaymentController {
             data.put("orderNo", order.getOrderNo());
             return Result.success(data);
         } catch (com.pethome.common.BusinessException e) {
+            log.error("模拟支付确认失败", e);
             return Result.error(e.getCode(), e.getMessage());
         } catch (Exception e) {
             log.error("模拟支付确认失败", e);
@@ -519,3 +522,4 @@ public class PaymentController {
                 + "</xml>";
     }
 }
+

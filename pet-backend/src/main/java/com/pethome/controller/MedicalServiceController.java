@@ -9,11 +9,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/medical-services")
 @Tag(name = "医疗服务管理")
 public class MedicalServiceController {
+
+    private static final Logger log = LoggerFactory.getLogger(MedicalServiceController.class);
 
     @Autowired
     private MedicalServiceService medicalServiceService;
@@ -26,7 +30,8 @@ public class MedicalServiceController {
             IPage<MedicalService> result = medicalServiceService.getMedicalServiceList(page);
             return Result.success(result.getRecords());
         } catch (Exception e) {
-            return Result.error("获取医疗服务列表失败: " + e.getMessage());
+            log.error("获取医疗服务列表失败", e);
+            return Result.error("获取医疗服务列表失败，请稍后重试");
         }
     }
 
@@ -47,7 +52,8 @@ public class MedicalServiceController {
             MedicalService result = medicalServiceService.createMedicalService(medicalService);
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("创建医疗服务失败: " + e.getMessage());
+            log.error("创建医疗服务失败", e);
+            return Result.error("创建医疗服务失败，请稍后重试");
         }
     }
 
@@ -58,7 +64,8 @@ public class MedicalServiceController {
             MedicalService result = medicalServiceService.updateMedicalService(medicalService);
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("更新医疗服务失败: " + e.getMessage());
+            log.error("更新医疗服务失败", e);
+            return Result.error("更新医疗服务失败，请稍后重试");
         }
     }
 
@@ -69,7 +76,8 @@ public class MedicalServiceController {
             boolean result = medicalServiceService.deleteMedicalService(id);
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("删除医疗服务失败: " + e.getMessage());
+            log.error("删除医疗服务失败", e);
+            return Result.error("删除医疗服务失败，请稍后重试");
         }
     }
 
@@ -80,7 +88,8 @@ public class MedicalServiceController {
             MedicalService result = medicalServiceService.getMedicalServiceById(id);
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("获取医疗服务详情失败: " + e.getMessage());
+            log.error("获取医疗服务详情失败", e);
+            return Result.error("获取医疗服务详情失败，请稍后重试");
         }
     }
 }

@@ -6,10 +6,10 @@ const INTERNAL_IP_STORAGE_KEY = 'PETHOME_INTERNAL_IP' // 存储原始内网IP，
 const DEFAULT_HTTP_BASE = 'http://localhost:8080'
 const DEFAULT_HTTPS_BASE = 'https://localhost'
 const DEFAULT_BACKEND_PORT = '8080'
-// 图片 URL 中 localhost 替换兜底（与 main.js 中 DEV_API_BASE 保持一致，避免子包/时序导致未替换）
-const FALLBACK_DEV_IMAGE_ORIGIN = 'http://10.43.238.18:8080'
-// 线上图片域名兜底：接口/数据库返回 localhost 时，若未替换则用此域名，避免封面黑块（与 main.js API_BASE 一致）
-const PRODUCTION_IMAGE_ORIGIN = 'https://situationship.icu'
+// 图片 URL 中 localhost 替换兜底（本地运行，统一回落到本机后端）
+const FALLBACK_DEV_IMAGE_ORIGIN = DEFAULT_HTTP_BASE
+// 历史线上图片地址经 getImageUrl 处理后也统一转回本机后端（项目已不部署线上环境）
+const PRODUCTION_IMAGE_ORIGIN = DEFAULT_HTTP_BASE
 
 // 解析URL的辅助函数（替代URL构造函数，兼容小程序环境）
 function parseUrl(url) {
@@ -1016,12 +1016,17 @@ function isValidIdCard(idCard) {
 
 // Loading 状态管理
 let loadingCount = 0
+// 记录 loading 是否真实处于展示态：多个并发请求只调用一次 uni.showLoading，
+// 最后一个请求结束时才调用 uni.hideLoading，避免「showLoading 与 hideLoading 必须配对使用」告警
+let loadingVisible = false
 
 /**
  * 显示加载提示
  */
 function showLoading(title = '加载中...') {
   loadingCount++
+  if (loadingVisible) return
+  loadingVisible = true
   uni.showLoading({
     title,
     mask: true
@@ -1032,9 +1037,9 @@ function showLoading(title = '加载中...') {
  * 隐藏加载提示
  */
 function hideLoading() {
-  loadingCount--
-  if (loadingCount <= 0) {
-    loadingCount = 0
+  loadingCount = Math.max(0, loadingCount - 1)
+  if (loadingCount === 0 && loadingVisible) {
+    loadingVisible = false
     uni.hideLoading()
   }
 }
@@ -1051,7 +1056,10 @@ function getLoadingCount() {
  */
 function resetLoading() {
   loadingCount = 0
-  uni.hideLoading()
+  if (loadingVisible) {
+    loadingVisible = false
+    uni.hideLoading()
+  }
 }
 
 /**

@@ -16,6 +16,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
@@ -52,6 +54,28 @@ public class CommonUploadController {
     /** 校验 uploadId：防路径穿越（如 ../../）与非法字符 */
     private boolean isValidUploadId(String uploadId) {
         return uploadId != null && UPLOAD_ID_PATTERN.matcher(uploadId).matches();
+    }
+
+    @Autowired(required = false)
+    private com.pethome.security.UserTokenResolver userTokenResolver;
+
+    /**
+     * 分片目录的归属标识（u=用户 / a=管理员）。
+     * 安全修复：原实现分片目录只用 uploadId，任意登录用户猜中 uploadId 即可合并或删除他人分片。
+     */
+    private String resolveChunkOwner(HttpServletRequest request, String authHeader) {
+        if (request != null) {
+            Object userId = request.getAttribute("userId");
+            if (userId != null) {
+                return "u" + userId;
+            }
+            Object adminId = request.getAttribute("adminId");
+            if (adminId != null) {
+                return "a" + adminId;
+            }
+        }
+        Long resolved = userTokenResolver != null ? userTokenResolver.getUserIdFromBearer(authHeader) : null;
+        return resolved != null ? "u" + resolved : null;
     }
 
     @Autowired
@@ -153,7 +177,8 @@ public class CommonUploadController {
             
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("文件上传失败: " + e.getMessage());
+            log.error("文件上传失败", e);
+            return Result.error("文件上传失败，请稍后重试");
         }
     }
 
@@ -168,7 +193,8 @@ public class CommonUploadController {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 
@@ -183,7 +209,8 @@ public class CommonUploadController {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("轮播图上传失败: " + e.getMessage());
+            log.error("轮播图上传失败", e);
+            return Result.error("轮播图上传失败，请稍后重试");
         }
     }
 
@@ -198,7 +225,8 @@ public class CommonUploadController {
             String imageUrl = fileUploadUtil.uploadImage(file, "files");
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("商品图片上传失败: " + e.getMessage());
+            log.error("商品图片上传失败", e);
+            return Result.error("商品图片上传失败，请稍后重试");
         }
     }
 
@@ -247,7 +275,8 @@ public class CommonUploadController {
                     : videoBaseUrl + "/" + FILES_SUBDIR + "/" + finalName;
             return Result.success(videoUrl);
         } catch (Exception e) {
-            return Result.error("视频上传失败: " + e.getMessage());
+            log.error("视频上传失败", e);
+            return Result.error("视频上传失败，请稍后重试");
         }
     }
 
@@ -261,7 +290,9 @@ public class CommonUploadController {
             @RequestParam("uploadId") String uploadId,
             @RequestParam("chunkIndex") Integer chunkIndex,
             @RequestParam("totalChunks") Integer totalChunks,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             if (file.isEmpty()) {
                 return Result.error("分块文件不能为空");
@@ -279,8 +310,12 @@ public class CommonUploadController {
                 return Result.error("分块参数无效");
             }
             // 分块临时目录放在视频根目录下，避免与图片混用
+            String owner = resolveChunkOwner(request, authHeader);
+            if (owner == null) {
+                return Result.error(401, "请先登录后再上传");
+            }
             String baseDir = videoUploadPath;
-            File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + uploadId.trim());
+            File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + owner + "-" + uploadId.trim());
             if (!chunkDir.exists()) {
                 if (!chunkDir.mkdirs()) {
                     return Result.error("无法创建分块目录");
@@ -290,7 +325,8 @@ public class CommonUploadController {
             file.transferTo(chunkFile);
             return Result.success(null);
         } catch (Exception e) {
-            return Result.error("分块上传失败: " + e.getMessage());
+            log.error("分块上传失败", e);
+            return Result.error("分块上传失败，请稍后重试");
         }
     }
 
@@ -299,7 +335,9 @@ public class CommonUploadController {
     public Result<String> mergeVideoChunks(
             @RequestParam(value = "uploadId") String uploadId,
             @RequestParam(value = "totalChunks") Integer totalChunks,
-            @RequestParam(value = "filename", required = false) String filename) {
+            @RequestParam(value = "filename", required = false) String filename,
+            HttpServletRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             // 安全修复：uploadId 格式白名单 + totalChunks 上限（防路径穿越与合并 DoS）
             if (!isValidUploadId(uploadId == null ? null : uploadId.trim())) {
@@ -309,8 +347,12 @@ public class CommonUploadController {
                 return Result.error("参数无效");
             }
             // 分片与合并都使用视频根目录
+            String owner = resolveChunkOwner(request, authHeader);
+            if (owner == null) {
+                return Result.error(401, "请先登录后再上传");
+            }
             String baseDir = videoUploadPath;
-            File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + uploadId.trim());
+            File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + owner + "-" + uploadId.trim());
             if (!chunkDir.exists() || !chunkDir.isDirectory()) {
                 return Result.error("分块目录不存在");
             }
@@ -352,7 +394,8 @@ public class CommonUploadController {
                     : videoBaseUrl + "/" + FILES_SUBDIR + "/" + finalName;
             return Result.success(videoUrl);
         } catch (Exception e) {
-            return Result.error("合并失败: " + e.getMessage());
+            log.error("视频分块合并失败", e);
+            return Result.error("合并失败，请稍后重试");
         }
     }
 }

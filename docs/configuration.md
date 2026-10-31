@@ -69,7 +69,7 @@
 - 管理后台开发环境**直连**后端（`net.config.js`），`rspack.config.js` 的 `devServer.proxy`（`/api` → `http://localhost:8080`）为兜底路径。
 - 浏览器直连受 CORS 约束，后端默认白名单 `localhost:*` 已覆盖 8091 端口。
 - 小程序 `wx.request` 不走浏览器 CORS，无需处理。
-- **生产**：管理后台 `baseURL = https://situationship.icu/api`；小程序发行构建（`build:mp-weixin`）自动切换到 `https://situationship.icu`（`main.js` 按 `NODE_ENV` 分流）。
+- **本地运行**：管理后台 `baseURL = http://localhost:8080/api`；小程序发行构建（`build:mp-weixin`）同样连 `http://localhost:8080`（`main.js` 中统一配置，不再区分环境）。
 
 ## 上传与大小限制
 

@@ -5,7 +5,7 @@ import com.pethome.entity.Admin;
 import com.pethome.entity.ServiceSchedule;
 import com.pethome.service.AdminService;
 import com.pethome.service.ServiceScheduleService;
-import com.pethome.util.AdminContext;
+import com.pethome.security.AdminContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 服务预约时间管理Controller
@@ -24,6 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/api/schedule")
 @Tag(name = "服务预约时间管理")
 public class ServiceScheduleController {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceScheduleController.class);
 
     @Autowired
     private ServiceScheduleService scheduleService;
@@ -51,7 +55,8 @@ public class ServiceScheduleController {
             List<Map<String, Object>> timeSlots = scheduleService.getAvailableTimeSlots(serviceType, localDate, effectiveStoreId);
             return Result.success(timeSlots);
         } catch (Exception e) {
-            return Result.error("查询可预约时间段失败: " + e.getMessage());
+            log.error("查询可预约时间段失败", e);
+            return Result.error("查询可预约时间段失败，请稍后重试");
         }
     }
 
@@ -65,7 +70,8 @@ public class ServiceScheduleController {
             List<ServiceSchedule> schedules = scheduleService.getMemberSchedule(memberId, localDate);
             return Result.success(schedules);
         } catch (Exception e) {
-            return Result.error("查询服务人员日程失败: " + e.getMessage());
+            log.error("查询服务人员日程失败", e);
+            return Result.error("查询服务人员日程失败，请稍后重试");
         }
     }
 
@@ -82,7 +88,8 @@ public class ServiceScheduleController {
             boolean success = scheduleService.batchCreateSchedules(memberId, start, end, timeSlots);
             return success ? Result.success(true) : Result.error("批量创建时间段失败");
         } catch (Exception e) {
-            return Result.error("批量创建时间段失败: " + e.getMessage());
+            log.error("批量创建时间段失败", e);
+            return Result.error("批量创建时间段失败，请稍后重试");
         }
     }
     
@@ -106,7 +113,8 @@ public class ServiceScheduleController {
             Map<String, Integer> calendar = scheduleService.getScheduleCalendar(serviceType, start, end, effectiveStoreId, memberId);
             return Result.success(calendar);
         } catch (Exception e) {
-            return Result.error("获取排班日历失败: " + e.getMessage());
+            log.error("获取排班日历失败", e);
+            return Result.error("获取排班日历失败，请稍后重试");
         }
     }
     
@@ -128,7 +136,8 @@ public class ServiceScheduleController {
             List<Map<String, Object>> schedules = scheduleService.getDaySchedule(serviceType, localDate, effectiveStoreId, memberId);
             return Result.success(schedules);
         } catch (Exception e) {
-            return Result.error("获取日期排班失败: " + e.getMessage());
+            log.error("获取日期排班失败", e);
+            return Result.error("获取日期排班失败，请稍后重试");
         }
     }
 
@@ -144,9 +153,11 @@ public class ServiceScheduleController {
             Map<String, Object> data = scheduleService.getMemberCalendarView(memberId, start, end);
             return Result.success(data);
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            return Result.error("获取人员月历失败: " + e.getMessage());
+            log.error("获取人员月历失败", e);
+            return Result.error("获取人员月历失败，请稍后重试");
         }
     }
 
@@ -163,9 +174,11 @@ public class ServiceScheduleController {
             boolean ok = scheduleService.setMemberDayAttendance(memberId, localDate, mode);
             return ok ? Result.success(true) : Result.error("设置失败");
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            return Result.error("设置出勤失败: " + e.getMessage());
+            log.error("设置出勤失败", e);
+            return Result.error("设置出勤失败，请稍后重试");
         }
     }
     
@@ -188,9 +201,11 @@ public class ServiceScheduleController {
             boolean success = scheduleService.updateSchedule(schedule);
             return success ? Result.success(true) : Result.error("更新失败");
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         } catch (Exception e) {
-            return Result.error("更新排班失败: " + e.getMessage());
+            log.error("更新排班失败", e);
+            return Result.error("更新排班失败，请稍后重试");
         }
     }
     
@@ -201,7 +216,8 @@ public class ServiceScheduleController {
             boolean success = scheduleService.deleteSchedule(id);
             return success ? Result.success(true) : Result.error("删除失败");
         } catch (Exception e) {
-            return Result.error("删除排班失败: " + e.getMessage());
+            log.error("删除排班失败", e);
+            return Result.error("删除排班失败，请稍后重试");
         }
     }
 
@@ -224,4 +240,5 @@ public class ServiceScheduleController {
         }
     }
 }
+
 

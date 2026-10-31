@@ -8,7 +8,7 @@ import com.pethome.entity.User;
 import com.pethome.service.PetService;
 import com.pethome.service.PetWeightRecordService;
 import com.pethome.service.UserService;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;

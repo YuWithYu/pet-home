@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.pethome.common.Result;
 import com.pethome.entity.*;
 import com.pethome.service.*;
-import com.pethome.util.AdminContext;
+import com.pethome.security.AdminContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -135,7 +135,7 @@ public class VerifyController {
             
         } catch (Exception e) {
             log.error("核销失败", e);
-            return Result.error("核销失败：" + e.getMessage());
+            return Result.error("核销失败，请稍后重试");
         }
     }
 
@@ -164,7 +164,7 @@ public class VerifyController {
             
         } catch (Exception e) {
             log.error("检查核销码状态失败", e);
-            return Result.error("检查失败：" + e.getMessage());
+            return Result.error("检查失败，请稍后重试");
         }
     }
 
@@ -242,7 +242,7 @@ public class VerifyController {
             return Result.success(sorted);
         } catch (Exception e) {
             log.error("获取今日核销记录失败", e);
-            return Result.error("获取今日核销记录失败：" + e.getMessage());
+            return Result.error("获取今日核销记录失败，请稍后重试");
         }
     }
     
@@ -435,3 +435,4 @@ public class VerifyController {
         return null;
     }
 }
+

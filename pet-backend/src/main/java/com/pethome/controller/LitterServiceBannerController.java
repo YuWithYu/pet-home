@@ -19,11 +19,15 @@ import com.pethome.util.FileUploadUtil;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/litter-banners")
 @Tag(name = "铲屎服务展示图管理")
 public class LitterServiceBannerController {
+
+    private static final Logger log = LoggerFactory.getLogger(LitterServiceBannerController.class);
 
     @Autowired
     private LitterServiceBannerService litterServiceBannerService;
@@ -73,7 +77,8 @@ public class LitterServiceBannerController {
             
             return Result.success(imageUrl);
         } catch (Exception e) {
-            return Result.error("图片上传失败: " + e.getMessage());
+            log.error("图片上传失败", e);
+            return Result.error("图片上传失败，请稍后重试");
         }
     }
 
@@ -87,7 +92,8 @@ public class LitterServiceBannerController {
             LitterServiceBanner createdBanner = litterServiceBannerService.createLitterServiceBanner(banner);
             return Result.success(createdBanner);
         } catch (Exception e) {
-            return Result.error("创建展示图失败: " + e.getMessage());
+            log.error("创建展示图失败", e);
+            return Result.error("创建展示图失败，请稍后重试");
         }
     }
 
@@ -99,7 +105,8 @@ public class LitterServiceBannerController {
             LitterServiceBanner updatedBanner = litterServiceBannerService.updateLitterServiceBanner(banner);
             return Result.success(updatedBanner);
         } catch (Exception e) {
-            return Result.error("更新展示图失败: " + e.getMessage());
+            log.error("更新展示图失败", e);
+            return Result.error("更新展示图失败，请稍后重试");
         }
     }
 
@@ -114,7 +121,8 @@ public class LitterServiceBannerController {
                 return Result.error("删除展示图失败");
             }
         } catch (Exception e) {
-            return Result.error("删除展示图失败: " + e.getMessage());
+            log.error("删除展示图失败", e);
+            return Result.error("删除展示图失败，请稍后重试");
         }
     }
 }

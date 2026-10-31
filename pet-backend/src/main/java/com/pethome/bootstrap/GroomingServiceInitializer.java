@@ -1,4 +1,4 @@
-package com.pethome.config;
+package com.pethome.bootstrap;
 
 import com.pethome.entity.GroomingService;
 import com.pethome.service.GroomingServiceService;
@@ -158,4 +158,5 @@ public class GroomingServiceInitializer {
         return service;
     }
 }
+
 

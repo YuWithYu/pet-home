@@ -4,6 +4,8 @@ import com.pethome.common.Result;
 import com.pethome.util.FileUploadUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,8 @@ import java.util.UUID;
 @RequestMapping("/api/admin")
 @Tag(name = "文件上传管理")
 public class UploadController {
+
+    private static final Logger log = LoggerFactory.getLogger(UploadController.class);
 
     @Value("${upload.path:./upload/}")
     private String uploadPath;
@@ -41,7 +45,8 @@ public class UploadController {
                     : fileUploadUtil.uploadFile(file, type);
             return Result.success(url);
         } catch (Exception e) {
-            return Result.error("文件上传失败: " + e.getMessage());
+            log.error("文件上传失败", e);
+            return Result.error("文件上传失败，请稍后重试");
         }
     }
 }

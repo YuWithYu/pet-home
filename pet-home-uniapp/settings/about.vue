@@ -27,10 +27,6 @@
         <view class="section-title">联系我们</view>
         <view class="contact-info">
           <view class="info-item">
-            <text class="info-label">官方网站：</text>
-            <text class="info-value">https://situationship.icu</text>
-          </view>
-          <view class="info-item">
             <text class="info-label">客服邮箱：</text>
             <text class="info-value">csiyu8596@gmail.com</text>
           </view>

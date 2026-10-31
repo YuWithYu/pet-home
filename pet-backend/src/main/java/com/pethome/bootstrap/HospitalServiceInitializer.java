@@ -1,4 +1,4 @@
-package com.pethome.config;
+package com.pethome.bootstrap;
 
 import com.pethome.entity.HospitalService;
 import com.pethome.service.HospitalServiceService;
@@ -172,4 +172,5 @@ public class HospitalServiceInitializer {
         return service;
     }
 }
+
 

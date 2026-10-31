@@ -4,10 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.pethome.common.Result;
 import com.pethome.entity.*;
 import com.pethome.service.*;
-import com.pethome.mapper.StoreMapper;
-import com.pethome.mapper.MessageMapper;
 import com.pethome.entity.Admin;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -55,10 +53,7 @@ public class MessageController {
     private com.pethome.service.UserService userService;
     
     @Autowired(required = false)
-    private StoreMapper storeMapper;
-
-    @Autowired(required = false)
-    private com.pethome.mapper.ServiceStoreMapper serviceStoreMapper;
+    private com.pethome.service.StoreService storeService;
     
     @Autowired(required = false)
     private com.pethome.service.ServiceStoreService serviceStoreService;
@@ -67,16 +62,10 @@ public class MessageController {
     private com.pethome.service.AdminService adminService;
     
     @Autowired(required = false)
-    private MessageMapper messageMapper;
-    
-    @Autowired(required = false)
     private JwtUtil jwtUtil;
     
     @Autowired(required = false)
-    private com.pethome.util.AdminContext adminContext;
-
-    @Autowired(required = false)
-    private com.pethome.mapper.UserMapper userMapper;
+    private com.pethome.security.AdminContext adminContext;
     
     /**
      * 获取私信列表（两个用户之间的消息）
@@ -131,8 +120,8 @@ public class MessageController {
                     String[] parts = storeIdStr.split("_");
                     if (parts.length > 0) {
                         Long storeId = Long.parseLong(parts[0]);
-                        if (storeMapper != null) {
-                            Store store = storeMapper.selectById(storeId);
+                        if (storeService != null) {
+                            Store store = storeService.getById(storeId);
                             if (store != null) {
                                 storeInfo = new HashMap<>();
                                 storeInfo.put("storeId", storeId);
@@ -159,9 +148,9 @@ public class MessageController {
                 try {
                     String outletStr = finalConversationId.replace("outlet_", "");
                     String[] parts = outletStr.split("_");
-                    if (parts.length > 0 && serviceStoreMapper != null) {
+                    if (parts.length > 0 && serviceStoreService != null) {
                         Long serviceStoreId = Long.parseLong(parts[0]);
-                        ServiceStore ss = serviceStoreMapper.selectById(serviceStoreId);
+                        ServiceStore ss = serviceStoreService.getStoreById(serviceStoreId);
                         if (ss != null) {
                             storeInfo = new HashMap<>();
                             storeInfo.put("storeId", serviceStoreId);
@@ -215,7 +204,7 @@ public class MessageController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取私信列表失败", e);
-            return Result.error("获取私信列表失败: " + e.getMessage());
+            return Result.error("获取私信列表失败，请稍后重试");
         }
     }
     
@@ -289,7 +278,7 @@ public class MessageController {
             }
         } catch (Exception e) {
             log.error("发送私信失败", e);
-            return Result.error("发送私信失败: " + e.getMessage());
+            return Result.error("发送私信失败，请稍后重试");
         }
     }
     
@@ -348,7 +337,7 @@ public class MessageController {
             return Result.success("没有未读消息");
         } catch (Exception e) {
             log.error("标记已读失败", e);
-            return Result.error("标记已读失败: " + e.getMessage());
+            return Result.error("标记已读失败，请稍后重试");
         }
     }
     
@@ -376,13 +365,13 @@ public class MessageController {
             
             // 直接通过SQL查询所有客服会话（优化性能，避免循环查询）
             List<Message> allMessages = new ArrayList<>();
-            if (messageMapper != null) {
+            if (messageService != null) {
                 if (finalStoreId != null) {
                     // 如果指定了店铺ID，只查询该店铺的客服会话
-                    allMessages = messageMapper.selectServiceConversationsByStoreId(finalStoreId);
+                    allMessages = messageService.findServiceConversationsByStoreId(finalStoreId);
                 } else {
                     // 查询所有客服会话
-                    allMessages = messageMapper.selectAllServiceConversations();
+                    allMessages = messageService.findAllServiceConversations();
                 }
             } else {
                 // 如果mapper不可用，返回空列表
@@ -453,9 +442,9 @@ public class MessageController {
 
             // 批量查询：店铺/用户/未读数各一条 SQL（替代逐会话循环查询的 N+1）
             Map<Long, Store> storeMap = new HashMap<>();
-            if (storeMapper != null && !storeIdSet.isEmpty()) {
+            if (storeService != null && !storeIdSet.isEmpty()) {
                 try {
-                    for (Store store : storeMapper.selectBatchIds(storeIdSet)) {
+                    for (Store store : storeService.listByIds(storeIdSet)) {
                         if (store != null && store.getId() != null) {
                             storeMap.put(store.getId(), store);
                         }
@@ -521,7 +510,7 @@ public class MessageController {
             return Result.success(conversationList);
         } catch (Exception e) {
             log.error("获取客服会话列表失败", e);
-            return Result.error("获取客服会话列表失败: " + e.getMessage());
+            return Result.error("获取客服会话列表失败，请稍后重试");
         }
     }
 
@@ -541,11 +530,11 @@ public class MessageController {
             Long finalServiceStoreId = currentServiceStoreId != null ? currentServiceStoreId : serviceStoreId;
 
             List<Message> allMessages = new ArrayList<>();
-            if (messageMapper != null) {
+            if (messageService != null) {
                 if (finalServiceStoreId != null) {
-                    allMessages = messageMapper.selectOutletConversationsByServiceStoreId(finalServiceStoreId);
+                    allMessages = messageService.findOutletConversationsByServiceStoreId(finalServiceStoreId);
                 } else {
-                    allMessages = messageMapper.selectAllOutletConversations();
+                    allMessages = messageService.findAllOutletConversations();
                 }
             }
 
@@ -598,9 +587,9 @@ public class MessageController {
 
             // 批量查询：服务门店/用户/未读数各一条 SQL（替代逐会话循环查询的 N+1）
             Map<Long, ServiceStore> serviceStoreMap = new HashMap<>();
-            if (serviceStoreMapper != null && !serviceStoreIdSet.isEmpty()) {
+            if (serviceStoreService != null && !serviceStoreIdSet.isEmpty()) {
                 try {
-                    for (ServiceStore ss : serviceStoreMapper.selectBatchIds(serviceStoreIdSet)) {
+                    for (ServiceStore ss : serviceStoreService.getStoresByIds(serviceStoreIdSet)) {
                         if (ss != null && ss.getId() != null) {
                             serviceStoreMap.put(ss.getId(), ss);
                         }
@@ -685,7 +674,7 @@ public class MessageController {
             return Result.success(conversationList);
         } catch (Exception e) {
             log.error("获取门店客服会话列表失败", e);
-            return Result.error("获取门店客服会话列表失败: " + e.getMessage());
+            return Result.error("获取门店客服会话列表失败，请稍后重试");
         }
     }
 
@@ -701,7 +690,7 @@ public class MessageController {
             if (admin == null) {
                 return Result.error("请先登录");
             }
-            List<Message> allMessages = messageMapper != null ? messageMapper.selectAllPlatformConversations() : new ArrayList<>();
+            List<Message> allMessages = messageService != null ? messageService.findAllPlatformConversations() : new ArrayList<>();
             Map<String, Map<String, Object>> conversationMap = new HashMap<>();
             Set<Long> userIdSet = new HashSet<>();
 
@@ -775,7 +764,7 @@ public class MessageController {
             return Result.success(conversationList);
         } catch (Exception e) {
             log.error("获取平台客服会话列表失败", e);
-            return Result.error("获取平台客服会话列表失败: " + e.getMessage());
+            return Result.error("获取平台客服会话列表失败，请稍后重试");
         }
     }
     
@@ -834,9 +823,9 @@ public class MessageController {
                             convMap.put("otherUserId", "outlet_" + serviceStoreId);
                             String storeName = "门店客服";
                             String storeAvatar = "/static/images/客服.png";
-                            if (serviceStoreMapper != null) {
+                            if (serviceStoreService != null) {
                                 try {
-                                    ServiceStore ss = serviceStoreMapper.selectById(serviceStoreId);
+                                    ServiceStore ss = serviceStoreService.getStoreById(serviceStoreId);
                                     if (ss != null) {
                                         storeName = (ss.getStoreName() != null && !ss.getStoreName().isEmpty() ? ss.getStoreName() : "门店") + "客服";
                                         // 小程序端显示 = 编辑服务门店里「门店头像(客服会话显示)」，未设置时回退管理员头像
@@ -881,9 +870,9 @@ public class MessageController {
                         // 获取店铺信息（名称和头像）
                         String storeName = "店铺客服"; // 默认名称
                         String storeAvatar = "/static/images/客服.png"; // 默认头像
-                        if (storeMapper != null) {
+                        if (storeService != null) {
                             try {
-                                Store store = storeMapper.selectById(storeId);
+                                Store store = storeService.getById(storeId);
                                 if (store != null) {
                                     if (store.getName() != null && !store.getName().isEmpty()) {
                                         storeName = store.getName() + "客服";
@@ -941,7 +930,7 @@ public class MessageController {
             return Result.success(conversationList);
         } catch (Exception e) {
             log.error("获取会话列表失败", e);
-            return Result.error("获取会话列表失败: " + e.getMessage());
+            return Result.error("获取会话列表失败，请稍后重试");
         }
     }
 
@@ -977,7 +966,7 @@ public class MessageController {
             return Result.success(null);
         } catch (Exception e) {
             log.error("隐藏会话失败", e);
-            return Result.error("隐藏会话失败: " + e.getMessage());
+            return Result.error("隐藏会话失败，请稍后重试");
         }
     }
     
@@ -1030,7 +1019,7 @@ public class MessageController {
             }
         } catch (Exception e) {
             log.error("发送客服消息失败", e);
-            return Result.error("发送客服消息失败: " + e.getMessage());
+            return Result.error("发送客服消息失败，请稍后重试");
         }
     }
 
@@ -1073,7 +1062,7 @@ public class MessageController {
             return Result.error("发送失败");
         } catch (Exception e) {
             log.error("发送门店客服消息失败", e);
-            return Result.error("发送门店客服消息失败: " + e.getMessage());
+            return Result.error("发送门店客服消息失败，请稍后重试");
         }
     }
 
@@ -1117,7 +1106,7 @@ public class MessageController {
             return Result.error("发送失败");
         } catch (Exception e) {
             log.error("发送平台客服消息失败", e);
-            return Result.error("发送平台客服消息失败: " + e.getMessage());
+            return Result.error("发送平台客服消息失败，请稍后重试");
         }
     }
     
@@ -1353,7 +1342,7 @@ public class MessageController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取点赞和收藏列表失败", e);
-            return Result.error("获取点赞和收藏列表失败: " + e.getMessage());
+            return Result.error("获取点赞和收藏列表失败，请稍后重试");
         }
     }
     
@@ -1439,7 +1428,7 @@ public class MessageController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取新增关注列表失败", e);
-            return Result.error("获取新增关注列表失败: " + e.getMessage());
+            return Result.error("获取新增关注列表失败，请稍后重试");
         }
     }
     
@@ -1557,7 +1546,7 @@ public class MessageController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取评论和@列表失败", e);
-            return Result.error("获取评论和@列表失败: " + e.getMessage());
+            return Result.error("获取评论和@列表失败，请稍后重试");
         }
     }
     
@@ -1585,22 +1574,25 @@ public class MessageController {
                     .collect(Collectors.toSet());
             followingIds.add(userId); // 排除自己
             
-            // 从数据库查询可推荐用户：状态正常、排除自己和已关注的，按 id 倒序取 limit 个
+            // 从数据库查询可推荐用户：状态正常、排除自己，按 id 倒序取候选后再过滤已关注
             List<com.pethome.entity.User> users = new ArrayList<>();
-            if (userMapper != null && !followingIds.isEmpty()) {
-                QueryWrapper<com.pethome.entity.User> q = new QueryWrapper<>();
-                q.eq("status", 1)
-                 .ne("id", userId)
-                 .notIn("id", followingIds)
-                 .orderByDesc("id")
-                 .last("LIMIT " + Math.min(Math.max(limit != null ? limit : 10, 1), 50));
-                users = userMapper.selectList(q);
-            } else if (userMapper != null) {
-                QueryWrapper<com.pethome.entity.User> q = new QueryWrapper<>();
-                q.eq("status", 1).ne("id", userId)
-                 .orderByDesc("id")
-                 .last("LIMIT " + Math.min(Math.max(limit != null ? limit : 10, 1), 50));
-                users = userMapper.selectList(q);
+            if (userService != null) {
+                int wanted = Math.min(Math.max(limit != null ? limit : 10, 1), 50);
+                // 多取一些候选，保证过滤掉已关注后仍能凑够 wanted 个
+                int candidateLimit = Math.min(wanted + followingIds.size(), 200);
+                List<com.pethome.entity.User> candidates = userService.getRecentUsers(userId, true, candidateLimit);
+                for (com.pethome.entity.User candidate : candidates) {
+                    if (candidate == null || candidate.getId() == null) {
+                        continue;
+                    }
+                    if (followingIds.contains(candidate.getId())) {
+                        continue;
+                    }
+                    users.add(candidate);
+                    if (users.size() >= wanted) {
+                        break;
+                    }
+                }
             }
             
             for (com.pethome.entity.User user : users) {
@@ -1656,7 +1648,7 @@ public class MessageController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取推荐用户失败", e);
-            return Result.error("获取推荐用户失败: " + e.getMessage());
+            return Result.error("获取推荐用户失败，请稍后重试");
         }
     }
 
@@ -1665,11 +1657,11 @@ public class MessageController {
      */
     private Map<Long, User> batchLoadUsers(Set<Long> userIds) {
         Map<Long, User> userMap = new HashMap<>();
-        if (userMapper == null || userIds == null || userIds.isEmpty()) {
+        if (userService == null || userIds == null || userIds.isEmpty()) {
             return userMap;
         }
         try {
-            for (User user : userMapper.selectBatchIds(userIds)) {
+            for (User user : userService.getUsersByIds(userIds)) {
                 if (user != null && user.getId() != null) {
                     userMap.put(user.getId(), user);
                 }
@@ -1686,11 +1678,11 @@ public class MessageController {
      */
     private Map<String, Map<Long, Integer>> batchUnreadCounts(List<String> conversationIds) {
         Map<String, Map<Long, Integer>> result = new HashMap<>();
-        if (messageMapper == null || conversationIds == null || conversationIds.isEmpty()) {
+        if (messageService == null || conversationIds == null || conversationIds.isEmpty()) {
             return result;
         }
         try {
-            List<Map<String, Object>> rows = messageMapper.selectUnreadCounts(conversationIds);
+            List<Map<String, Object>> rows = messageService.findUnreadCounts(conversationIds);
             if (rows != null) {
                 for (Map<String, Object> row : rows) {
                     Object cid = row.get("conversationId");
@@ -1708,3 +1700,4 @@ public class MessageController {
         return result;
     }
 }
+

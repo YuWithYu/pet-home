@@ -43,7 +43,7 @@ public class ProductController {
     private ProductFavoriteService productFavoriteService;
     
     @Autowired(required = false)
-    private com.pethome.util.AdminContext adminContext;
+    private com.pethome.security.AdminContext adminContext;
     
     @Value("${host:http://localhost}")
     private String serverHost;
@@ -225,7 +225,7 @@ public class ProductController {
             }
         } catch (Exception e) {
             log.error("创建商品失败", e);
-            return Result.error("创建商品失败: " + e.getMessage());
+            return Result.error("创建商品失败，请稍后重试");
         }
     }
 
@@ -262,7 +262,7 @@ public class ProductController {
             }
         } catch (Exception e) {
             log.error("更新商品失败", e);
-            return Result.error("更新商品失败: " + e.getMessage());
+            return Result.error("更新商品失败，请稍后重试");
         }
     }
 
@@ -289,7 +289,7 @@ public class ProductController {
             return Result.success(success);
         } catch (Exception e) {
             log.error("删除商品失败", e);
-            return Result.error("删除商品失败: " + e.getMessage());
+            return Result.error("删除商品失败，请稍后重试");
         }
     }
 
@@ -326,7 +326,8 @@ public class ProductController {
             product.setSkuStockList(buildSkuStockList(product));
             return Result.success(product);
         } catch (Exception e) {
-            return Result.error("获取商品详情失败: " + e.getMessage());
+            log.error("获取商品详情失败", e);
+            return Result.error("获取商品详情失败，请稍后重试");
         }
     }
 
@@ -528,7 +529,8 @@ public class ProductController {
             
             return Result.success(reviews);
         } catch (Exception e) {
-            return Result.error("获取商品评价失败: " + e.getMessage());
+            log.error("获取商品评价失败", e);
+            return Result.error("获取商品评价失败，请稍后重试");
         }
     }
 
@@ -540,7 +542,7 @@ public class ProductController {
             return Result.success(salesRecords);
         } catch (Exception e) {
             log.error("获取商品销售记录失败", e);
-            return Result.error("获取商品销售记录失败: " + e.getMessage());
+            return Result.error("获取商品销售记录失败，请稍后重试");
         }
     }
 
@@ -584,7 +586,7 @@ public class ProductController {
             }
         } catch (Exception e) {
             log.error("创建评价失败", e);
-            return Result.error("创建评价失败: " + e.getMessage());
+            return Result.error("创建评价失败，请稍后重试");
         }
     }
     
@@ -612,7 +614,7 @@ public class ProductController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("操作失败", e);
-            return Result.error("操作失败: " + e.getMessage());
+            return Result.error("操作失败，请稍后重试");
         }
     }
     
@@ -632,7 +634,7 @@ public class ProductController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取失败", e);
-            return Result.error("获取失败: " + e.getMessage());
+            return Result.error("获取失败，请稍后重试");
         }
     }
     
@@ -660,7 +662,7 @@ public class ProductController {
             return Result.success(reply);
         } catch (Exception e) {
             log.error("回复失败", e);
-            return Result.error("回复失败: " + e.getMessage());
+            return Result.error("回复失败，请稍后重试");
         }
     }
     
@@ -673,7 +675,7 @@ public class ProductController {
             return Result.success(replies);
         } catch (Exception e) {
             log.error("获取回复列表失败", e);
-            return Result.error("获取回复列表失败: " + e.getMessage());
+            return Result.error("获取回复列表失败，请稍后重试");
         }
     }
 
@@ -694,7 +696,7 @@ public class ProductController {
             }
         } catch (Exception e) {
             log.error("收藏失败", e);
-            return Result.error("收藏失败: " + e.getMessage());
+            return Result.error("收藏失败，请稍后重试");
         }
     }
 
@@ -715,7 +717,7 @@ public class ProductController {
             }
         } catch (Exception e) {
             log.error("取消收藏失败", e);
-            return Result.error("取消收藏失败: " + e.getMessage());
+            return Result.error("取消收藏失败，请稍后重试");
         }
     }
 
@@ -731,7 +733,8 @@ public class ProductController {
             boolean isCollected = productFavoriteService.isCollected(id, userId);
             return Result.success(isCollected);
         } catch (Exception e) {
-            return Result.error("检查收藏状态失败: " + e.getMessage());
+            log.error("检查收藏状态失败", e);
+            return Result.error("检查收藏状态失败，请稍后重试");
         }
     }
 
@@ -763,7 +766,8 @@ public class ProductController {
             return Result.success(response);
         } catch (Exception e) {
             log.error("获取收藏列表失败", e);
-            return Result.error("获取收藏列表失败: " + e.getMessage());
+            return Result.error("获取收藏列表失败，请稍后重试");
         }
     }
 }
+

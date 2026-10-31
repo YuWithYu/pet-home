@@ -49,7 +49,7 @@ public class BannerController {
     @Value("${server.port:8080}")
     private String serverPort;
 
-    /** 生产环境公网 base URL（如 https://situationship.icu），设后接口返回的图片地址用此域名，不拼端口 */
+    /** 公网 base URL（可选，默认空即用本机 http://localhost:8080），设后接口返回的图片地址用此域名，不拼端口 */
     @Value("${app.public-base-url:}")
     private String publicBaseUrl;
 
@@ -194,7 +194,7 @@ public class BannerController {
 
         } catch (IOException e) {
             log.error("轮播图文件上传失败", e);
-            return Result.error("文件上传失败: " + e.getMessage());
+            return Result.error("文件上传失败，请稍后重试");
         }
     }
 

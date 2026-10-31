@@ -603,7 +603,7 @@ export default {
     async testApiConnection() {
       try {
         const base = (util.getApiBaseUrl && util.getApiBaseUrl()) || ''
-        const testUrl = (base.replace(/\/+$/, '') || 'https://situationship.icu') + '/api/community/posts?page=1&size=5'
+        const testUrl = (base.replace(/\/+$/, '') || 'http://localhost:8080') + '/api/community/posts?page=1&size=5'
         const response = await uni.request({
           url: testUrl,
           method: 'GET',
@@ -1511,10 +1511,10 @@ export default {
       })
     },
 
-    // 将帖子中所有图片/封面 URL 统一规范为当前可访问的域名（避免 localhost 导致发现流封面黑块）
+    // 将帖子中所有图片/封面 URL 统一规范为本地后端地址（项目仅本地运行）
     normalizePostImageUrls(posts) {
       if (!posts || !Array.isArray(posts)) return
-      const PROD_ORIGIN = 'https://situationship.icu'
+      const PROD_ORIGIN = 'http://localhost:8080'
       const toProdUrl = (url) => {
         if (!url || typeof url !== 'string') return url
         const s = url.trim()

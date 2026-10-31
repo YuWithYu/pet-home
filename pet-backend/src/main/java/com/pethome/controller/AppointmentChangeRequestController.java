@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 预约变更申请：用户提交变更；工作人员查询待处理、同意/拒绝
@@ -20,6 +22,8 @@ import java.util.Map;
 @RequestMapping("/api/appointment-change-request")
 @Tag(name = "预约变更申请")
 public class AppointmentChangeRequestController {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentChangeRequestController.class);
 
     @Autowired
     private AppointmentChangeRequestService changeRequestService;
@@ -69,6 +73,7 @@ public class AppointmentChangeRequestController {
                     requestedKeyHandoverMethod, requestedKeyReturnMethod, requestedPetId);
             return Result.success(req);
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         }
     }
@@ -166,6 +171,7 @@ public class AppointmentChangeRequestController {
             boolean ok = changeRequestService.cancelByUser(appointmentType, appointmentId, userId);
             return ok ? Result.success(null) : Result.error("无待确认的变更申请或已处理");
         } catch (IllegalArgumentException e) {
+            log.error("操作失败", e);
             return Result.error(e.getMessage());
         }
     }

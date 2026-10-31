@@ -4,7 +4,7 @@ import com.pethome.service.AdminService;
 import com.pethome.service.UserService;
 import com.pethome.entity.Admin;
 import com.pethome.entity.User;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

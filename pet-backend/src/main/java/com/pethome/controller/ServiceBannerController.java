@@ -19,11 +19,15 @@ import com.pethome.service.MedicalServiceBannerService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api")
 @Tag(name = "服务展示图管理")
 public class ServiceBannerController {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceBannerController.class);
 
     @Autowired
     private MedicalServiceBannerService medicalServiceBannerService;
@@ -93,8 +97,9 @@ public class ServiceBannerController {
                 result.put("data", null);
             }
         } catch (Exception e) {
+            log.error("获取洗护服务展示图失败", e);
             result.put("code", 500);
-            result.put("msg", "获取洗护服务展示图失败: " + e.getMessage());
+            result.put("msg", "获取洗护服务展示图失败，请稍后重试");
             result.put("data", null);
         }
 
@@ -126,8 +131,9 @@ public class ServiceBannerController {
                 result.put("data", null);
             }
         } catch (Exception e) {
+            log.error("获取宠物医院展示图失败", e);
             result.put("code", 500);
-            result.put("msg", "获取宠物医院展示图失败: " + e.getMessage());
+            result.put("msg", "获取宠物医院展示图失败，请稍后重试");
             result.put("data", null);
         }
 
@@ -159,8 +165,9 @@ public class ServiceBannerController {
                 result.put("data", null);
             }
         } catch (Exception e) {
+            log.error("获取铲屎服务展示图失败", e);
             result.put("code", 500);
-            result.put("msg", "获取铲屎服务展示图失败: " + e.getMessage());
+            result.put("msg", "获取铲屎服务展示图失败，请稍后重试");
             result.put("data", null);
         }
 
@@ -175,7 +182,8 @@ public class ServiceBannerController {
             MedicalServiceBanner banner = medicalServiceBannerService.getBannerByPosition("medical-page-top");
             return Result.success(banner);
         } catch (Exception e) {
-            return Result.error("获取服务展示图失败: " + e.getMessage());
+            log.error("获取服务展示图失败", e);
+            return Result.error("获取服务展示图失败，请稍后重试");
         }
     }
 }

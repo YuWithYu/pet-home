@@ -40,7 +40,7 @@ public class SearchController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("首页搜索失败", e);
-            return Result.error("搜索失败: " + e.getMessage());
+            return Result.error("搜索失败，请稍后重试");
         }
     }
     
@@ -59,7 +59,7 @@ public class SearchController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("社区搜索失败", e);
-            return Result.error("搜索失败: " + e.getMessage());
+            return Result.error("搜索失败，请稍后重试");
         }
     }
     
@@ -74,7 +74,7 @@ public class SearchController {
             return Result.success(hotKeywords);
         } catch (Exception e) {
             log.error("获取热搜失败", e);
-            return Result.error("获取热搜失败: " + e.getMessage());
+            return Result.error("获取热搜失败，请稍后重试");
         }
     }
 }

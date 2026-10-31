@@ -1,9 +1,6 @@
 const network = {
-  // 生产环境后端地址（开发环境走 devServer 代理，见 rspack.config.js devServer.proxy）
-  baseURL:
-    process.env.NODE_ENV === "production"
-      ? "https://situationship.icu/api"
-      : "http://localhost:8080/api",
+  // 本项目仅本地运行：直连本地后端（不再区分生产环境域名）
+  baseURL: "http://localhost:8080/api",
   contentType: "application/json;charset=UTF-8",
   messageDuration: 3000,
   requestTimeout: 30000,

@@ -61,7 +61,7 @@ public class AdminDailyTopicController {
             return Result.success(response);
         } catch (Exception e) {
             log.error("获取专题列表失败", e);
-            return Result.error("获取专题列表失败: " + e.getMessage());
+            return Result.error("获取专题列表失败，请稍后重试");
         }
     }
 
@@ -81,7 +81,7 @@ public class AdminDailyTopicController {
             return Result.success(topic);
         } catch (Exception e) {
             log.error("获取专题详情失败", e);
-            return Result.error("获取专题详情失败: " + e.getMessage());
+            return Result.error("获取专题详情失败，请稍后重试");
         }
     }
 
@@ -121,7 +121,7 @@ public class AdminDailyTopicController {
             return Result.success(created);
         } catch (Exception e) {
             log.error("创建专题失败", e);
-            return Result.error("创建专题失败: " + e.getMessage());
+            return Result.error("创建专题失败，请稍后重试");
         }
     }
 
@@ -173,7 +173,7 @@ public class AdminDailyTopicController {
             return Result.success(updated);
         } catch (Exception e) {
             log.error("更新专题失败", e);
-            return Result.error("更新专题失败: " + e.getMessage());
+            return Result.error("更新专题失败，请稍后重试");
         }
     }
 
@@ -192,7 +192,7 @@ public class AdminDailyTopicController {
             }
         } catch (Exception e) {
             log.error("删除专题失败", e);
-            return Result.error("删除专题失败: " + e.getMessage());
+            return Result.error("删除专题失败，请稍后重试");
         }
     }
 
@@ -211,7 +211,7 @@ public class AdminDailyTopicController {
             }
         } catch (Exception e) {
             log.error("发布专题失败", e);
-            return Result.error("发布专题失败: " + e.getMessage());
+            return Result.error("发布专题失败，请稍后重试");
         }
     }
 
@@ -230,7 +230,7 @@ public class AdminDailyTopicController {
             }
         } catch (Exception e) {
             log.error("下线专题失败", e);
-            return Result.error("下线专题失败: " + e.getMessage());
+            return Result.error("下线专题失败，请稍后重试");
         }
     }
 
@@ -245,7 +245,7 @@ public class AdminDailyTopicController {
             return Result.success(posts);
         } catch (Exception e) {
             log.error("获取专题帖子失败", e);
-            return Result.error("获取专题帖子失败: " + e.getMessage());
+            return Result.error("获取专题帖子失败，请稍后重试");
         }
     }
 
@@ -267,7 +267,7 @@ public class AdminDailyTopicController {
             return Result.success(null);
         } catch (Exception e) {
             log.error("关联帖子失败", e);
-            return Result.error("关联帖子失败: " + e.getMessage());
+            return Result.error("关联帖子失败，请稍后重试");
         }
     }
 
@@ -353,7 +353,7 @@ public class AdminDailyTopicController {
             return Result.success(response);
         } catch (Exception e) {
             log.error("搜索帖子失败", e);
-            return Result.error("搜索帖子失败: " + e.getMessage());
+            return Result.error("搜索帖子失败，请稍后重试");
         }
     }
 

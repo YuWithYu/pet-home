@@ -202,12 +202,59 @@ mysql -u root -p pet_home -e "source database/pet_home.sql"
 - `coupon` / `user_coupon` 建表与 `time_slots` 补列另有启动期初始化器幂等兜底。
 - 表结构变更请使用 `database/migration_*.sql`，不要整库重导旧快照。
 
-### 2. 启动 Redis
+### 2. 启动 Redis 与消息中间件（可选）
 
 ```powershell
-# Windows 示例，按实际安装路径调整
+# Redis（Windows 示例，按实际安装路径调整）
 "C:\Redis\redis-server.exe"
 ```
+
+Kafka（行为埋点管道）与 RabbitMQ（订单超时延迟队列）为可选组件，二进制统一放在 `infra/`（已加入 `.gitignore`，不入库）。
+本地已验证可用的版本：Kafka 4.1.2（KRaft 单节点，无 ZooKeeper）、RabbitMQ 4.4.0 + Erlang/OTP 28。
+
+**下载与目录布局**（脚本按下列路径探测，缺哪个就跳过哪个）：
+
+```
+infra/
+├── kafka/kafka_2.13-4.1.2/libs/                        # 解压后的 Kafka，脚本使用其 libs 目录
+├── erlang/bin/erl.exe                                 # Erlang 解压后 bin 就在顶层
+└── rabbitmq/rabbitmq_server-4.4.0/sbin/rabbitmq-server.bat
+```
+
+| 组件 | 版本 | 下载地址 | 备注 |
+|---|---|---|---|
+| Kafka | 4.1.2 | <https://archive.apache.org/dist/kafka/4.1.2/kafka_2.13-4.1.2.tgz>（国内可换 [腾讯云镜像](https://mirrors.cloud.tencent.com/apache/kafka/4.1.2/kafka_2.13-4.1.2.tgz)） | 133 MB，需要 JDK 17+；解压到 `infra/kafka` |
+| Erlang/OTP | 28.4 | <https://github.com/erlang/otp/releases/download/OTP-28.4/otp_win64_28.4.zip> | 170 MB，RabbitMQ 4.x 要求 OTP 27+；解压到 `infra/erlang` |
+| RabbitMQ | 4.4.0 | <https://mirrors.huaweicloud.com/rabbitmq-server/v4.4.0/rabbitmq-server-windows-4.4.0.zip> | 68 MB；解压到 `infra/rabbitmq`，首次需启用管理台插件 |
+
+Windows 上的两个坑：
+
+- **管理台插件**只在首次安装后启用一次，否则 15672 打不开。脚本不自动改插件配置，需手工执行一次（执行前先把 `infra/erlang/bin` 加到 `PATH`、设 `ERLANG_HOME`，与 `start-infra.ps1` 里的设置保持一致）：
+
+```powershell
+infra\rabbitmq\rabbitmq_server-4.4.0\sbin\rabbitmq-plugins.bat enable rabbitmq_management
+```
+
+- **Kafka 官方 `bin\windows\*.bat`** 在本机实测会因 classpath 过长报 `The input line is too long`，所以脚本改为直接 `java -cp "libs\*" kafka.Kafka`；排查问题时管理命令同理用工具类，例如 `java -cp "libs\*" org.apache.kafka.tools.TopicCommand --list`。
+
+```powershell
+# 一键启动 Kafka（127.0.0.1:9092，控制器 9093）与 RabbitMQ（5672，管理台 15672 guest/guest）
+powershell -ExecutionPolicy Bypass -File scripts\start-infra.ps1
+
+# 停止（RabbitMQ 用 rabbitmqctl 优雅关闭，Kafka 按端口结束）
+powershell -ExecutionPolicy Bypass -File scripts\stop-infra.ps1
+```
+
+对应开关（默认值见 `application.yml`）：
+
+| 组件 | 开关 | 默认 | 说明 |
+|---|---|---|---|
+| Kafka | `APP_KAFKA_ENABLED` | `true` | 未启动 broker 时埋点投递自动跳过，不影响主流程 |
+| RabbitMQ | `APP_MQ_ENABLED` | `true` | 本地 broker 已内置：`infra/erlang` + `infra/rabbitmq`；设 `false` 时订单超时自动降级为 `@Scheduled` 扫表 + Redis |
+
+RabbitMQ 生效内容：`pethome.delay.exchange → pethome.delay.order.queue`（队列级 TTL 30 分钟）→ 死信路由到 `pethome.biz.exchange → pethome.order.timeout.queue`（手动 ACK 消费）→ 失败进 `pethome.dlx.exchange → pethome.order.timeout.dlq`（最多重试 3 次）。业务侧通过本地消息表 `mq_outbox` + 每分钟补偿任务保证「订单落库成功但投递失败」也能最终送达。
+
+> 未安装 broker 的机器：`start-infra.ps1` 会跳过缺失组件并提示；此时用 `APP_MQ_ENABLED=false` 启动后端即可，主流程不受影响。
 
 ### 3. 启动后端
 

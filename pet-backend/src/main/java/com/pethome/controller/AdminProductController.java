@@ -35,7 +35,7 @@ public class AdminProductController {
             return success ? Result.success(true) : Result.error("商品不存在或操作失败");
         } catch (Exception e) {
             log.error("设置商品热门推荐失败", e);
-            return Result.error("操作失败: " + e.getMessage());
+            return Result.error("操作失败，请稍后重试");
         }
     }
 
@@ -57,7 +57,7 @@ public class AdminProductController {
             return success ? Result.success(true) : Result.error("批量操作失败");
         } catch (Exception e) {
             log.error("批量设置商品热门推荐失败", e);
-            return Result.error("操作失败: " + e.getMessage());
+            return Result.error("操作失败，请稍后重试");
         }
     }
 }

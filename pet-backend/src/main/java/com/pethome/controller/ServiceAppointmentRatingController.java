@@ -4,9 +4,8 @@ import com.pethome.common.Result;
 import com.pethome.entity.ServiceAppointmentRating;
 import com.pethome.entity.ServiceMember;
 import com.pethome.entity.User;
-import com.pethome.mapper.ServiceAppointmentRatingMapper;
 import com.pethome.service.*;
-import com.pethome.util.JwtUtil;
+import com.pethome.security.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +18,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 /**
  * 服务预约评价接口 - 用户对已完成服务进行评分
@@ -32,7 +30,7 @@ public class ServiceAppointmentRatingController {
     private static final Logger log = LoggerFactory.getLogger(ServiceAppointmentRatingController.class);
 
     @Autowired
-    private ServiceAppointmentRatingMapper ratingMapper;
+    private ServiceAppointmentRatingService ratingService;
     @Autowired
     private ServiceMemberService serviceMemberService;
     @Autowired
@@ -118,7 +116,7 @@ public class ServiceAppointmentRatingController {
                 return Result.error("只能评价自己的订单");
             }
 
-            ServiceAppointmentRating existing = ratingMapper.findByAppointmentAndUser(appointmentType, appointmentId, userId);
+            ServiceAppointmentRating existing = ratingService.findByAppointmentAndUser(appointmentType, appointmentId, userId);
             if (existing != null) {
                 return Result.error("您已评价过该订单");
             }
@@ -130,9 +128,9 @@ public class ServiceAppointmentRatingController {
             entity.setUserId(userId);
             entity.setRating(rating);
             entity.setComment(comment != null && !comment.isEmpty() ? comment : null);
-            ratingMapper.insert(entity);
+            ratingService.save(entity);
 
-            BigDecimal avgRating = ratingMapper.avgRatingByMemberId(memberId);
+            BigDecimal avgRating = ratingService.avgRatingByMemberId(memberId);
             ServiceMember sm = serviceMemberService.getMemberById(memberId);
             if (sm != null && avgRating != null) {
                 sm.setRating(avgRating);
@@ -144,7 +142,7 @@ public class ServiceAppointmentRatingController {
             return Result.error("参数格式错误");
         } catch (Exception e) {
             log.error("提交服务评价失败", e);
-            return Result.error("评价失败: " + e.getMessage());
+            return Result.error("评价失败，请稍后重试");
         }
     }
 
@@ -152,9 +150,7 @@ public class ServiceAppointmentRatingController {
     @Operation(summary = "获取服务人员的所有评价")
     public Result<List<Map<String, Object>>> getMemberRatings(@PathVariable Long memberId) {
         try {
-            QueryWrapper<ServiceAppointmentRating> q = new QueryWrapper<>();
-            q.eq("member_id", memberId).orderByDesc("create_time");
-            List<ServiceAppointmentRating> list = ratingMapper.selectList(q);
+            List<ServiceAppointmentRating> list = ratingService.listByMemberId(memberId);
             List<Map<String, Object>> result = new ArrayList<>();
             for (ServiceAppointmentRating r : list) {
                 Map<String, Object> m = new java.util.HashMap<>();
@@ -185,7 +181,7 @@ public class ServiceAppointmentRatingController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取服务人员评价列表失败", e);
-            return Result.error("获取评价列表失败: " + e.getMessage());
+            return Result.error("获取评价列表失败，请稍后重试");
         }
     }
 
@@ -200,7 +196,7 @@ public class ServiceAppointmentRatingController {
             if (userId == null) {
                 return Result.success(Map.of("rated", false));
             }
-            ServiceAppointmentRating r = ratingMapper.findByAppointmentAndUser(appointmentType, appointmentId, userId);
+            ServiceAppointmentRating r = ratingService.findByAppointmentAndUser(appointmentType, appointmentId, userId);
             return Result.success(Map.of("rated", r != null, "rating", r != null ? r.getRating() : 0));
         } catch (Exception e) {
             return Result.success(Map.of("rated", false));

@@ -9,7 +9,7 @@ import com.pethome.entity.Banner;
 import com.pethome.entity.Comment;
 import com.pethome.entity.Post;
 import com.pethome.entity.User;
-import com.pethome.mapper.UserMapper;
+import com.pethome.service.UserService;
 import com.pethome.service.BannerService;
 import com.pethome.service.CommentService;
 import com.pethome.service.PostService;
@@ -51,7 +51,7 @@ public class AdminCommunityController {
     private UserFollowService userFollowService;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserService userService;
 
     @Autowired
     private BannerService bannerService;
@@ -144,7 +144,8 @@ public class AdminCommunityController {
 
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取帖子列表失败: " + e.getMessage());
+            log.error("获取帖子列表失败", e);
+            return Result.error("获取帖子列表失败，请稍后重试");
         }
     }
 
@@ -177,7 +178,8 @@ public class AdminCommunityController {
             }
             return Result.success(null);
         } catch (Exception e) {
-            return Result.error("更新帖子状态失败: " + e.getMessage());
+            log.error("更新帖子状态失败", e);
+            return Result.error("更新帖子状态失败，请稍后重试");
         }
     }
 
@@ -199,7 +201,8 @@ public class AdminCommunityController {
             postService.updateById(post);
             return Result.success(null);
         } catch (Exception e) {
-            return Result.error("设置置顶失败: " + e.getMessage());
+            log.error("设置置顶失败", e);
+            return Result.error("设置置顶失败，请稍后重试");
         }
     }
 
@@ -221,7 +224,8 @@ public class AdminCommunityController {
             postService.updateById(post);
             return Result.success(null);
         } catch (Exception e) {
-            return Result.error("设置热门失败: " + e.getMessage());
+            log.error("设置热门失败", e);
+            return Result.error("设置热门失败，请稍后重试");
         }
     }
 
@@ -239,7 +243,8 @@ public class AdminCommunityController {
             invalidateStatsCache();
             return Result.success(null);
         } catch (Exception e) {
-            return Result.error("删除帖子失败: " + e.getMessage());
+            log.error("删除帖子失败", e);
+            return Result.error("删除帖子失败，请稍后重试");
         }
     }
 
@@ -271,7 +276,8 @@ public class AdminCommunityController {
 
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取评论列表失败: " + e.getMessage());
+            log.error("获取评论列表失败", e);
+            return Result.error("获取评论列表失败，请稍后重试");
         }
     }
 
@@ -293,7 +299,8 @@ public class AdminCommunityController {
             commentService.updateById(comment);
             return Result.success(null);
         } catch (Exception e) {
-            return Result.error("更新评论状态失败: " + e.getMessage());
+            log.error("更新评论状态失败", e);
+            return Result.error("更新评论状态失败，请稍后重试");
         }
     }
 
@@ -314,7 +321,8 @@ public class AdminCommunityController {
             commentService.updateById(comment);
             return Result.success(null);
         } catch (Exception e) {
-            return Result.error("删除评论失败: " + e.getMessage());
+            log.error("删除评论失败", e);
+            return Result.error("删除评论失败，请稍后重试");
         }
     }
 
@@ -328,7 +336,8 @@ public class AdminCommunityController {
             List<Post> posts = postService.getUserPosts(id);
             return Result.success(posts);
         } catch (Exception e) {
-            return Result.error("获取用户帖子失败: " + e.getMessage());
+            log.error("获取用户帖子失败", e);
+            return Result.error("获取用户帖子失败，请稍后重试");
         }
     }
 
@@ -343,7 +352,8 @@ public class AdminCommunityController {
             fillCommentUserInfo(comments);
             return Result.success(comments);
         } catch (Exception e) {
-            return Result.error("获取用户评论失败: " + e.getMessage());
+            log.error("获取用户评论失败", e);
+            return Result.error("获取用户评论失败，请稍后重试");
         }
     }
 
@@ -360,7 +370,7 @@ public class AdminCommunityController {
         }
         Map<Long, User> userMap = new HashMap<>();
         if (!userIds.isEmpty()) {
-            for (User user : userMapper.selectBatchIds(userIds)) {
+            for (User user : userService.getUsersByIds(userIds)) {
                 userMap.put(user.getId(), user);
             }
         }
@@ -456,7 +466,8 @@ public class AdminCommunityController {
 
             return Result.success(response);
         } catch (Exception e) {
-            return Result.error("获取每日专题帖子失败: " + e.getMessage());
+            log.error("获取每日专题帖子失败", e);
+            return Result.error("获取每日专题帖子失败，请稍后重试");
         }
     }
 
@@ -472,7 +483,7 @@ public class AdminCommunityController {
             return Result.success(allBanners != null ? allBanners : new ArrayList<>());
         } catch (Exception e) {
             log.error("获取每日专题Banner失败", e);
-            return Result.error("获取每日专题Banner失败: " + e.getMessage());
+            return Result.error("获取每日专题Banner失败，请稍后重试");
         }
     }
 
@@ -494,7 +505,8 @@ public class AdminCommunityController {
                 return Result.success(created);
             }
         } catch (Exception e) {
-            return Result.error("保存每日专题Banner失败: " + e.getMessage());
+            log.error("保存每日专题Banner失败", e);
+            return Result.error("保存每日专题Banner失败，请稍后重试");
         }
     }
 
@@ -512,7 +524,8 @@ public class AdminCommunityController {
                 return Result.error("删除失败");
             }
         } catch (Exception e) {
-            return Result.error("删除每日专题Banner失败: " + e.getMessage());
+            log.error("删除每日专题Banner失败", e);
+            return Result.error("删除每日专题Banner失败，请稍后重试");
         }
     }
 }

@@ -44,7 +44,7 @@ public class BookingController {
     private RedisCacheService redisCacheService;
 
     @Autowired(required = false)
-    private com.pethome.util.UserTokenResolver userTokenResolver;
+    private com.pethome.security.UserTokenResolver userTokenResolver;
 
     /**
      * 从 Authorization 头解析当前登录用户 ID（归属校验统一入口）。
@@ -122,8 +122,9 @@ public class BookingController {
             result.put("msg", "success");
             result.put("data", availableSlots);
         } catch (Exception e) {
+            log.error("获取时间段失败", e);
             result.put("code", -1);
-            result.put("msg", "获取时间段失败: " + e.getMessage());
+            result.put("msg", "获取时间段失败，请稍后重试");
             result.put("data", null);
         }
         
@@ -200,7 +201,7 @@ public class BookingController {
             }
         } catch (Exception e) {
             result.put("code", -1);
-            result.put("msg", "预约失败: " + e.getMessage());
+            result.put("msg", "预约失败，请稍后重试");
             log.error("创建预约失败", e);
         }
         
@@ -247,8 +248,9 @@ public class BookingController {
             result.put("msg", "success");
             result.put("data", bookingPage);
         } catch (Exception e) {
+            log.error("查询失败", e);
             result.put("code", -1);
-            result.put("msg", "查询失败: " + e.getMessage());
+            result.put("msg", "查询失败，请稍后重试");
         }
         
         return result;
@@ -313,11 +315,13 @@ public class BookingController {
                 result.put("msg", "取消失败");
             }
         } catch (Exception e) {
+            log.error("取消失败", e);
             result.put("code", -1);
-            result.put("msg", "取消失败: " + e.getMessage());
+            result.put("msg", "取消失败，请稍后重试");
         }
 
         return result;
     }
 }
+
 

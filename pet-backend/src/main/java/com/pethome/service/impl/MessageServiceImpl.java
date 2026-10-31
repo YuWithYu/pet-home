@@ -82,4 +82,34 @@ public class MessageServiceImpl implements IMessageService {
         }
         messageMapper.insertHiddenConversation(userId, conversationId.trim());
     }
+
+    @Override
+    public List<Message> findServiceConversationsByStoreId(Long storeId) {
+        return messageMapper.selectServiceConversationsByStoreId(storeId);
+    }
+
+    @Override
+    public List<Message> findAllServiceConversations() {
+        return messageMapper.selectAllServiceConversations();
+    }
+
+    @Override
+    public List<Message> findOutletConversationsByServiceStoreId(Long serviceStoreId) {
+        return messageMapper.selectOutletConversationsByServiceStoreId(serviceStoreId);
+    }
+
+    @Override
+    public List<Message> findAllOutletConversations() {
+        return messageMapper.selectAllOutletConversations();
+    }
+
+    @Override
+    public List<Message> findAllPlatformConversations() {
+        return messageMapper.selectAllPlatformConversations();
+    }
+
+    @Override
+    public List<java.util.Map<String, Object>> findUnreadCounts(List<String> conversationIds) {
+        return messageMapper.selectUnreadCounts(conversationIds);
+    }
 }

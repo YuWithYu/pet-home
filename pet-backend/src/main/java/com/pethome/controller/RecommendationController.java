@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 推荐算法控制器。
@@ -21,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/api/recommendation")
 @Tag(name = "推荐算法")
 public class RecommendationController {
+
+    private static final Logger log = LoggerFactory.getLogger(RecommendationController.class);
     
     @Autowired
     private PostRecommendationService postRecommendationService;
@@ -47,7 +51,8 @@ public class RecommendationController {
             
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("协同过滤推荐失败: " + e.getMessage());
+            log.error("协同过滤推荐失败", e);
+            return Result.error("协同过滤推荐失败，请稍后重试");
         }
     }
     
@@ -80,7 +85,8 @@ public class RecommendationController {
             
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("深度学习推荐失败: " + e.getMessage());
+            log.error("深度学习推荐失败", e);
+            return Result.error("深度学习推荐失败，请稍后重试");
         }
     }
     
@@ -94,7 +100,8 @@ public class RecommendationController {
             List<String> interests = postRecommendationService.getUserInterestTags(userId);
             return Result.success(interests);
         } catch (Exception e) {
-            return Result.error("获取用户兴趣失败: " + e.getMessage());
+            log.error("获取用户兴趣失败", e);
+            return Result.error("获取用户兴趣失败，请稍后重试");
         }
     }
 
@@ -111,7 +118,8 @@ public class RecommendationController {
             List<Post> hotPosts = postRecommendationService.getHotPosts(limit);
             return Result.success(hotPosts);
         } catch (Exception e) {
-            return Result.error("热度推荐失败: " + e.getMessage());
+            log.error("热度推荐失败", e);
+            return Result.error("热度推荐失败，请稍后重试");
         }
     }
 }

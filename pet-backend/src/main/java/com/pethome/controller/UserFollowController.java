@@ -27,7 +27,7 @@ public class UserFollowController {
     private UserFollowService userFollowService;
 
     @Autowired
-    private com.pethome.mapper.UserMapper userMapper;
+    private com.pethome.service.UserService userService;
 
     @PostMapping("/follow")
     @Operation(summary = "关注用户")
@@ -61,7 +61,8 @@ public class UserFollowController {
                 return Result.error("关注失败，请稍后重试");
             }
         } catch (Exception e) {
-            return Result.error("关注用户失败: " + e.getMessage());
+            log.error("关注用户失败", e);
+            return Result.error("关注用户失败，请稍后重试");
         }
     }
 
@@ -85,7 +86,8 @@ public class UserFollowController {
                 return Result.error("取消关注失败，可能没有关注过");
             }
         } catch (Exception e) {
-            return Result.error("取消关注用户失败: " + e.getMessage());
+            log.error("取消关注用户失败", e);
+            return Result.error("取消关注用户失败，请稍后重试");
         }
     }
 
@@ -105,7 +107,8 @@ public class UserFollowController {
             boolean isFollowing = userFollowService.isFollowing(followerId, followingId);
             return Result.success(isFollowing);
         } catch (Exception e) {
-            return Result.error("检查关注状态失败: " + e.getMessage());
+            log.error("检查关注状态失败", e);
+            return Result.error("检查关注状态失败，请稍后重试");
         }
     }
 
@@ -116,7 +119,8 @@ public class UserFollowController {
             List<UserFollow> followingList = userFollowService.getFollowingList(userId);
             return Result.success(followingList);
         } catch (Exception e) {
-            return Result.error("获取关注列表失败: " + e.getMessage());
+            log.error("获取关注列表失败", e);
+            return Result.error("获取关注列表失败，请稍后重试");
         }
     }
 
@@ -127,7 +131,8 @@ public class UserFollowController {
             List<UserFollow> followerList = userFollowService.getFollowerList(userId);
             return Result.success(followerList);
         } catch (Exception e) {
-            return Result.error("获取粉丝列表失败: " + e.getMessage());
+            log.error("获取粉丝列表失败", e);
+            return Result.error("获取粉丝列表失败，请稍后重试");
         }
     }
 
@@ -144,7 +149,8 @@ public class UserFollowController {
             
             return Result.success(stats);
         } catch (Exception e) {
-            return Result.error("获取关注统计失败: " + e.getMessage());
+            log.error("获取关注统计失败", e);
+            return Result.error("获取关注统计失败，请稍后重试");
         }
     }
 
@@ -167,7 +173,8 @@ public class UserFollowController {
             
             return Result.success(result);
         } catch (Exception e) {
-            return Result.error("获取关注用户列表失败: " + e.getMessage());
+            log.error("获取关注用户列表失败", e);
+            return Result.error("获取关注用户列表失败，请稍后重试");
         }
     }
 
@@ -189,13 +196,8 @@ public class UserFollowController {
             int targetCount = 10; // 目标返回10个用户
             
             // 首先尝试查询status=1的用户（正常状态的用户），排除已关注和自身
-            com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.pethome.entity.User> qw1 =
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-            qw1.eq("status", 1)
-               .ne("id", userId) // 排除自身
-               .orderByDesc("id")
-               .last("LIMIT 100"); // 增加查询数量，确保有足够的选择
-            java.util.List<com.pethome.entity.User> users1 = userMapper.selectList(qw1);
+            // 优先取正常状态用户，查询上限 100 以保证有足够的可推荐候选
+            java.util.List<com.pethome.entity.User> users1 = userService.getRecentUsers(userId, true, 100);
             log.debug("查询到status=1的用户数: {}", users1.size());
             
             for (com.pethome.entity.User u : users1) {
@@ -242,12 +244,8 @@ public class UserFollowController {
             
             // 如果还不够，查询所有用户（不限制status），排除已关注和自身
             if (result.size() < targetCount) {
-                com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.pethome.entity.User> qw2 =
-                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-                qw2.ne("id", userId) // 排除自身
-                   .orderByDesc("id")
-                   .last("LIMIT 100"); // 查询更多用户
-                java.util.List<com.pethome.entity.User> users2 = userMapper.selectList(qw2);
+            // 不足时放开状态限制，仅排除自身
+            java.util.List<com.pethome.entity.User> users2 = userService.getRecentUsers(userId, false, 100);
                 log.debug("查询到所有用户数（不限制status）: {}", users2.size());
                 
                 for (com.pethome.entity.User u : users2) {
@@ -314,7 +312,7 @@ public class UserFollowController {
             return Result.success(finalResult);
         } catch (Exception e) {
             log.error("获取推荐用户列表失败", e);
-            return Result.error("获取推荐用户列表失败: " + e.getMessage());
+            return Result.error("获取推荐用户列表失败，请稍后重试");
         }
     }
 

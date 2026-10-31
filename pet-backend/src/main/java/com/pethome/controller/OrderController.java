@@ -37,22 +37,19 @@ import com.pethome.entity.Product;
 import com.pethome.entity.RefundRequest;
 import com.pethome.entity.StoreWarehouse;
 import com.pethome.entity.User;
-import com.pethome.mapper.PointsRecordMapper;
-import com.pethome.mapper.ProductMapper;
-import com.pethome.mapper.RefundRequestMapper;
-import com.pethome.mapper.StoreWarehouseMapper;
 import com.pethome.service.AddressService;
 import com.pethome.service.AppointmentService;
 import com.pethome.service.LogisticsService;
 import com.pethome.service.OrderItemService;
 import com.pethome.service.OrderService;
 import com.pethome.service.ProductService;
+import com.pethome.service.RefundRequestService;
+import com.pethome.service.RefundSettlementService;
+import com.pethome.service.StoreWarehouseService;
 import com.pethome.service.UserService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
  * 订单控制器
@@ -138,9 +135,6 @@ public class OrderController {
     private ProductService productService;
 
     @Autowired
-    private ProductMapper productMapper;
-
-    @Autowired
     private AddressService addressService;
     
     @Autowired
@@ -150,25 +144,25 @@ public class OrderController {
     private com.pethome.service.IMessageService messageService;
     
     @Autowired
-    private RefundRequestMapper refundRequestMapper;
+    private RefundRequestService refundRequestService;
+
+    @Autowired
+    private RefundSettlementService refundSettlementService;
     
     @Autowired(required = false)
-    private com.pethome.util.AdminContext adminContext;
+    private com.pethome.security.AdminContext adminContext;
 
     @Autowired(required = false)
     private UserService userService;
     
     @Autowired(required = false)
-    private PointsRecordMapper pointsRecordMapper;
+    private com.pethome.security.JwtUtil jwtUtil;
 
     @Autowired(required = false)
-    private com.pethome.util.JwtUtil jwtUtil;
+    private com.pethome.security.UserTokenResolver userTokenResolver;
 
-    @Autowired(required = false)
-    private com.pethome.util.UserTokenResolver userTokenResolver;
-
-    @Autowired(required = false)
-    private StoreWarehouseMapper storeWarehouseMapper;
+    @Autowired
+    private StoreWarehouseService storeWarehouseService;
 
     @Autowired
     private com.pethome.service.AppointmentDelayService appointmentDelayService;
@@ -227,7 +221,8 @@ public class OrderController {
             data.put("completedCount", (int) orders.stream().filter(o -> "completed".equals(o.get("status"))).count());
             return Result.success(data);
         } catch (Exception e) {
-            return Result.error("获取铲屎服务预约列表失败: " + e.getMessage());
+            log.error("获取铲屎服务预约列表失败", e);
+            return Result.error("获取铲屎服务预约列表失败，请稍后重试");
         }
     }
 
@@ -388,7 +383,7 @@ public class OrderController {
 
             Map<Long, RefundRequest> refundByOrderId = new LinkedHashMap<>();
             // 订单列表统一返回退款状态，C 端据此展示“退款成功/申请中/失败”
-            List<RefundRequest> refundRows = refundRequestMapper.selectByOrderIds(orderIds);
+            List<RefundRequest> refundRows = refundRequestService.listByOrderIds(orderIds);
             if (refundRows != null) {
                 for (RefundRequest r : refundRows) {
                     if (r.getOrderId() != null) {
@@ -573,7 +568,7 @@ public class OrderController {
             return Result.success(data);
         } catch (Exception e) {
             log.error("获取商品订单列表异常", e);
-            return Result.error("获取商品订单列表失败: " + e.getMessage());
+            return Result.error("获取商品订单列表失败，请稍后重试");
         }
     }
 
@@ -889,7 +884,7 @@ public class OrderController {
 
             // 统一补充退款信息（用于C端“售后详情”展示申请原因/状态）
             try {
-                RefundRequest refundRequest = refundRequestMapper.selectByOrderId(order.getId());
+                RefundRequest refundRequest = refundRequestService.getByOrderId(order.getId());
                 if (refundRequest != null && !"cancelled".equals(refundRequest.getStatus())) {
                     orderData.put("hasRefundRequest", true);
                     orderData.put("refundStatus", refundRequest.getStatus());
@@ -912,7 +907,7 @@ public class OrderController {
             return Result.success(orderData);
         } catch (Exception e) {
             log.error("获取商品订单详情失败", e);
-            return Result.error("获取商品订单详情失败: " + e.getMessage());
+            return Result.error("获取商品订单详情失败，请稍后重试");
         }
     }
 
@@ -994,6 +989,7 @@ public class OrderController {
             return Result.success(result);
         } catch (com.pethome.common.BusinessException e) {
             // 业务异常：返回具体提示（如库存不足、地址越权）
+            log.error("创建订单失败", e);
             return Result.error(e.getCode(), e.getMessage());
         } catch (Exception e) {
             log.error("创建订单失败", e);
@@ -1020,7 +1016,6 @@ public class OrderController {
      */
     @PutMapping("/{orderId}/status")
     @Operation(summary = "更新商品订单状态")
-    @Transactional(rollbackFor = Exception.class)
     public Result<Boolean> updateOrderStatus(
             @PathVariable String orderId,
             @RequestParam String status,
@@ -1158,9 +1153,8 @@ public class OrderController {
 
             return Result.success(updatedOrder != null);
         } catch (Exception e) {
-            // 异常回滚仍需显式标记（本方法持有事务边界，Service 异常向外传播时整体回滚）
+            // 事务边界在 OrderServiceImpl.updateOrderStatus（DAO 写操作随其事务回滚），表现层只做错误出口
             log.error("更新订单状态失败: orderId={}, status={}", orderId, status, e);
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return Result.error("更新订单状态失败，请稍后重试");
         }
     }
@@ -1307,7 +1301,7 @@ public class OrderController {
             return Result.success(logisticsData);
         } catch (Exception e) {
             log.error("获取物流信息失败", e);
-            return Result.error("获取物流信息失败: " + e.getMessage());
+            return Result.error("获取物流信息失败，请稍后重试");
         }
     }
 
@@ -1331,20 +1325,14 @@ public class OrderController {
             if (currentStoreId == null) {
                 boolean isPlatform = adminContext != null && token != null && adminContext.isPlatformAdmin(token);
                 if (isPlatform) {
-                    QueryWrapper<StoreWarehouse> q = new QueryWrapper<>();
-                    q.orderByAsc("id");
-                    List<StoreWarehouse> list = storeWarehouseMapper.selectList(q);
-                    return Result.success(list != null ? list : new ArrayList<>());
+                    return Result.success(storeWarehouseService.listAll());
                 }
                 return Result.success(new ArrayList<>());
             }
-            QueryWrapper<StoreWarehouse> q = new QueryWrapper<>();
-            q.eq("store_id", currentStoreId).orderByAsc("id");
-            List<StoreWarehouse> list = storeWarehouseMapper.selectList(q);
-            return Result.success(list != null ? list : new ArrayList<>());
+            return Result.success(storeWarehouseService.listByStore(currentStoreId));
         } catch (Exception e) {
             log.error("获取发货仓列表失败", e);
-            return Result.error("获取发货仓列表失败: " + e.getMessage());
+            return Result.error("获取发货仓列表失败，请稍后重试");
         }
     }
 
@@ -1379,9 +1367,6 @@ public class OrderController {
                     return Result.error("当前账号无权操作，请使用管理员账号");
                 }
             }
-            if (storeWarehouseMapper == null) {
-                return Result.error("功能暂不可用");
-            }
             String address = null;
             if (body != null && body.get("address") != null) {
                 address = body.get("address").toString().trim();
@@ -1393,11 +1378,11 @@ public class OrderController {
             wh.setStoreId(currentStoreId != null ? currentStoreId : -1L);
             wh.setAddress(address);
             wh.setCreateTime(java.time.LocalDateTime.now());
-            storeWarehouseMapper.insert(wh);
+            storeWarehouseService.save(wh);
             return Result.success(wh);
         } catch (Exception e) {
             log.error("添加发货仓失败", e);
-            return Result.error("添加发货仓失败: " + e.getMessage());
+            return Result.error("添加发货仓失败，请稍后重试");
         }
     }
 
@@ -1407,10 +1392,7 @@ public class OrderController {
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String token) {
         try {
-            if (storeWarehouseMapper == null) {
-                return Result.error("功能暂不可用");
-            }
-            StoreWarehouse existing = storeWarehouseMapper.selectById(id);
+            StoreWarehouse existing = storeWarehouseService.getById(id);
             if (existing == null) {
                 return Result.error("发货仓不存在");
             }
@@ -1422,11 +1404,11 @@ public class OrderController {
             if (!isPlatform && currentStoreId != null && !currentStoreId.equals(existing.getStoreId())) {
                 return Result.error("无权删除此发货仓");
             }
-            storeWarehouseMapper.deleteById(id);
+            storeWarehouseService.removeById(id);
             return Result.success(true);
         } catch (Exception e) {
             log.error("删除发货仓失败", e);
-            return Result.error("删除发货仓失败: " + e.getMessage());
+            return Result.error("删除发货仓失败，请稍后重试");
         }
     }
 
@@ -1557,7 +1539,7 @@ public class OrderController {
             return Result.success(true);
         } catch (Exception e) {
             log.error("更新物流信息失败", e);
-            return Result.error("更新物流信息失败: " + e.getMessage());
+            return Result.error("更新物流信息失败，请稍后重试");
         }
     }
 
@@ -1572,7 +1554,7 @@ public class OrderController {
             return Result.success(companies);
         } catch (Exception e) {
             log.error("获取物流公司列表失败", e);
-            return Result.error("获取物流公司列表失败: " + e.getMessage());
+            return Result.error("获取物流公司列表失败，请稍后重试");
         }
     }
 
@@ -1623,7 +1605,7 @@ public class OrderController {
             }
 
             // 检查是否已经申请过退款
-            RefundRequest existingRefund = refundRequestMapper.selectByOrderId(order.getId());
+            RefundRequest existingRefund = refundRequestService.getByOrderId(order.getId());
             if (existingRefund != null && !"rejected".equals(existingRefund.getStatus()) && !"cancelled".equals(existingRefund.getStatus())) {
                 return Result.error("该订单已申请退款，请勿重复申请");
             }
@@ -1658,7 +1640,7 @@ public class OrderController {
             refundRequest.setCreateTime(java.time.LocalDateTime.now());
             refundRequest.setUpdateTime(java.time.LocalDateTime.now());
             
-            refundRequestMapper.insert(refundRequest);
+            refundRequestService.save(refundRequest);
             
             Map<String, Object> result = new HashMap<>();
             result.put("id", refundRequest.getId());
@@ -1707,7 +1689,7 @@ public class OrderController {
                 return Result.error(403, "无权操作该订单退款申请");
             }
 
-            RefundRequest refundRequest = refundRequestMapper.selectByOrderId(order.getId());
+            RefundRequest refundRequest = refundRequestService.getByOrderId(order.getId());
             if (refundRequest == null) {
                 return Result.error("未找到退款申请");
             }
@@ -1717,10 +1699,11 @@ public class OrderController {
 
             refundRequest.setStatus("cancelled");
             refundRequest.setUpdateTime(java.time.LocalDateTime.now());
-            refundRequestMapper.updateById(refundRequest);
+            refundRequestService.updateById(refundRequest);
             return Result.success(true);
         } catch (Exception e) {
-            return Result.error("取消退款申请失败: " + e.getMessage());
+            log.error("取消退款申请失败", e);
+            return Result.error("取消退款申请失败，请稍后重试");
         }
     }
 
@@ -1743,18 +1726,7 @@ public class OrderController {
 
             int p = page != null && page > 0 ? page : 1;
             int sz = size != null && size > 0 ? size : 10;
-            Page<RefundRequest> mpPage = new Page<>(p, sz);
-            QueryWrapper<RefundRequest> qw = new QueryWrapper<>();
-            if (status != null && !status.trim().isEmpty()) {
-                qw.eq("status", status.trim());
-            }
-            if (currentStoreId != null) {
-                qw.inSql("order_id",
-                        "SELECT DISTINCT oi.order_id FROM order_item oi INNER JOIN product p ON p.id = oi.product_id WHERE p.store_id = "
-                                + currentStoreId);
-            }
-            qw.orderByDesc("create_time");
-            refundRequestMapper.selectPage(mpPage, qw);
+            Page<RefundRequest> mpPage = refundRequestService.pageRefunds(p, sz, status, currentStoreId);
 
             List<RefundRequest> refundRequests = mpPage.getRecords();
 
@@ -1852,7 +1824,7 @@ public class OrderController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取退款申请列表异常", e);
-            return Result.error("获取退款申请列表失败: " + (e.getMessage() != null ? e.getMessage() : "未知错误"));
+            return Result.error("获取退款申请列表失败，请稍后重试");
         }
     }
 
@@ -1915,7 +1887,7 @@ public class OrderController {
             }
             
             // 查找退款申请记录
-            RefundRequest refundRequest = refundRequestMapper.selectByOrderId(order.getId());
+            RefundRequest refundRequest = refundRequestService.getByOrderId(order.getId());
             if (refundRequest == null) {
                 return Result.error("退款申请记录不存在");
             }
@@ -1925,89 +1897,10 @@ public class OrderController {
             if (!"pending".equals(refundRequest.getStatus())) {
                 return Result.error("该退款申请已处理");
             }
-            
-            // 更新退款状态为已批准
-            refundRequest.setStatus("approved");
-            refundRequest.setUpdateTime(java.time.LocalDateTime.now());
-            refundRequestMapper.updateById(refundRequest);
 
-            // 积分订单退款：审批通过后返还积分（按原兑换扣除积分数返还）
-            Integer pointsRefunded = 0;
+            // 状态流转 + 积分返还 + 库存恢复 + 返券，全部在服务层同一事务内完成
             boolean isPointsOrder = order.getOrderNo() != null && order.getOrderNo().startsWith("EX");
-            if (isPointsOrder) {
-                if (order.getUserId() == null) {
-                    return Result.error("积分退款失败：订单缺少用户信息");
-                }
-                if (userService == null || pointsRecordMapper == null) {
-                    return Result.error("积分退款失败：积分服务不可用");
-                }
-
-                String exchangeRef = order.getOrderNo().substring(2);
-                Integer pointsToReturn = 0;
-                try {
-                    if (!exchangeRef.isEmpty()) {
-                        Long spendRecordId = Long.parseLong(exchangeRef);
-                        PointsRecord spendRecord = pointsRecordMapper.selectById(spendRecordId);
-                        if (spendRecord != null && "spend".equals(spendRecord.getType()) && spendRecord.getPoints() != null) {
-                            pointsToReturn = Math.max(spendRecord.getPoints(), 0);
-                        }
-                    }
-                } catch (NumberFormatException ignored) {
-                    // EX 后缀非数字时走兜底逻辑
-                }
-                if (pointsToReturn <= 0 && refundRequest.getRefundAmount() != null) {
-                    pointsToReturn = Math.max(refundRequest.getRefundAmount().intValue(), 0);
-                }
-                if (pointsToReturn <= 0) {
-                    return Result.error("积分退款失败：未找到可返还的积分数");
-                }
-
-                // 防重：存在同订单号的“退款返还”积分记录时，不重复返还
-                QueryWrapper<PointsRecord> duplicateQw = new QueryWrapper<>();
-                duplicateQw.eq("user_id", order.getUserId())
-                        .eq("type", "earn")
-                        .like("description", "订单退款返还积分")
-                        .like("description", order.getOrderNo());
-                Long duplicateCount = pointsRecordMapper.selectCount(duplicateQw);
-                if (duplicateCount == null || duplicateCount == 0) {
-                    User user = userService.getUserById(order.getUserId());
-                    if (user == null) {
-                        return Result.error("积分退款失败：用户不存在");
-                    }
-                    int currentPoints = user.getPoints() != null ? user.getPoints() : 0;
-                    user.setPoints(currentPoints + pointsToReturn);
-                    userService.updateUser(user);
-
-                    PointsRecord earnRecord = new PointsRecord();
-                    earnRecord.setUserId(order.getUserId());
-                    earnRecord.setType("earn");
-                    earnRecord.setPoints(pointsToReturn);
-                    earnRecord.setDescription("订单退款返还积分（订单号：" + order.getOrderNo() + "）");
-                    earnRecord.setCreateTime(java.time.LocalDateTime.now());
-                    pointsRecordMapper.insert(earnRecord);
-                }
-                pointsRefunded = pointsToReturn;
-            }
-
-            // 退款批准后恢复商品库存（非积分订单）
-            if (!isPointsOrder) {
-                List<OrderItem> orderItems = orderItemService.getOrderItemsByOrderId(order.getId());
-                for (OrderItem item : orderItems) {
-                    if (item.getProductId() != null) {
-                        Product product = productService.getProductById(item.getProductId());
-                        if (product != null) {
-                            product.setStock(product.getStock() + item.getQuantity());
-                            productService.updateProduct(product);
-                            log.info("退款恢复库存: orderId={}, productId={}, quantity={}", order.getId(), item.getProductId(), item.getQuantity());
-                        }
-                    }
-                }
-
-                // 退款批准后返还该订单已核销的优惠券（幂等：仅 used 且 order_id 匹配的券会被恢复）
-                if (order.getCouponId() != null && userCouponService != null) {
-                    userCouponService.returnByOrder(order.getId(), order.getUserId());
-                }
-            }
+            Integer pointsRefunded = refundSettlementService.approveAndSettle(order, refundRequest);
 
             // 按产品要求：退款批准后不再下发"店铺客服"会话消息，避免消息页出现该通知
 
@@ -2020,9 +1913,12 @@ public class OrderController {
             }
             
             return Result.success(result);
+        } catch (IllegalArgumentException e) {
+            // 结算业务校验失败（如积分订单无可返还积分），事务已在服务层回滚
+            return Result.error(e.getMessage());
         } catch (Exception e) {
             log.error("批准退款失败", e);
-            return Result.error("批准退款失败: " + e.getMessage());
+            return Result.error("批准退款失败，请稍后重试");
         }
     }
 
@@ -2081,7 +1977,7 @@ public class OrderController {
                 }
             }
 
-            RefundRequest refundRequest = refundRequestMapper.selectByOrderId(order.getId());
+            RefundRequest refundRequest = refundRequestService.getByOrderId(order.getId());
             if (refundRequest == null) {
                 return Result.error("退款申请记录不存在");
             }
@@ -2107,7 +2003,7 @@ public class OrderController {
                     : ("申请原因：" + userApplyReason + "；拒绝原因：" + rejectReason);
             refundRequest.setReason(mergedReason);
             refundRequest.setUpdateTime(java.time.LocalDateTime.now());
-            refundRequestMapper.updateById(refundRequest);
+            refundRequestService.updateById(refundRequest);
 
             Map<String, Object> result = new HashMap<>();
             result.put("orderId", order.getId());
@@ -2118,7 +2014,7 @@ public class OrderController {
             return Result.success(result);
         } catch (Exception e) {
             log.error("拒绝退款失败", e);
-            return Result.error("拒绝退款失败: " + e.getMessage());
+            return Result.error("拒绝退款失败，请稍后重试");
         }
     }
     
@@ -2169,3 +2065,4 @@ public class OrderController {
         }
     }
 }
+
