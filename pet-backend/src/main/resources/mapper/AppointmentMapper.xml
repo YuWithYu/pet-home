@@ -47,7 +47,7 @@
         WHERE service_type = #{serviceType}
           AND date = #{date}
           AND time_slot = #{timeSlot}
-          AND status NOT IN ('cancelled', 'completed')
+          AND status NOT IN ('cancelled', 'completed', 'no_show')
         <if test="memberId != null">
           AND member_id = #{memberId}
         </if>

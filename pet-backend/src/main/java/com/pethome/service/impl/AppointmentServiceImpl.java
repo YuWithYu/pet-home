@@ -1,9 +1,12 @@
 package com.pethome.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.pethome.common.lock.LockHandle;
+import com.pethome.common.lock.RedisDistributedLock;
 import com.pethome.entity.Appointment;
 import com.pethome.mapper.AppointmentMapper;
 import com.pethome.service.AppointmentService;
@@ -13,15 +16,16 @@ import com.pethome.service.DepartmentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 预约服务实现类
@@ -38,15 +42,18 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     private RedisCacheService redisCacheService;
 
     @Autowired
+    private RedisDistributedLock distributedLock;
+
+    @Autowired
     private StaffScheduleService staffScheduleService;
 
     @Autowired
     private DepartmentService departmentService;
     
     /**
-     * Redis 缓存 key 前缀
+     * 时间段锁 key 前缀（分布式锁）
      */
-    private static final String TIME_SLOT_CACHE_PREFIX = "appointment:timeslot:";
+    private static final String SLOT_LOCK_PREFIX = "appointment:slot:lock:";
     private static final String APPOINTMENT_CACHE_PREFIX = "appointment:";
 
     @Override
@@ -66,20 +73,14 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
             throw new RuntimeException("用户ID不能为空");
         }
         
-        // 检查时间段是否可用（使用 Redis 锁防止并发冲突）
-        String cacheKey = generateTimeSlotCacheKey(
-            appointment.getServiceType(), 
-            appointment.getDate(), 
-            appointment.getTimeSlot(),
-            appointment.getMemberId()
-        );
-        
-        // 尝试获取 Redis 锁（5秒过期）
-        Boolean lockAcquired = redisCacheService.setIfAbsent(cacheKey, "locked", 5, TimeUnit.SECONDS);
-        if (lockAcquired == null || !lockAcquired) {
-            throw new RuntimeException("该时间段已被占用，请选择其他时间");
+        // 时间段并发控制：分布式锁削峰（快速失败）+ 数据库唯一索引兜底（最终裁决）
+        String slotToken = buildSlotToken(appointment);
+        String lockKey = SLOT_LOCK_PREFIX + slotToken;
+        LockHandle lockHandle = distributedLock.tryLock(lockKey, Duration.ofSeconds(30), Duration.ofSeconds(2));
+        if (lockHandle == null) {
+            throw new RuntimeException("该时间段正在被预约，请稍后重试");
         }
-        
+
         try {
             // 再次检查数据库（双重检查）
             int conflictCount = appointmentMapper.countByServiceTypeAndDateTime(
@@ -126,21 +127,23 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
             }
             }
             
-            // 保存预约
+            // 落库前重算令牌（成员可能在自动分配后被赋值）
+            appointment.setSlotToken(buildSlotToken(appointment));
+
+            // 保存预约（uk_apt_slot_token 唯一索引做并发兜底）
             appointmentMapper.insert(appointment);
             
             // 缓存预约信息（30分钟）
             String appointmentCacheKey = APPOINTMENT_CACHE_PREFIX + appointment.getId();
             redisCacheService.setCache(appointmentCacheKey, appointment, 30);
             
-            // 保持时间段锁（直到预约完成或取消）
-            redisCacheService.setCache(cacheKey, appointment.getId().toString(), 24, TimeUnit.HOURS);
-            
             return appointment;
-        } catch (Exception e) {
-            // 释放锁
-            redisCacheService.deleteCache(cacheKey);
-            throw e;
+        } catch (DuplicateKeyException e) {
+            // 唯一索引冲突：锁失效窗口内另一请求已完成落库
+            log.warn("时间段唯一索引冲突，判定已被预约: slotToken={}", slotToken);
+            throw new RuntimeException("该时间段已被预约，请选择其他时间");
+        } finally {
+            lockHandle.close();
         }
     }
 
@@ -150,14 +153,41 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
         if (appointment.getId() == null) {
             throw new RuntimeException("预约ID不能为空");
         }
-        
+
         appointmentMapper.updateById(appointment);
-        
+
+        // 改期 / 改服务人员后，占用令牌必须随最终值重算，否则旧时段被错误占用、新时段失去唯一索引保护
+        Appointment persisted = appointmentMapper.selectById(appointment.getId());
+        if (persisted != null) {
+            UpdateWrapper<Appointment> uw = new UpdateWrapper<>();
+            uw.eq("id", persisted.getId());
+            if (isTerminalStatus(persisted.getStatus())) {
+                uw.set("slot_token", null);
+                persisted.setSlotToken(null);
+            } else {
+                String token = buildSlotToken(persisted);
+                uw.set("slot_token", token);
+                persisted.setSlotToken(token);
+            }
+            try {
+                appointmentMapper.update(null, uw);
+            } catch (DuplicateKeyException e) {
+                log.warn("改期后时间段唯一索引冲突: appointmentId={}", persisted.getId());
+                throw new RuntimeException("目标时间段已被预约，请选择其他时间");
+            }
+        }
+
         // 更新缓存
-        String cacheKey = APPOINTMENT_CACHE_PREFIX + appointment.getId();
-        redisCacheService.setCache(cacheKey, appointment, 30);
-        
-        return appointmentMapper.selectById(appointment.getId());
+        if (persisted != null) {
+            String cacheKey = APPOINTMENT_CACHE_PREFIX + persisted.getId();
+            redisCacheService.setCache(cacheKey, persisted, 30);
+        }
+        return persisted;
+    }
+
+    /** 终态：不再占用时段（唯一索引允许多个 NULL） */
+    private boolean isTerminalStatus(String status) {
+        return "completed".equals(status) || "cancelled".equals(status) || "no_show".equals(status);
     }
 
     @Override
@@ -171,15 +201,12 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
             appointment.setStatus(status);
             appointmentMapper.updateById(appointment);
         
-        // 如果状态是已完成或已取消，释放时间段锁
-        if ("completed".equals(status) || "cancelled".equals(status)) {
-            String cacheKey = generateTimeSlotCacheKey(
-                appointment.getServiceType(),
-                appointment.getDate(),
-                appointment.getTimeSlot(),
-                appointment.getMemberId()
-            );
-            redisCacheService.deleteCache(cacheKey);
+        // 已完成/已取消/爽约：清空占用令牌，数据库唯一索引随之释放该时间段
+        if ("completed".equals(status) || "cancelled".equals(status) || "no_show".equals(status)) {
+            UpdateWrapper<Appointment> uw = new UpdateWrapper<>();
+            uw.eq("id", id).set("slot_token", null);
+            appointmentMapper.update(null, uw);
+            appointment.setSlotToken(null);
         }
         
         // 更新缓存
@@ -191,19 +218,10 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
 
     @Override
     public Appointment getAppointmentById(Long id) {
-        // 先尝试从缓存获取
+        // 走缓存读取模板：空值缓存防穿透 + SETNX 互斥重建防击穿 + 随机 TTL 防雪崩
         String cacheKey = APPOINTMENT_CACHE_PREFIX + id;
-        Appointment cached = redisCacheService.getCache(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-        
-        Appointment appointment = appointmentMapper.selectById(id);
-        if (appointment != null) {
-            // 写入缓存
-            redisCacheService.setCache(cacheKey, appointment, 30);
-        }
-        return appointment;
+        return redisCacheService.getOrLoad(cacheKey, 30, Appointment.class,
+                () -> appointmentMapper.selectById(id));
     }
     
     @Override
@@ -231,15 +249,8 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     
     @Override
     public boolean checkTimeSlotAvailable(String serviceType, LocalDate date, String timeSlot, Long memberId) {
-        // 先检查 Redis 缓存
-        String cacheKey = generateTimeSlotCacheKey(serviceType, date, timeSlot, memberId);
-        String cached = redisCacheService.getCache(cacheKey);
-        if (cached != null && !"locked".equals(cached)) {
-            // 缓存中有预约ID，说明该时间段已被占用
-            return false;
-        }
-        
-        // 检查数据库
+        // 以数据库为准：Redis 中的时段状态可能因实例重启、任务延迟而滞后，
+        // 可用性判定必须读取唯一索引对应的真实占用记录。
         int count = appointmentMapper.countByServiceTypeAndDateTime(serviceType, date, timeSlot, memberId);
         return count == 0;
     }
@@ -262,20 +273,13 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
             throw new RuntimeException("该时间段已被其他预约占用");
         }
         
-        // 分配工单
+        // 分配工单：令牌随 service_type/date/time_slot/member 重新计算并落库，
+        // 唯一索引会阻止同一服务人员被并发分配到同一时段
         appointment.setMemberId(memberId);
         appointment.setStatus("assigned"); // 已分配
+        appointment.setSlotToken(buildSlotToken(appointment));
         appointmentMapper.updateById(appointment);
-        
-        // 更新时间段锁
-        String cacheKey = generateTimeSlotCacheKey(
-            appointment.getServiceType(),
-            appointment.getDate(),
-            appointment.getTimeSlot(),
-            memberId
-        );
-        redisCacheService.setCache(cacheKey, appointmentId.toString(), 24, TimeUnit.HOURS);
-        
+
         // 更新缓存
         String appointmentCacheKey = APPOINTMENT_CACHE_PREFIX + appointmentId;
         redisCacheService.setCache(appointmentCacheKey, appointment, 30);
@@ -320,20 +324,17 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
                 appointment.setStatus("completed");
             }
             appointmentMapper.updateById(appointment);
-            
+
+            // 核销完成即释放时段：清空占用令牌（唯一索引允许多个 NULL）
+            UpdateWrapper<Appointment> uw = new UpdateWrapper<>();
+            uw.eq("id", appointment.getId()).set("slot_token", null);
+            appointmentMapper.update(null, uw);
+            appointment.setSlotToken(null);
+
             // 更新缓存
             String appointmentCacheKey = APPOINTMENT_CACHE_PREFIX + appointment.getId();
             redisCacheService.setCache(appointmentCacheKey, appointment, 30);
-            
-            // 释放时间段锁
-            String cacheKey = generateTimeSlotCacheKey(
-                appointment.getServiceType(),
-                appointment.getDate(),
-                appointment.getTimeSlot(),
-                appointment.getMemberId()
-            );
-            redisCacheService.deleteCache(cacheKey);
-            
+
             return appointment;
         }
         
@@ -483,11 +484,13 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
     }
     
     /**
-     * 生成时间段缓存 key
+     * 生成时间段占用令牌：与数据库唯一索引 uk_apt_slot_token 一一对应。
+     * 成员为空时使用 “any” 占位，保证未分配时也不会绕过唯一约束。
      */
-    private String generateTimeSlotCacheKey(String serviceType, LocalDate date, String timeSlot, Long memberId) {
-        String dateStr = date.format(DateTimeFormatter.ISO_DATE);
-        String memberStr = memberId != null ? memberId.toString() : "any";
-        return TIME_SLOT_CACHE_PREFIX + serviceType + ":" + dateStr + ":" + timeSlot + ":" + memberStr;
+    private String buildSlotToken(Appointment appointment) {
+        String dateStr = appointment.getDate() == null ? "null" : appointment.getDate().format(DateTimeFormatter.ISO_DATE);
+        String memberStr = appointment.getMemberId() != null ? appointment.getMemberId().toString() : "any";
+        String slot = appointment.getTimeSlot() == null ? "null" : appointment.getTimeSlot().trim();
+        return appointment.getServiceType() + "|" + dateStr + "|" + slot + "|" + memberStr;
     }
 }

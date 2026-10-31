@@ -63,6 +63,14 @@ public class Appointment {
      */
     @TableField("time_slot")
     private String timeSlot;
+
+    /**
+     * 时间段占用令牌：serviceType|date|timeSlot|memberId。
+     * 数据库唯一索引 uk_apt_slot_token 的兜底依据：并发预约时仅一条能插入成功；
+     * 预约取消/完成/核销时置 NULL 即释放该时间段（唯一索引允许多个 NULL）。
+     */
+    @TableField("slot_token")
+    private String slotToken;
     
     /**
      * 状态：pending（待分配）、assigned（已分配）、confirmed（已确认）、completed（已完成）、cancelled（已取消）
