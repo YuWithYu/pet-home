@@ -22,6 +22,8 @@
 导致 4 个后台写接口可被匿名调用；另有 1 处列表接口直接信任查询参数造成水平越权。5 项已全部修复。
 第二轮加固一并处理了中危/低危项：异常信息脱敏（304 处）、短信 IP 维度限流、视频分片归属绑定、
 种子账号与生产 DB 链路提示，编译与运行时验证均通过。
+第三轮加固把管理端鉴权下沉到 Spring Security（`BearerAuthenticationFilter` + `/api/admin/**` 要求 `ROLE_ADMIN`），
+不再依赖 `RoleInterceptor` 单点防护；同时接入 Semgrep / Trivy / Gitleaks 的 CI 安全门禁。
 
 已排除的高风险项（经代码核对确认安全）：
 
@@ -240,7 +242,7 @@ File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + uid + "-" + u
 
 | ID | 项 | 建议 |
 |----|----|------|
-| I-01 | 单层鉴权：Spring Security `anyRequest().permitAll()` + `csrf().disable()`（`SecurityConfig.java:48-50`），唯一边界是拦截器 | 后续把「需登录/需角色」规则下沉到 `SecurityFilterChain`（`authorizeHttpRequests`），拦截器只做身份解析，实现纵深防御 |
+| I-01 | 单层鉴权：Spring Security 原为 `anyRequest().permitAll()`，唯一边界是拦截器 | **已修复（部分）**：新增 `BearerAuthenticationFilter` 写入 `SecurityContext`，`/api/admin/**` 要求 `ROLE_ADMIN`、`/api/admin/self/**` 允许 `ADMIN/STAFF`，形成第二道闸门；接口级 `@PreAuthorize` 仍可作为后续增强 |
 | I-02 | 依赖维护状态：`kaptcha 2.3.2`（2010 年停更）、`thymeleaf 3.0.15`、`commons-lang3 3.12.0`、`jackson 2.13.5`、`snakeyaml 1.30`、`spring-boot-maven-plugin` 仍为 2.7.14 | 建立 SCA 门禁（Trivy / OWASP Dependency-Check）；kaptcha 建议替换为 `easy-captcha` 或自研（仅用于后台登录） |
 | I-03 | mock 支付通道 | `mockEnabled=false` 时 `/mock/confirm` 直接 403（fail-closed），需在发布检查单中确认生产环境未开启 `PAYMENT_MOCK_ENABLED` |
 | I-04 | 公开白名单中的 `/api/pets/\d+`、`/api/user/detail` 等条目 | 现由 Controller 内归属 / 登录校验兜底，条目可保留；建议后续把此类接口移出白名单，让 401 在拦截器层直接返回，减少「Controller 忘记校验」的机会 |
@@ -249,9 +251,9 @@ File chunkDir = new File(baseDir, CHUNKS_SUBDIR + File.separator + uid + "-" + u
 
 ## 8. 纵深防御加固建议（按投入产出排序）
 
-1. **上线 CI 安全门禁**（半天内可落地，收益最大）：Semgrep（`p/owasp-top-ten` + `p/cwe-top-25`）、Trivy（`CRITICAL,HIGH` 阻断）、Gitleaks（全历史密钥扫描）
+1. ~~**上线 CI 安全门禁**~~（**已落地**）：`.github/workflows/security.yml` 含 Semgrep（`p/owasp-top-ten` + `p/cwe-top-25`）、Trivy（`CRITICAL,HIGH` 阻断）、Gitleaks（全历史密钥扫描）
 2. **密钥泄露处置**：`application-prod.yml` 历史上曾提交明文数据库密码与微信 AppSecret，**视为已泄露，必须完成轮换**（配置已改为环境变量注入，但旧值仍需在服务端重置）
-3. **鉴权下沉**：把后台 `/api/admin/**`、`/api/**` 的写操作收敛到 Spring Security 规则 + 方法级 `@PreAuthorize`，拦截器保留为补充
+3. ~~**鉴权下沉**~~（**已落地粗粒度部分**）：`BearerAuthenticationFilter` + `SecurityFilterChain` 已对 `/api/admin/**` 强制 `ROLE_ADMIN`；接口级 `@PreAuthorize` 可作为后续增强，拦截器保留为补充
 4. **统一错误出口**：`GlobalExceptionHandler` 收敛所有 Controller 的 `e.getMessage()` 直返（见 M-02）
 5. **审计日志**：支付、退款、管理员登录、权限变更写入不可篡改存储，便于事件响应与追责
 6. **监控告警**：对 401/403 突增、`/api/sms/send` 调用量、上传失败率设置阈值告警
