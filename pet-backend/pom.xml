@@ -16,7 +16,9 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.14</version>
+        <!-- 安全修复：2.7.14 已停止维护，且依赖的 Spring Security 5.7.10 / Spring Framework 5.3.29 /
+             Tomcat 9.0.78 存在已知 CVE；升级到 2.7.x 最后一个补丁版本，仅含修复无 API 变更。 -->
+        <version>2.7.18</version>
         <relativePath/>
     </parent>
 
@@ -251,6 +253,24 @@
             <groupId>com.qiniu</groupId>
             <artifactId>qiniu-java-sdk</artifactId>
             <version>${qiniu.version}</version>
+        </dependency>
+
+        <!-- RabbitMQ：订单超时延迟队列 + 异步解耦 + 重试/DLQ 补偿 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!-- Kafka：高吞吐行为埋点管道（可选，由 app.kafka.enabled 控制） -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <!-- Caffeine：本地一级缓存，与 Redis 组成多级缓存 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
     </dependencies>
 
