@@ -116,12 +116,18 @@ public class DailyTopicController {
     @GetMapping("/collected")
     @Operation(summary = "获取用户收藏的专题列表")
     public Result<Map<String, Object>> getCollectedTopics(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "20") Integer size) {
+            @RequestParam(defaultValue = "20") Integer size,
+            HttpServletRequest request) {
         return com.pethome.common.SafeCall.of(() -> {
+            // 安全修复：收藏列表属个人数据，一律以登录态为准；query userId 仅兼容旧前端且不参与查询
+            Long currentUserId = currentUserId(request);
+            if (currentUserId == null) {
+                throw new BusinessException(401, "用户未登录或token无效");
+            }
             Page<DailyTopic> topicPage = new Page<>(page, size);
-            Page<DailyTopic> result = topicCollectService.getCollectedTopics(userId, topicPage);
+            Page<DailyTopic> result = topicCollectService.getCollectedTopics(currentUserId, topicPage);
             Map<String, Object> response = new HashMap<>();
             response.put("topics", result.getRecords());
             response.put("total", result.getTotal());
@@ -137,8 +143,11 @@ public class DailyTopicController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "获取专题详情")
-    public Result<DailyTopic> getTopicDetail(@PathVariable Long id, @RequestParam(required = false) Long userId) {
+    public Result<DailyTopic> getTopicDetail(@PathVariable Long id, @RequestParam(required = false) Long userId,
+                                             HttpServletRequest request) {
         return com.pethome.common.SafeCall.of(() -> {
+            // 安全修复：点赞/收藏状态属个人数据，以登录态为准（query userId 仅兼容旧前端，不参与查询）
+            Long effectiveUserId = currentUserId(request);
             DailyTopic topic = dailyTopicService.getById(id);
             if (topic == null || topic.getStatus() != 1) {
                 return Result.success(null);
@@ -147,9 +156,9 @@ public class DailyTopicController {
             topic.setPosts(posts);
             dailyTopicService.incrementViewCount(id);
             topic.setCollectCount(topicCollectService.getCollectCount(id));
-            if (userId != null) {
-                topic.setIsLiked(topicLikeService.isLiked(id, userId));
-                topic.setIsCollected(topicCollectService.isCollected(id, userId));
+            if (effectiveUserId != null) {
+                topic.setIsLiked(topicLikeService.isLiked(id, effectiveUserId));
+                topic.setIsCollected(topicCollectService.isCollected(id, effectiveUserId));
             }
             return Result.success(topic);
         }, "获取专题详情失败，请稍后重试", log);
@@ -234,9 +243,15 @@ public class DailyTopicController {
      */
     @GetMapping("/{id}/collect/status")
     @Operation(summary = "检查专题收藏状态")
-    public Result<Boolean> getTopicCollectStatus(@PathVariable Long id, @RequestParam Long userId) {
+    public Result<Boolean> getTopicCollectStatus(@PathVariable Long id, @RequestParam(required = false) Long userId,
+                                                 HttpServletRequest request) {
         return com.pethome.common.SafeCall.of(() -> {
-            boolean isCollected = topicCollectService.isCollected(id, userId);
+            // 安全修复：收藏状态属个人数据，以登录态为准
+            Long currentUserId = currentUserId(request);
+            if (currentUserId == null) {
+                throw new BusinessException(401, "用户未登录或token无效");
+            }
+            boolean isCollected = topicCollectService.isCollected(id, currentUserId);
             return Result.success(isCollected);
         }, "检查收藏状态失败，请稍后重试", log);
     }
@@ -262,9 +277,12 @@ public class DailyTopicController {
     @Operation(summary = "获取专题评论列表")
     public Result<java.util.List<Comment>> getTopicComments(
             @PathVariable Long id,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) Long userId,
+            HttpServletRequest request) {
         return com.pethome.common.SafeCall.of(() -> {
-            java.util.List<Comment> comments = commentService.getCommentsByTopicId(id, userId);
+            // 安全修复：点赞状态属个人数据，以登录态为准（query userId 仅兼容旧前端）
+            Long effectiveUserId = currentUserId(request);
+            java.util.List<Comment> comments = commentService.getCommentsByTopicId(id, effectiveUserId);
             return Result.success(comments != null ? comments : new java.util.ArrayList<>());
         }, "获取评论失败，请稍后重试", log);
     }

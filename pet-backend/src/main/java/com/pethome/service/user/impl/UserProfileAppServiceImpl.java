@@ -207,6 +207,8 @@ public class UserProfileAppServiceImpl implements UserProfileAppService {
         }
 
         // 2. 如果 admin 表中没有，再查询 user 表（普通用户）
+        // 安全修复：此前匿名请求未带 userId/username 时会 fallback 到「用户ID=1」，并把该用户的
+        // 手机号、积分等完整资料返回；传 username 还可枚举任意账号。现要求必须持有可解析的登录态。
         User user;
         if (tokenUsername != null) {
             // 优先使用 token 中的用户名/手机号查询（微信/手机登录时 subject 可能是手机号）
@@ -214,21 +216,21 @@ public class UserProfileAppServiceImpl implements UserProfileAppService {
             if (user == null) {
                 user = userService.getUserByPhone(tokenUsername);
             }
-        } else if (userId != null) {
-            user = userService.getUserById(userId);
-        } else if (username != null && !username.isEmpty()) {
-            user = userService.getUserByUsername(username);
+        } else if (loginUserId != null) {
+            user = userService.getUserById(loginUserId);
         } else {
-            // 默认返回ID为1的用户（用于测试）
-            user = userService.getUserById(1L);
+            throw new BusinessException(401, "请先登录");
         }
 
         if (user == null) {
-            if (tokenUsername != null) {
-                throw new BusinessException(401,
-                        "用户不存在: " + tokenUsername + "。请检查账号是否正确或联系管理员");
-            }
             throw new BusinessException(401, "未登录，请先登录");
+        }
+        // 兼容旧前端仍传 username：仅允许查询当前登录账号，禁止枚举他人资料
+        if (username != null && !username.isEmpty()
+                && !username.equals(user.getUsername())
+                && !username.equals(user.getPhone())
+                && !username.equals(tokenUsername)) {
+            throw new BusinessException(403, "无权查看其他用户信息");
         }
 
         if (user.getStatus() == null || user.getStatus() != 1) {

@@ -45,9 +45,12 @@ public class CommunityController {
     public Result<Map<String, Object>> getVideoFeed(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) Long userId,
+            HttpServletRequest request) {
+        // 安全修复：个性化推荐必须以登录态为准，query userId 仅兼容旧前端且不参与查询
+        Long effectiveUserId = currentUserId(request);
         return SafeCall.of(() -> Result.success(
-                communityFeedAppService.getVideoFeed(page, size, userId)),
+                communityFeedAppService.getVideoFeed(page, size, effectiveUserId)),
                 "获取视频推荐流失败，请稍后重试", log);
     }
 
@@ -68,9 +71,15 @@ public class CommunityController {
     @Operation(summary = "获取@提及用户列表（抖音式：输入@后弹出选择）排序：帖子作者>评论区用户>关注的人")
     public Result<List<Map<String, Object>>> getMentionUsers(
             @PathVariable Long id,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) Long userId,
+            HttpServletRequest request) {
+        // 安全修复：候选排序依赖「关注的人」，属关注关系数据，必须以登录态为准
+        Long effectiveUserId = currentUserId(request);
+        if (effectiveUserId == null) {
+            return Result.error(401, "用户未登录或token无效");
+        }
         return SafeCall.of(() -> Result.success(
-                communityFeedAppService.getMentionUsers(id, userId)),
+                communityFeedAppService.getMentionUsers(id, effectiveUserId)),
                 "获取@用户列表失败，请稍后重试", log);
     }
 
@@ -231,9 +240,13 @@ public class CommunityController {
             @RequestParam(defaultValue = "10") Integer latestLimit,
             @RequestParam(defaultValue = "20") Integer followLimit,
             @RequestParam(defaultValue = "20") Integer exploreLimit,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) Long userId,
+            HttpServletRequest request) {
+        // 安全修复：关注区/发现区依赖登录用户的关注关系与兴趣，必须以登录态为准
+        Long effectiveUserId = currentUserId(request);
         return SafeCall.of(() -> Result.success(
-                communityFeedAppService.getPostFeed(topLimit, hotLimit, latestLimit, followLimit, exploreLimit, userId)),
+                communityFeedAppService.getPostFeed(topLimit, hotLimit, latestLimit, followLimit, exploreLimit,
+                        effectiveUserId)),
                 "获取帖子Feed失败，请稍后重试", log);
     }
 
@@ -247,9 +260,12 @@ public class CommunityController {
             @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size,
-            @RequestParam(required = false) String tag) {
+            @RequestParam(required = false) String tag,
+            HttpServletRequest request) {
+        // 安全修复：规则型推荐依赖用户兴趣/互动数据，必须以登录态为准
+        Long effectiveUserId = currentUserId(request);
         return SafeCall.of(() -> Result.success(
-                communityFeedAppService.getRecommendPosts(userId, page, size, tag)),
+                communityFeedAppService.getRecommendPosts(effectiveUserId, page, size, tag)),
                 "获取推荐帖子失败，请稍后重试", log);
     }
 
@@ -258,9 +274,16 @@ public class CommunityController {
     public Result<Map<String, Object>> getFollowingPosts(
             @RequestParam Long userId,
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(defaultValue = "10") Integer size,
+            HttpServletRequest request) {
+        // 安全修复：关注动态属个人社交数据，一律以登录态为准；query userId 仅兼容旧前端
+        Long currentUserId = currentUserId(request);
+        if (currentUserId == null) {
+            return Result.error(401, "用户未登录或token无效");
+        }
+        final Long effectiveUserId = currentUserId;
         return SafeCall.of(() -> Result.success(
-                communityFeedAppService.getFollowingPosts(userId, page, size)),
+                communityFeedAppService.getFollowingPosts(effectiveUserId, page, size)),
                 "获取关注用户帖子失败，请稍后重试", log);
     }
 

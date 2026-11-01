@@ -37,9 +37,10 @@ public class UserFollowController {
     public Result<Boolean> followUser(@RequestParam Long followingId, @RequestParam Long followerId,
                                       HttpServletRequest request) {
         return SafeCall.of(() -> {
-            // 安全修复：关注人以登录态为准（原从 query 取，可替他人批量关注刷粉）
+            // 安全修复：关注人必须以登录态为准；未登录直接拒绝，绝不回退到 query 中的 followerId
+            // （否则匿名可替任意用户批量关注刷粉）
             Object attrId = request.getAttribute("userId");
-            Long effectiveFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : followerId;
+            Long effectiveFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : null;
             if (effectiveFollowerId == null) {
                 throw new BusinessException(401, "用户未登录或token无效");
             }
@@ -68,9 +69,10 @@ public class UserFollowController {
     public Result<Boolean> unfollowUser(@RequestParam Long followingId, @RequestParam Long followerId,
                                         HttpServletRequest request) {
         return SafeCall.of(() -> {
-            // 安全修复：取关人以登录态为准（原从 query 取，可强制取关他人）
+            // 安全修复：取关人必须以登录态为准；未登录直接拒绝，绝不回退到 query 中的 followerId
+            // （否则匿名可强制取关任意用户）
             Object attrId = request.getAttribute("userId");
-            Long effectiveFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : followerId;
+            Long effectiveFollowerId = attrId instanceof Number ? ((Number) attrId).longValue() : null;
             if (effectiveFollowerId == null) {
                 throw new BusinessException(401, "用户未登录或token无效");
             }
