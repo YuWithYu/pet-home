@@ -9,10 +9,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethome.common.Result;
 import com.pethome.entity.Admin;
 import com.pethome.entity.LitterService;
-import com.pethome.service.admin.AdminService;
 import com.pethome.service.appointment.LitterServiceService;
 import com.pethome.util.FileUploadUtil;
-import com.pethome.security.JwtUtil;
+import com.pethome.security.AdminContext;
 import com.pethome.security.RequestIdentity;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,32 +36,18 @@ public class LitterServiceController {
     @Autowired
     private FileUploadUtil fileUploadUtil;
     
-    @Autowired
-    private AdminService adminService;
-    
-    @Autowired
-    private JwtUtil jwtUtil;
+    @Autowired(required = false)
+    private AdminContext adminContext;
 
     /**
-     * 从 token 中获取当前登录的管理员信息
+     * 从 token 中获取当前登录的管理员信息（未启用账号视为未登录）
      */
     private Admin getCurrentAdminFromToken(String token) {
-        if (token == null || !token.startsWith("Bearer ")) {
+        if (adminContext == null) {
             return null;
         }
-        try {
-            token = token.substring(7);
-            String username = jwtUtil.getUsernameFromToken(token);
-            if (username != null) {
-                Admin admin = adminService.getByUsername(username);
-                if (admin != null && admin.isEnabled()) {
-                    return admin;
-                }
-            }
-        } catch (RuntimeException e) {
-            log.warn("解析 token 失败", e);
-        }
-        return null;
+        Admin admin = adminContext.getCurrentAdmin(token);
+        return admin != null && admin.isEnabled() ? admin : null;
     }
 
     @GetMapping("/page")

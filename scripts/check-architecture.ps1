@@ -46,7 +46,9 @@ $rules = @(
     @{ Id = 'controller-handwritten-catch'; Desc = 'Controller 手写异常捕获（绕过全局异常出口）'; Scope = 'controller'; Test = { param($pkg, $text) $text -match 'catch \(Exception' } },
     @{ Id = 'entity-to-domain';           Desc = '实体反向依赖服务/持久化/表现层';                     Scope = 'entity';       Test = { param($pkg, $text) $text -match 'import com\.pethome\.(service|mapper|controller)\.' } },
     @{ Id = 'mapper-to-domain';           Desc = 'Mapper 反向依赖服务/表现层';                         Scope = 'mapper';       Test = { param($pkg, $text) $text -match 'import com\.pethome\.(service|controller)\.' } },
-    @{ Id = 'package-cycle';              Desc = '包级双向依赖（循环依赖）';                           Scope = '*';            Test = { param($pkg, $text) $false } }
+    @{ Id = 'package-cycle';              Desc = '包级双向依赖（循环依赖）';                           Scope = '*';            Test = { param($pkg, $text) $false } },
+    @{ Id = 'controller-size';            Desc = 'Controller 过大（职责过多，应下沉到应用服务）';        Scope = 'controller';   Test = { param($pkg, $text) (($text -split "`n").Count) -gt 600 } },
+    @{ Id = 'service-impl-size';          Desc = 'Service 实现过大（应抽离支撑组件）';                  Scope = 'service';      Test = { param($pkg, $text) ($pkg -match '(^|\.)impl') -and (($text -split "`n").Count) -gt 700 } }
 )
 
 $violations = [ordered]@{}

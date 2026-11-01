@@ -3,23 +3,13 @@ package com.pethome.service.admin.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pethome.entity.TaskRecord;
-import com.pethome.entity.User;
-import com.pethome.entity.PointsRecord;
 import com.pethome.mapper.TaskRecordMapper;
 import com.pethome.service.admin.TaskService;
-import com.pethome.service.user.SignInService;
-import com.pethome.service.user.UserService;
-import com.pethome.service.order.PointsRecordService;
-import com.pethome.mapper.UserFollowMapper;
-import com.pethome.mapper.PostMapper;
-import com.pethome.mapper.CommentMapper;
-import com.pethome.mapper.PostCollectMapper;
-import com.pethome.mapper.PostLikeMapper;
-import com.pethome.mapper.CommentLikeMapper;
+import com.pethome.service.admin.support.TaskProgressCalculator;
+import com.pethome.service.admin.support.TaskRewardService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,32 +29,10 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
     private static final Logger log = LoggerFactory.getLogger(TaskServiceImpl.class);
 
     @Autowired
-    private UserService userService;
+    private TaskProgressCalculator taskProgressCalculator;
     
     @Autowired
-    @Lazy
-    private SignInService signInService;
-    
-    @Autowired
-    private UserFollowMapper userFollowMapper;
-    
-    @Autowired
-    private PostMapper postMapper;
-    
-    @Autowired
-    private CommentMapper commentMapper;
-    
-    @Autowired
-    private PostCollectMapper postCollectMapper;
-    
-    @Autowired
-    private PostLikeMapper postLikeMapper;
-    
-    @Autowired
-    private CommentLikeMapper commentLikeMapper;
-    
-    @Autowired
-    private PointsRecordService pointsRecordService;
+    private TaskRewardService taskRewardService;
     
     // 任务配置
     private static final Map<String, Map<String, Object>> TASK_CONFIG = new HashMap<>();
@@ -158,7 +126,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
                 boolean claimed = Boolean.TRUE.equals(record.getClaimed());
                 // 发布内容：未领取前按库中今日发帖数同步任务行，解决先发待审 progress=0、后台通过后仍显示 0/1
                 if ("post_content".equals(taskId) && !claimed) {
-                    int dbProgress = queryTodayPostContentProgress(userId);
+                    int dbProgress = taskProgressCalculator.queryTodayPostContentProgress(userId);
                     int targetVal = (Integer) config.get("target");
                     displayProgress = dbProgress;
                     completed = dbProgress >= targetVal;
@@ -176,65 +144,7 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
                 task.put("canClaim", completed && !claimed);
             } else {
                 // 根据任务类型初始化进度（从实际数据查询）
-                int progress = 0;
-                if ("daily_signin".equals(taskId)) {
-                    // 检查今日是否已签到
-                    progress = signInService.hasSignedIn(userId, today) ? 1 : 0;
-                } else if ("follow_user".equals(taskId)) {
-                    // 查询用户今日已关注的用户数量
-                    try {
-                        QueryWrapper<com.pethome.entity.UserFollow> followWrapper =
-                            new QueryWrapper<>();
-                        followWrapper.eq("follower_id", userId);
-                        followWrapper.apply("DATE(create_time) = CURDATE()");
-                        progress = Math.toIntExact(userFollowMapper.selectCount(followWrapper));
-                    } catch (Exception e) {
-                        log.error("查询关注用户任务进度失败", e);
-                    }
-                } else if ("post_content".equals(taskId)) {
-                    progress = queryTodayPostContentProgress(userId);
-                } else if ("comment_content".equals(taskId)) {
-                    // 查询用户今日已发布的顶级评论数量
-                    try {
-                        QueryWrapper<com.pethome.entity.Comment> commentWrapper =
-                            new QueryWrapper<>();
-                        commentWrapper.eq("user_id", userId);
-                        commentWrapper.and(w -> w.isNull("parent_id").or().eq("parent_id", 0));
-                        commentWrapper.apply("DATE(create_time) = CURDATE()");
-                        progress = Math.toIntExact(commentMapper.selectCount(commentWrapper));
-                    } catch (Exception e) {
-                        log.error("查询评论内容任务进度失败", e);
-                    }
-                } else if ("collect_content".equals(taskId)) {
-                    // 查询用户今日已收藏的帖子数量
-                    try {
-                        QueryWrapper<com.pethome.entity.PostCollect> collectWrapper =
-                            new QueryWrapper<>();
-                        collectWrapper.eq("user_id", userId);
-                        collectWrapper.apply("DATE(create_time) = CURDATE()");
-                        progress = Math.toIntExact(postCollectMapper.selectCount(collectWrapper));
-                    } catch (Exception e) {
-                        log.error("查询收藏内容任务进度失败", e);
-                    }
-                } else if ("like_content".equals(taskId)) {
-                    // 查询用户今日已点赞的帖子数量
-                    try {
-                        progress = postLikeMapper.getTodayLikeCount(userId);
-                    } catch (Exception e) {
-                        log.error("查询点赞内容任务进度失败", e);
-                    }
-                } else if ("like_comment".equals(taskId)) {
-                    // 查询用户今日已点赞的评论数量
-                    try {
-                        QueryWrapper<com.pethome.entity.CommentLike> likeCommentWrapper =
-                            new QueryWrapper<>();
-                        likeCommentWrapper.eq("user_id", userId);
-                        likeCommentWrapper.apply("DATE(create_time) = CURDATE()");
-                        progress = Math.toIntExact(commentLikeMapper.selectCount(likeCommentWrapper));
-                    } catch (Exception e) {
-                        log.error("查询点赞评论任务进度失败", e);
-                    }
-                }
+                int progress = taskProgressCalculator.calculateDisplayProgress(userId, taskId, today);
 
                 task.put("progress", progress);
                 task.put("current", progress);
@@ -329,52 +239,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
         } else {
             // 如果没有记录，从实际数据查询任务完成状态
             int target = (Integer) config.get("target");
-            
-            if ("daily_signin".equals(taskId)) {
-                completed = signInService.hasSignedIn(userId, today);
-                actualProgress = completed ? 1 : 0;
-            } else if ("follow_user".equals(taskId)) {
-                // 查询用户今日已关注的用户数量
-                QueryWrapper<com.pethome.entity.UserFollow> followWrapper = new QueryWrapper<>();
-                followWrapper.eq("follower_id", userId);
-                followWrapper.apply("DATE(create_time) = CURDATE()");
-                actualProgress = Math.toIntExact(userFollowMapper.selectCount(followWrapper));
-                completed = actualProgress >= target;
-            } else if ("post_content".equals(taskId)) {
-                // 查询用户今日已发布的帖子数量
-                QueryWrapper<com.pethome.entity.Post> postWrapper = new QueryWrapper<>();
-                postWrapper.eq("user_id", userId);
-                postWrapper.in("status", java.util.Arrays.asList(1, 2));
-                postWrapper.apply("DATE(create_time) = CURDATE()");
-                actualProgress = Math.toIntExact(postMapper.selectCount(postWrapper));
-                completed = actualProgress >= target;
-            } else if ("comment_content".equals(taskId)) {
-                // 查询用户今日已发布的顶级评论数量
-                QueryWrapper<com.pethome.entity.Comment> commentWrapper = new QueryWrapper<>();
-                commentWrapper.eq("user_id", userId);
-                commentWrapper.and(w -> w.isNull("parent_id").or().eq("parent_id", 0));
-                commentWrapper.apply("DATE(create_time) = CURDATE()");
-                actualProgress = Math.toIntExact(commentMapper.selectCount(commentWrapper));
-                completed = actualProgress >= target;
-            } else if ("collect_content".equals(taskId)) {
-                // 查询用户今日已收藏的帖子数量
-                QueryWrapper<com.pethome.entity.PostCollect> collectWrapper = new QueryWrapper<>();
-                collectWrapper.eq("user_id", userId);
-                collectWrapper.apply("DATE(create_time) = CURDATE()");
-                actualProgress = Math.toIntExact(postCollectMapper.selectCount(collectWrapper));
-                completed = actualProgress >= target;
-            } else if ("like_content".equals(taskId)) {
-                // 查询用户今日已点赞的帖子数量
-                actualProgress = postLikeMapper.getTodayLikeCount(userId);
-                completed = actualProgress >= target;
-            } else if ("like_comment".equals(taskId)) {
-                // 查询用户今日已点赞的评论数量
-                QueryWrapper<com.pethome.entity.CommentLike> likeCommentWrapper = new QueryWrapper<>();
-                likeCommentWrapper.eq("user_id", userId);
-                likeCommentWrapper.apply("DATE(create_time) = CURDATE()");
-                actualProgress = Math.toIntExact(commentLikeMapper.selectCount(likeCommentWrapper));
-                completed = actualProgress >= target;
-            }
+            actualProgress = taskProgressCalculator.calculateClaimProgress(userId, taskId, today);
+            completed = actualProgress >= target;
             
             log.info("领取奖励 - 任务ID: {}, 用户ID: {}, 实际进度: {}, 目标: {}, 是否完成: {}",
                 taskId, userId, actualProgress, target, completed);
@@ -417,37 +283,11 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
         // 发放奖励
         int rewardPoints = (Integer) config.get("reward");
         String taskName = (String) config.get("name");
-        User user = userService.getUserById(userId);
-        if (user != null) {
-            int currentPoints = user.getPoints() != null ? user.getPoints() : 0;
-            user.setPoints(currentPoints + rewardPoints);
-            userService.updateUser(user);
-        }
-        
-        // 创建积分记录
-        try {
-            PointsRecord pointsRecord = new PointsRecord();
-            pointsRecord.setUserId(userId);
-            pointsRecord.setType("earn");
-            pointsRecord.setPoints(rewardPoints);
-            // 格式：任务奖励 - 具体任务名（如 点赞评论、发布内容、关注用户 等）
-            pointsRecord.setDescription("任务奖励：" + (taskName != null ? taskName : "每日任务"));
-            pointsRecord.setSource("task");
-            pointsRecord.setCreateTime(LocalDateTime.now());
-            pointsRecordService.addRecord(pointsRecord);
-            log.info("创建任务积分记录成功，任务: {}, 积分: {}", taskName, rewardPoints);
-
-            // 更新用户的魅力值和等级
-            if (userService != null) {
-                userService.updateCharmAndLevel(userId);
-            }
-        } catch (Exception e) {
-            log.error("创建任务积分记录失败", e);
-        }
+        int balance = taskRewardService.grantTaskReward(userId, rewardPoints, taskName);
         
         Map<String, Object> result = new HashMap<>();
         result.put("points", rewardPoints);
-        result.put("balance", user != null ? user.getPoints() : rewardPoints);
+        result.put("balance", balance);
         
         return result;
     }
@@ -497,7 +337,8 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
             return;
         }
         try {
-            updateTaskProgress(userId, "post_content", queryTodayPostContentProgress(userId));
+            updateTaskProgress(userId, "post_content",
+                taskProgressCalculator.queryTodayPostContentProgress(userId));
         } catch (Exception e) {
             // 任务进度同步失败不影响管理员审核结果
             log.warn("同步发布内容任务进度失败，用户ID: {}", userId, e);
@@ -512,23 +353,6 @@ public class TaskServiceImpl extends ServiceImpl<TaskRecordMapper, TaskRecord> i
                 return "分享小程序给好友可获得积分奖励";
             default:
                 return "完成任务可获得积分奖励";
-        }
-    }
-
-    /** 今日已发帖数：正常 + 待审核（与 PostServiceImpl.getTodayPostCount 一致） */
-    private int queryTodayPostContentProgress(Long userId) {
-        if (userId == null || postMapper == null) {
-            return 0;
-        }
-        try {
-            QueryWrapper<com.pethome.entity.Post> postWrapper = new QueryWrapper<>();
-            postWrapper.eq("user_id", userId);
-            postWrapper.in("status", java.util.Arrays.asList(1, 2));
-            postWrapper.apply("DATE(create_time) = CURDATE()");
-            return Math.toIntExact(postMapper.selectCount(postWrapper));
-        } catch (Exception e) {
-            log.error("queryTodayPostContentProgress 失败", e);
-            return 0;
         }
     }
 }

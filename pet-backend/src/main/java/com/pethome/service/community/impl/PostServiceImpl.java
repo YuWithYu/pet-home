@@ -9,7 +9,6 @@ import com.pethome.entity.DailyTopicPost;
 import com.pethome.entity.Post;
 import com.pethome.entity.PostCollect;
 import com.pethome.entity.PostLike;
-import com.pethome.entity.User;
 import com.pethome.entity.UserFollow;
 import com.pethome.entity.UserPostInteraction;
 import com.pethome.mapper.CommentLikeMapper;
@@ -20,35 +19,21 @@ import com.pethome.mapper.PostLikeMapper;
 import com.pethome.mapper.PostMapper;
 import com.pethome.mapper.PostTagMapper;
 import com.pethome.mapper.UserFollowMapper;
-import com.pethome.mapper.UserMapper;
 import com.pethome.mapper.UserPostInteractionMapper;
-import com.pethome.mq.BehaviorEventPublisher;
 import com.pethome.service.community.PostService;
 import com.pethome.service.common.RedisCacheService;
 import com.pethome.service.community.TagService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.pethome.service.community.support.PostCounterService;
+import com.pethome.service.community.support.PostViewAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
-
-    private static final Logger log = LoggerFactory.getLogger(PostServiceImpl.class);
-
-    /** ObjectMapper 线程安全且创建昂贵，静态复用避免逐帖实例化 */
-    private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER =
-            new com.fasterxml.jackson.databind.ObjectMapper();
 
     @Autowired
     private PostMapper postMapper;
@@ -60,13 +45,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private UserFollowMapper userFollowMapper;
     
     @Autowired
-    private UserMapper userMapper;
-    
-    @Autowired
     private RedisCacheService redisCacheService;
-
-    @Autowired
-    private BehaviorEventPublisher behaviorEventPublisher;
 
     @Autowired
     private CommentMapper commentMapper;
@@ -88,6 +67,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Autowired
     private TagService tagService;
+
+    @Autowired
+    private PostViewAssembler postViewAssembler;
+
+    @Autowired
+    private PostCounterService postCounterService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -231,68 +216,17 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     
     @Override
     public void incrementViews(Long postId) {
-        Long viewCount = redisCacheService.incrementPostView(postId);
-
-        // 旁路埋点：Kafka 未启用时为空操作，不影响浏览量主链路
-        behaviorEventPublisher.publishPostView(postId, null);
-
-        if (viewCount == null || viewCount == 1) {
-            Post post = postMapper.selectById(postId);
-            if (post != null) {
-                Integer currentViews = post.getViewsCount() != null ? post.getViewsCount() : 0;
-                redisCacheService.setPostViewCount(postId, currentViews + 1);
-                viewCount = (long) (currentViews + 1);
-            }
-        }
-
-        if (viewCount != null) {
-            Post post = postMapper.selectById(postId);
-            if (post != null) {
-                post.setViewsCount(viewCount.intValue());
-                postMapper.updateById(post);
-            }
-        }
+        postCounterService.incrementViews(postId);
     }
     
     @Override
     public void updateLikesCount(Long postId, int delta) {
-        // 1. 更新 Redis 缓存
-        if (delta > 0) {
-            redisCacheService.incrementPostLike(postId);
-        } else if (delta < 0) {
-            redisCacheService.decrementPostLike(postId);
-        }
-        
-        Integer newCount = redisCacheService.getPostLikeCount(postId);
-        if (newCount == null) {
-            Post post = postMapper.selectById(postId);
-            if (post != null) {
-                Integer currentLikes = post.getLikesCount() != null ? post.getLikesCount() : 0;
-                newCount = Math.max(0, currentLikes + delta);
-                redisCacheService.setPostLikeCount(postId, newCount);
-            }
-        }
-        
-        // 2. 立即回写数据库，避免仅依赖定时同步导致刷新后点赞数丢失
-        if (newCount != null) {
-            Post post = postMapper.selectById(postId);
-            if (post != null) {
-                post.setLikesCount(newCount);
-                postMapper.updateById(post);
-            }
-        }
+        postCounterService.updateLikesCount(postId, delta);
     }
     
     @Override
     public void updateCommentsCount(Long postId, int delta) {
-        Post post = postMapper.selectById(postId);
-        if (post != null) {
-            post.setCommentsCount(Math.max(0, post.getCommentsCount() + delta));
-            postMapper.updateById(post);
-            
-            // 更新Redis缓存
-            redisCacheService.incrementPostStat(postId, "commentCount", delta);
-        }
+        postCounterService.updateCommentsCount(postId, delta);
     }
     
     @Override
@@ -341,92 +275,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
      * 批量查询作者信息与点赞状态，避免逐帖查询的 N+1
      */
     public void fillUserInfoAndLikeStatus(List<Post> posts, Long currentUserId) {
-        if (posts == null || posts.isEmpty()) {
-            return;
-        }
-
-        // 批量查询作者信息：单次 selectBatchIds 替代逐帖 selectById
-        Set<Long> userIds = new HashSet<>();
-        for (Post post : posts) {
-            if (post.getUserId() != null) {
-                userIds.add(post.getUserId());
-            }
-        }
-        Map<Long, User> userMap = userIds.isEmpty()
-                ? Collections.emptyMap()
-                : userMapper.selectBatchIds(userIds).stream()
-                        .collect(Collectors.toMap(User::getId, user -> user));
-
-        // 批量查询点赞状态：单次 IN 查询替代逐帖 isLiked
-        Set<Long> likedPostIds = new HashSet<>();
-        if (currentUserId != null) {
-            List<Long> postIds = new ArrayList<>();
-            for (Post post : posts) {
-                if (post.getId() != null) {
-                    postIds.add(post.getId());
-                }
-            }
-            if (!postIds.isEmpty()) {
-                try {
-                    List<PostLike> likes = postLikeMapper.selectList(
-                            new QueryWrapper<PostLike>().eq("user_id", currentUserId).in("post_id", postIds));
-                    for (PostLike like : likes) {
-                        if (like.getPostId() != null) {
-                            likedPostIds.add(like.getPostId());
-                        }
-                    }
-                } catch (Exception e) {
-                    // 查询失败时保持全部未点赞，不影响列表返回
-                    log.error("批量查询点赞状态失败", e);
-                }
-            }
-        }
-
-        for (Post post : posts) {
-            User user = userMap.get(post.getUserId());
-            if (user != null) {
-                // 只使用昵称，如果昵称为空则使用默认值（不使用手机号）
-                String displayName = null;
-                if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
-                    displayName = user.getNickname().trim();
-                }
-                // 如果昵称为空，使用默认格式，绝不使用手机号（username）
-                post.setUserName(displayName != null && !displayName.isEmpty() ? displayName : "用户" + post.getUserId());
-                // 优先使用avatar字段，但需要排除临时路径
-                String avatar = (user.getAvatar() != null && !user.getAvatar().isEmpty()) ? user.getAvatar() : null;
-
-                // 检查是否是临时路径（tmp路径）
-                if (avatar != null && (avatar.contains("/tmp/") || avatar.contains("/__tmp__/") ||
-                    avatar.startsWith("http://tmp/") || avatar.startsWith("http://__tmp__/") ||
-                    avatar.startsWith("https://tmp/") || avatar.startsWith("https://__tmp__/"))) {
-                    // 如果是临时路径，使用默认头像
-                    avatar = null;
-                    log.warn("检测到用户头像为临时路径，使用默认头像。用户ID: {}, 临时路径: {}", user.getId(), user.getAvatar());
-                }
-
-                // 使用正确的默认头像路径（默认头像可以使用静态资源路径）
-                // 注意：用户上传的头像应保存在 /upload/ 目录，只有默认头像使用 /static/
-                post.setUserAvatar(avatar != null ? avatar : "/static/images/garfield-default-avatar.png");
-            }
-
-            // 视频帖无封面时从 videos[0] 的 thumb/customThumb/cover 补全，方便列表展示
-            if ((post.getCoverImage() == null || post.getCoverImage().trim().isEmpty()) && post.getVideos() != null && !post.getVideos().trim().isEmpty()) {
-                try {
-                    java.util.List<?> list = OBJECT_MAPPER.readValue(post.getVideos(), java.util.List.class);
-                    if (list != null && !list.isEmpty() && list.get(0) instanceof java.util.Map) {
-                        @SuppressWarnings("unchecked")
-                        java.util.Map<String, Object> first = (java.util.Map<String, Object>) list.get(0);
-                        String thumb = first.get("thumb") != null ? String.valueOf(first.get("thumb")).trim() : null;
-                        if (thumb == null || thumb.isEmpty()) thumb = first.get("customThumb") != null ? String.valueOf(first.get("customThumb")).trim() : null;
-                        if (thumb == null || thumb.isEmpty()) thumb = first.get("cover") != null ? String.valueOf(first.get("cover")).trim() : null;
-                        if (thumb != null && !thumb.isEmpty()) post.setCoverImage(thumb);
-                    }
-                } catch (Exception ignored) {}
-            }
-
-            // 点赞状态：批量结果中命中即已点赞
-            post.setIsLiked(likedPostIds.contains(post.getId()));
-        }
+        postViewAssembler.fillUserInfoAndLikeStatus(posts, currentUserId);
     }
     
     @Override
@@ -487,30 +336,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     
     @Override
     public void updateExposureScoreOnInteraction(Long postId, String interactionType) {
-        Post post = postMapper.selectById(postId);
-        if (post == null) {
-            return;
-        }
-        
-        // 根据不同互动类型增加曝光分数
-        double increment = 0.0;
-        switch (interactionType.toLowerCase()) {
-            case "like":
-                increment = 2.0; // 点赞增加2分
-                break;
-            case "comment":
-                increment = 3.0; // 评论增加3分
-                break;
-            case "view":
-                increment = 0.1; // 浏览增加0.1分
-                break;
-            default:
-                increment = 1.0; // 其他互动增加1分
-        }
-        
-        double currentScore = post.getExposureScore() != null ? post.getExposureScore() : 0.0;
-        post.setExposureScore(currentScore + increment);
-        postMapper.updateById(post);
+        postCounterService.updateExposureScoreOnInteraction(postId, interactionType);
     }
 
     @Override
