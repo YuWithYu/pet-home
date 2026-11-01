@@ -148,9 +148,11 @@ public class PetMedicalRecordController {
         if (body.getId() == null) {
             throw new BusinessException("记录ID不能为空");
         }
-        requireOwnedRecord(body.getId(), userId);
-        // 归属字段不允许被篡改
+        PetMedicalRecord owned = requireOwnedRecord(body.getId(), userId);
+        // 归属字段不允许被篡改：userId 以登录态为准，petId 回写为原记录所属宠物，
+        // 防止通过 update 把记录改挂到他人宠物（进而越权读取/删除）
         body.setUserId(userId);
+        body.setPetId(owned.getPetId());
         body.setHospitalAppointmentId(null);
         return Result.success(medicalRecordService.update(body));
     }

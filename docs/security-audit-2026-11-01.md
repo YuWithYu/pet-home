@@ -493,3 +493,37 @@ C1–C83 全量回归无 FAIL；`mvn -B package "-Dmaven.test.skip=true"` → **
 
 - 8080 已重启（`java -jar target/pet-home-backend-1.0.0.jar`），上述关键项在 8080 复检通过，修复已生效。
 
+## 14. 第八轮：归属完整性与身份来源收敛（2026-11-01）
+
+第八轮对宠物健康档案、社区推荐、签到与 API 文档暴露面做定点收敛；其余已复核项（宠物/体重记录/地址/通知/投诉/私信/优惠券/积分商城/上传/评价/预约变更与取消/用户资料/CORS/过滤器）确认已具备归属校验或登录态强制，本次不再改动。
+
+### 14.1 修复清单
+
+| # | 风险 | 位置 | 修复 |
+|---|------|------|------|
+| 1 | 更新健康档案时未回写 `petId`，可把记录改挂到他人宠物，进而越权读取/删除 | `PetMedicalRecordController#update` | 保留 `requireOwnedRecord` 返回值并强制 `body.setPetId(owned.getPetId())` |
+| 2 | 推荐用户接口完全匿名且信任 query `userId`，可用于探测他人推荐画像 | `MessageController#getRecommendedUsers` | 忽略 query `userId`，一律以拦截器登录态为准；未登录 401 |
+| 3 | 未登录签到抛出业务码 500（与 401 语义不符） | `SignInController#doSignIn` | 改为 `BusinessException(401, "未登录或token无效")` |
+| 4 | OpenAPI/Swagger 默认开启，匿名可获取全部接口结构 | `application.yml` `springdoc.*` | 默认值改为 `false`，联调需显式设置 `SWAGGER_ENABLED=true` |
+
+### 14.2 复测结果（18080 临时实例，`APP_MQ_ENABLED=false APP_KAFKA_ENABLED=false`）
+
+| 用例 | 期望 | 实测 |
+|------|------|------|
+| 匿名 `GET /api/messages/recommended-users?userId=83` | 401 | 401（HTTP 401） |
+| 用户 `GET /api/messages/recommended-users?userId=1&limit=5` | 200（仅本人推荐） | 200 |
+| 匿名 `POST /api/signin/do` | 401 | 401（HTTP 401，拦截器先拒绝） |
+| 用户创建健康档案后 `PUT /api/pet-medical-records/update` 传 `petId=999999` | 200 且 `petId` 保持原值 | 200，`originalPet=23 returnedPet=23` |
+
+C1–C87 全量回归 83 项 PASS / 0 FAIL；`mvn -B clean package "-Dmaven.test.skip=true"` → **BUILD SUCCESS**；
+`scripts/check-architecture.ps1` 13 项规则全部 PASS（基线 0）。
+
+- 临时 18080 实例已停止；8080 已用新 jar 重启并抽检通过。
+
+### 14.3 残余说明（不构成越权，暂不修改）
+
+- `ProductController#getProductReviews` / `review/{id}/like/status` 的 query `userId` 仅影响「点赞态/我的评价」展示，不返回他人敏感数据；写操作均使用登录态。
+- `ComplaintController#submit` 允许匿名提交（仅内容校验），存在垃圾提交风险，需在网关/风控层做频控。
+- `ProductController#favorites/count` 为固定返回 0 的桩实现，未接入真实收藏数据。
+
+

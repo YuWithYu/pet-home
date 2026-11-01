@@ -62,7 +62,7 @@ public class SignInController {
             Long userId = userTokenResolver.getUserIdFromBearer(authHeader);
             
             if (userId == null) {
-                throw new BusinessException("未登录或token无效");
+                throw new BusinessException(401, "未登录或token无效");
             }
             
             // 使用真实服务执行签到

@@ -195,9 +195,9 @@ management:
       enabled: false
 
 # API 文档：springfox 已停止维护且与 Boot 2.7 存在兼容性问题，迁移至 springdoc-openapi
-# 安全：生产环境必须关闭（暴露全部接口结构），通过环境变量控制
+# 安全：默认关闭（会暴露全部接口结构），本地联调需要时显式设置 SWAGGER_ENABLED=true
 springdoc:
   api-docs:
-    enabled: ${SWAGGER_ENABLED:true}
+    enabled: ${SWAGGER_ENABLED:false}
   swagger-ui:
-    enabled: ${SWAGGER_ENABLED:true}
+    enabled: ${SWAGGER_ENABLED:false}

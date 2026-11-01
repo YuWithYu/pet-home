@@ -1,5 +1,6 @@
 package com.pethome.controller.community;
 
+import com.pethome.common.BusinessException;
 import com.pethome.common.Result;
 import com.pethome.common.SafeCall;
 import com.pethome.security.RequestIdentity;
@@ -254,14 +255,22 @@ public class MessageController {
 
     /**
      * 获取推荐用户
+     *
+     * 安全约束：推荐结果基于登录用户自身的关注/兴趣，不接受 query 传入的 userId，
+     * 未登录直接返回 401，避免匿名用户以任意 userId 探测他人推荐画像。
      */
     @GetMapping("/recommended-users")
     @Operation(summary = "获取推荐用户")
     public Result<Map<String, Object>> getRecommendedUsers(
-            @RequestParam Long userId,
-            @RequestParam(defaultValue = "10") Integer limit) {
+            @RequestParam(required = false) Long userId,
+            @RequestParam(defaultValue = "10") Integer limit,
+            HttpServletRequest request) {
+        Long loginUserId = loginUserId(request);
+        if (loginUserId == null) {
+            throw new BusinessException(401, "未登录或token无效");
+        }
         return SafeCall.of(() -> Result.success(
-                        messageRecommendationAppService.getRecommendedUsers(userId, limit)),
+                        messageRecommendationAppService.getRecommendedUsers(loginUserId, limit)),
                 "获取推荐用户失败，请稍后重试", log);
     }
 
