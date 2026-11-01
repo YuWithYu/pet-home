@@ -163,7 +163,12 @@ public class AppointmentChangeRequestController {
     @GetMapping("/has-any")
     @Operation(summary = "按预约查询是否已有变更记录")
     public Result<Boolean> hasAnyByAppointment(
-            @RequestParam String appointmentType, @RequestParam Long appointmentId) {
+            @RequestParam String appointmentType, @RequestParam Long appointmentId,
+            HttpServletRequest request) {
+        // 安全修复：匿名可枚举任意预约是否存在变更记录（预约号可探测），要求登录态
+        if (currentUserId(request) == null && !isStaffOrAdmin(request)) {
+            return Result.error(401, "用户未登录或token无效");
+        }
         boolean hasAny = changeRequestService.hasAnyChangeRequest(appointmentType, appointmentId);
         return Result.success(hasAny);
     }

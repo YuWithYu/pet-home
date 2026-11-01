@@ -462,3 +462,34 @@ C1–C57 原有用例全量回归通过；`mvn -B package "-Dmaven.test.skip=tru
 
 - 验证实例已停止，**需重启正在运行的 8080 后端进程**后修复才生效。
 
+## 13. 第七轮：残余低风险项收敛（2026-11-01）
+
+第七轮针对前几轮遗留的 4 项低风险问题做定点收敛，其余高风险面（SQL 拼接、支付回调验签、actuator 暴露面、
+JWT 密钥强度与生产 fail-fast）复核确认已具备防护，不再重复修改。
+
+### 13.1 修复清单
+
+| # | 风险 | 位置 | 修复 |
+|---|------|------|------|
+| 1 | 短信接口无条件信任 `X-Forwarded-For`，可伪造来源 IP 绕过按 IP 发送限流 | `SmsController#sendSms` | 仅当直连来源为可信代理（回环/内网）时才读取 XFF，且取最右一跳；否则一律用 `remoteAddr` |
+| 2 | 匿名可枚举任意预约是否存在变更记录（预约号可探测） | `AppointmentChangeRequestController#hasAnyByAppointment` | 要求登录态或 staff/admin，否则 401 |
+| 3 | staff 可跨用户读写购物车（店员不应参与购物车业务） | `CartController#isAdminContext` | 管理端上下文仅 `admin` / `store_admin`，移除 `staff` 与 `adminId` 兜底 |
+| 4 | staff 可跨用户读取积分流水与积分统计（个人资产数据） | `UserController#getPointsRecords` / `getPointsStatistics` | 跨用户查询仅 `admin` 放行（`RequestIdentity.isAdmin`）；其余一律以登录态为准 |
+
+### 13.2 复测结果（18080 临时实例 + 重启后 8080 抽检）
+
+| 用例 | 期望 | 实测 |
+|------|------|------|
+| 匿名 `GET /api/appointment-change-request/has-any?…` | 401 | 401（HTTP 401） |
+| 用户 `GET /api/appointment-change-request/has-any?…` | 200 | 200，`data: false` |
+| staff `GET /api/cart/page?userId=83` | 403 | 403（HTTP 403） |
+| admin `GET /api/cart/page?userId=83` | 200 | 200 |
+| staff `GET /api/user/points/records?userId=83` | 403 | 403（拦截器 + 服务层双重拒绝） |
+| 用户 `GET /api/user/points/records?userId=75` | 200（强制本人） | 200，返回本人流水 |
+| 匿名 `GET /api/user/current` | 401 | 401「请先登录」 |
+
+C1–C83 全量回归无 FAIL；`mvn -B package "-Dmaven.test.skip=true"` → **BUILD SUCCESS**；
+`scripts/check-architecture.ps1` 全部 PASS。
+
+- 8080 已重启（`java -jar target/pet-home-backend-1.0.0.jar`），上述关键项在 8080 复检通过，修复已生效。
+

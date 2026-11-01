@@ -35,13 +35,10 @@ public class CartController {
         return attr instanceof Number ? ((Number) attr).longValue() : null;
     }
 
-    /** 管理端（admin/staff）上下文，可跨用户操作 */
+    /** 管理端（admin/store_admin）上下文，可代客操作购物车；staff（店员）不参与购物车业务 */
     private boolean isAdminContext(HttpServletRequest request) {
-        if (request.getAttribute("adminId") != null) {
-            return true;
-        }
         Object role = request.getAttribute("role");
-        return "admin".equals(role) || "staff".equals(role);
+        return "admin".equals(role) || "store_admin".equals(role);
     }
 
     /** 校验目标 userId 与登录身份一致；管理端放行，其余视为越权 */

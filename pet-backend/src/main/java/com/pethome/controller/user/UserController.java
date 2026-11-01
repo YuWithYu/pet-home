@@ -315,7 +315,7 @@ public class UserController {
             @RequestParam(required = false, defaultValue = "earn") String type,
             HttpServletRequest request) {
         return SafeCall.of(() -> Result.success(userProfileAppService.getPointsRecords(
-                token, userId, type, isStaffOrAdmin(request))),
+                token, userId, type, com.pethome.security.RequestIdentity.isAdmin(request))),
                 "获取积分记录失败，请稍后重试", log);
     }
 
@@ -326,7 +326,7 @@ public class UserController {
             @RequestParam(required = false) Long userId,
             HttpServletRequest request) {
         return SafeCall.of(() -> Result.success(userProfileAppService.getPointsStatistics(
-                token, userId, isStaffOrAdmin(request))),
+                token, userId, com.pethome.security.RequestIdentity.isAdmin(request))),
                 "获取积分统计失败，请稍后重试", log);
     }
 

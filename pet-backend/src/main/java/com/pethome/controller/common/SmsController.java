@@ -27,19 +27,32 @@ public class SmsController {
     private SmsService smsService;
 
     /**
-     * 取客户端 IP：Nginx 的 X-Forwarded-For 会追加真实客户端，取最右一跳；
-     * 无代理头时退回 remoteAddr（直连部署）。
+     * 取客户端 IP：
+     * 仅当直连来源是可信代理（本机/内网，通常是 Nginx）时才信任 X-Forwarded-For，
+     * 并取最右一跳（代理追加的真实客户端）；直连部署一律使用 remoteAddr，
+     * 防止客户端自行伪造 XFF 绕过按 IP 的发送限流。
      */
     private String resolveClientIp(HttpServletRequest request) {
+        String remote = request.getRemoteAddr();
         String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.trim().isEmpty()) {
+        if (forwarded != null && !forwarded.trim().isEmpty() && isTrustedProxy(remote)) {
             String[] parts = forwarded.split(",");
             String last = parts[parts.length - 1].trim();
             if (!last.isEmpty()) {
                 return last;
             }
         }
-        return request.getRemoteAddr();
+        return remote;
+    }
+
+    /** 可信代理判定：回环地址与内网网段（与常规 Nginx 同机/内网部署一致） */
+    private static boolean isTrustedProxy(String ip) {
+        if (ip == null || ip.isEmpty()) {
+            return false;
+        }
+        return ip.equals("127.0.0.1") || ip.equals("::1") || ip.equals("0:0:0:0:0:0:0:1")
+                || ip.startsWith("10.") || ip.startsWith("192.168.")
+                || ip.matches("172\\.(1[6-9]|2[0-9]|3[0-1])\\.\\d{1,3}\\.\\d{1,3}");
     }
 
     @PostMapping("/send")
