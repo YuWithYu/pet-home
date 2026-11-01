@@ -414,3 +414,51 @@ C1–C47 全部沿用上表并复测通过；编译 `mvn -B package "-Dmaven.tes
 
 - 验证实例已停止，**需重启正在运行的 8080 后端进程**后修复才生效。
 
+## 12. 第六轮：匿名身份回退与个人社交数据越权（2026-11-01）
+
+延续第 11 轮前提：`role=user` 的已登录用户除管理端前缀外一律放行，归属校验必须在接口内完成。
+本轮聚焦「未登录时回退 query 参数」与「个人社交数据按 query userId 读取」两类模式。
+
+### 12.1 修复清单
+
+| # | 风险 | 位置 | 修复 |
+|---|------|------|------|
+| 1 | 未登录时回退 query `followerId`，可匿名替任意用户关注 | `UserFollowController#followUser` | 身份仅取 `request.userId`，为空直接 401，不回退 |
+| 2 | 同上模式，可匿名强制取关任意用户 | `UserFollowController#unfollowUser` | 同上 |
+| 3 | 传任意 `userId` 读取他人每日专题收藏列表 | `DailyTopicController#getCollectedTopics` | 一律用登录态；未登录 401 |
+| 4 | 传任意 `userId` 探测他人专题收藏状态 | `DailyTopicController#getTopicCollectStatus` | 一律用登录态；未登录 401 |
+| 5 | 专题详情点赞/收藏态可按 query `userId` 伪造 | `DailyTopicController#getTopicDetail` | 点赞/收藏态仅用登录态 |
+| 6 | 专题评论点赞态可按 query `userId` 伪造 | `DailyTopicController#getTopicComments` | 同上 |
+| 7 | 匿名 `GET /api/user/current` 回退「用户 ID=1」，泄露该用户手机号与积分 | `UserProfileAppServiceImpl#doGetCurrentUser` | 删除回退；无 token/无身份直接 401 |
+| 8 | 传 `username` 可枚举任意账号资料 | 同上 | 仅允许查询当前登录账号，不一致 403 |
+| 9 | 传任意 `userId` 读取他人关注动态（社交关系泄露） | `CommunityController#getFollowingPosts` | 一律用登录态；未登录 401 |
+| 10 | 传任意 `userId` 读取他人 Feed 关注区/发现区 | `CommunityController#getPostFeed` | 个性化仅用登录态，匿名返回公共热门帖 |
+| 11 | 传任意 `userId` 读取他人规则型推荐（兴趣画像） | `CommunityController#getRecommendPosts` | 同上 |
+| 12 | 传任意 `userId` 读取他人 @ 候选（关注关系） | `CommunityController#getMentionUsers` | 一律用登录态；未登录 401 |
+| 13 | 传任意 `userId` 读取他人视频推荐（兴趣画像） | `CommunityController#getVideoFeed` | 个性化仅用登录态，匿名走热门视频 |
+
+### 12.2 复测结果（18080 临时实例，`APP_MQ_ENABLED=false APP_KAFKA_ENABLED=false`）
+
+| 用例 | 期望 `body.code` | 实测 |
+|------|------------------|------|
+| 匿名 `POST/DELETE /api/community/follow`（带 `followerId=83`） | 401 | 401（HTTP 401） |
+| 匿名 `GET /api/daily-topics/collected?userId=83` | 401 | 401 |
+| 匿名 `GET /api/daily-topics/1/collect/status?userId=83` | 401 | 401 |
+| 用户 `GET /api/daily-topics/collected?userId=1` | 200（仅本人） | 200，`topics: []` |
+| 匿名 `GET /api/user/current` | 401 | 401「请先登录」 |
+| 匿名 `GET /api/user/current?userId=83` | 200（公开字段） | 200，不含 `phone` / `points` |
+| 匿名 `GET /api/user/current?username=admin` | 401 | 401「请先登录」 |
+| 用户 `GET /api/user/current?username=admin` | 403 | 403「无权查看其他用户信息」 |
+| 用户 `GET /api/user/current`（本人 token） | 200 且含 `phone` | 200 |
+| 匿名 `GET /api/community/posts/following?userId=83` | 401 | 401 |
+| 用户 `GET /api/community/posts/following?userId=1` | 200（仅本人） | 200 |
+| 匿名 `GET /api/community/posts/feed?userId=83` | 200，`followPosts: []` | 200，关注区为空 |
+| 匿名 `GET /api/community/posts/recommend?userId=83` | 200（公共推荐） | 200 |
+| 匿名 `GET /api/community/posts/1/mention-users?userId=83` | 401 | 401 |
+| 匿名 `GET /api/community/posts/video-feed?userId=83` | 200，算法为 `hot-video` | 200 |
+
+C1–C57 原有用例全量回归通过；`mvn -B package "-Dmaven.test.skip=true"` → **BUILD SUCCESS**；
+`scripts/check-architecture.ps1` 全部 PASS（基线已收紧至 0）。
+
+- 验证实例已停止，**需重启正在运行的 8080 后端进程**后修复才生效。
+
