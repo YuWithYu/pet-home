@@ -37,6 +37,8 @@
 
 ## 1. 初始化数据库
 
+> 完整启动顺序：MySQL → Redis → 后端（8080）→ 管理后台（8091）/ 小程序端
+
 ```bash
 # 创建数据库
 mysql -u root -p -e "CREATE DATABASE pet_home DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
@@ -91,8 +93,28 @@ mvn spring-boot:run
 
 目录：`pet-home-uniapp`
 
-- 在 HBuilderX 中打开项目
-- 运行到微信开发者工具（或打包）
+### 方式一：HBuilderX（推荐）
+
+1. 打开 HBuilderX → 文件 → 导入 → 选择 `pet-home-uniapp` 目录
+2. 打开 `manifest.json`，在「微信小程序」页签填入自己的小程序 AppID（没有可先用测试号）
+3. 菜单「运行」→「运行到小程序模拟器」→「微信开发者工具」
+4. 首次运行需在微信开发者工具中开启「设置 → 安全设置 → 服务端口」，HBuilderX 才能自动拉起
+5. 在微信开发者工具中勾选「详情 → 本地设置 → 不校验合法域名」，否则本地 `http://localhost:8080` 的请求会被拦截
+
+开发产物在 `unpackage/dist/dev/mp-weixin`，发布产物在 `unpackage/dist/build/mp-weixin`。
+
+### 方式二：命令行
+
+需先具备 HBuilderX 自带的 CLI 环境（`uniapp` 命令），否则直接用方式一：
+
+```bash
+cd pet-home-uniapp
+npm install
+npm run dev:mp-weixin     # 开发编译，产物在 unpackage/dist/dev/mp-weixin
+npm run build:mp-weixin   # 生产构建
+```
+
+小程序请求的后端地址默认是 `http://localhost:8080`，定义在 `common/js/util.js` 的 `DEFAULT_HTTP_BASE`；真机调试时改成电脑局域网 IP。
 
 ## 5. 管理后台
 
@@ -100,10 +122,12 @@ mvn spring-boot:run
 
 ```bash
 cd pet-frontend
-npm install        # 安装依赖
-npm run serve:rspack   # 开发启动
-npm run build          # 构建
+npm install            # 首次运行安装依赖
+npm run serve:rspack   # 开发启动，浏览器访问 http://localhost:8091
+npm run build          # 生产构建，产物在 dist/
 ```
+
+前端请求后端地址配置在 `src/config/net.config.js`（默认 `http://localhost:8080/api`），开发端口在 `src/config/setting.config.js`（默认 `8091`）。
 
 ## 小程序端
 
