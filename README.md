@@ -129,6 +129,19 @@ npm run build          # 生产构建，产物在 dist/
 
 前端请求后端地址配置在 `src/config/net.config.js`（默认 `http://localhost:8080/api`），开发端口在 `src/config/setting.config.js`（默认 `8091`）。
 
+## 演示账号
+
+`database/pet_home.sql` 是脱敏后的演示数据，所有账号密码统一为 `123456`：
+
+| 端 | 账号 | 密码 | 说明 |
+| --- | --- | --- | --- |
+| 管理后台 | `admin` | `123456` | 超级管理员（`super_admin`），登录接口 `POST /api/admin/login` |
+| 小程序 | 手机号 `13800000075` 或账号 `demo_wx_75` | `123456` | 演示用户，登录接口 `POST /api/user/login` |
+
+用户表里的演示账号规律是：账号 `demo_wx_<id>`、手机号 `1380000<4 位 id>`，密码均为 `123456`。
+
+> 演示库已清空微信 `openid`，微信授权登录需要自己配置 AppID 后重新获取；这些密码仅用于本地演示，部署到生产环境前务必修改。
+
 ## 小程序端
 
 ### 登陆注册
