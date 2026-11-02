@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
@@ -24,10 +26,6 @@ public class JwtUtil {
 
     /** HS512 安全密钥最小字节长度（512 位 = 64 字节） */
     private static final int MIN_SECRET_BYTES = 64;
-
-    /** application.yml 中的本地开发默认密钥（仅用于检测，生产环境使用时拒绝启动） */
-    private static final String LOCAL_DEV_DEFAULT_SECRET =
-            "pet-home-local-dev-secret-key-please-change-in-production-2024-0123456789abcdef";
 
     @Autowired
     private JwtConfig jwtConfig;
@@ -41,19 +39,22 @@ public class JwtUtil {
     @PostConstruct
     public void validateSecret() {
         String secret = jwtConfig.getSecret();
-        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
+        boolean isProd = activeProfile != null && activeProfile.contains("prod");
+        if (secret == null || secret.trim().isEmpty()) {
+            if (isProd) {
+                throw new IllegalStateException(
+                        "生产环境必须通过环境变量 JWT_SECRET 注入至少 " + MIN_SECRET_BYTES + " 字节的随机密钥");
+            }
+            // 本地开发未注入密钥：启动时生成一次性随机密钥，避免源码中存在任何可预测的默认密钥
+            byte[] random = new byte[MIN_SECRET_BYTES];
+            new SecureRandom().nextBytes(random);
+            jwtConfig.setSecret(Base64.getEncoder().encodeToString(random));
+            log.warn("未配置 JWT_SECRET，已生成临时随机密钥；重启后已签发的 token 将失效，生产环境必须显式注入 JWT_SECRET");
+            return;
+        }
+        if (secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
             throw new IllegalStateException(
                     "JWT secret 长度不足，HS512 至少需要 " + MIN_SECRET_BYTES + " 字节，请检查 jwt.secret 配置");
-        }
-        // 安全修复：检测已知默认密钥——生产环境使用默认密钥意味着任何人都能伪造 token，直接拒绝启动
-        boolean usingDefaultSecret = LOCAL_DEV_DEFAULT_SECRET.equals(secret);
-        boolean isProd = activeProfile != null && activeProfile.contains("prod");
-        if (usingDefaultSecret && isProd) {
-            throw new IllegalStateException(
-                    "生产环境禁止使用本地开发默认 JWT 密钥，请通过环境变量 JWT_SECRET 注入随机 64+ 字节密钥");
-        }
-        if (usingDefaultSecret) {
-            log.warn("当前使用本地开发默认 JWT 密钥，生产环境必须通过环境变量 JWT_SECRET 注入随机密钥");
         }
     }
 

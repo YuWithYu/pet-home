@@ -99,8 +99,9 @@ mybatis-plus:
 
 jwt:
   # 安全提示：HS512 要求密钥至少 64 字节（512 位）。
-  # 本地开发使用固定密钥；生产环境必须改用环境变量 JWT_SECRET 注入随机 64+ 字节密钥。
-  secret: ${JWT_SECRET:pet-home-local-dev-secret-key-please-change-in-production-2024-0123456789abcdef}
+  # 不设默认值：源码中保留固定密钥意味着任何人都能伪造 token。本地未注入时启动随机生成临时密钥；
+  # 生产环境必须通过环境变量 JWT_SECRET 注入随机 64+ 字节密钥，否则拒绝启动。
+  secret: ${JWT_SECRET:}
   expiration: 7200
 
 wechat:
